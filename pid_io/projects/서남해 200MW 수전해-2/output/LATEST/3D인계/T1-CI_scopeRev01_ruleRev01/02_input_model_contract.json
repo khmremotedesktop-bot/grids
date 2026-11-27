@@ -6,7 +6,7 @@
  "instruction_rev": "R9-G6",
  "scope_rev": "01",
  "rule_rev": "01",
- "model_rev": "01",
+ "model_rev": "02",
  "coordinate_system": {
   "id": "CS-SEED",
   "axes": "X east, Y up (EL), Z south (right-handed, Three.js)",
@@ -15,13 +15,13 @@
   "source_id": "SRC-BASE",
   "locator": "Seed ASSUMPTIONS 'Origin = …'",
   "plot_transform": {
-   "formula": "X = 0.15562·x_pt + -87.57 · Z = 0.15562·y_pt + -130.91 · Y = EL (cable tier on racks = model RK.cable)",
-   "s": 0.15562134390355756,
-   "tx": -87.5679561826573,
-   "tz": -130.9063266013744,
+   "formula": "X = 0.15597·x_pt + -87.60 · Z = 0.15597·y_pt + -131.91 · Y = EL (cable tier on racks = model RK.cable)",
+   "s": 0.15596935872590495,
+   "tx": -87.59840854393246,
+   "tz": -131.90925052853203,
    "anchors": 13,
-   "residual_median_m": 3.25,
-   "residual_max_m": 9.71
+   "residual_median_m": 1.65,
+   "residual_max_m": 3.28
   }
  },
  "entities": [

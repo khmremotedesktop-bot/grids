@@ -859,7 +859,7 @@ def plot_read(name: str):
     rf = d / "input" / files["plotref"] if files.get("plotref") else None
     # v13.6: content hash, not mtime - a fresh clone / unzip on another PC keeps the cache (and its picture)
     fh = lambda f: hashlib.sha256(f.read_bytes()).hexdigest()[:16] if f else ""
-    key = [files["plot"], fh(pf), files.get("plotref"), fh(rf), "v4"]
+    key = [files["plot"], fh(pf), files.get("plotref"), fh(rf), "v5"]   # v5: eq_shapes
     cj = d / "cache" / "plot.json"
     if cj.exists():
         old = json.loads(cj.read_text(encoding="utf-8"))
@@ -907,7 +907,9 @@ def model_racks(name: str, values: dict | None = None):
                      if not r.get("ref") or (use_refs == "사용" or (use_refs == "서브 랙만" and r.get("kind") == "sub")) and k not in refs_off}
     ours = [{"id": f"RACK-{i + 1:02d}", "rect_pt": r[:4], "axis": "x" if (r[4] if len(r) > 4 else "H") == "H" else "y"}
             for i, r in enumerate(pl.get("racks") or [])]
-    tf = twin.fit(pl, ours, base)
+    # v13.9: the Base (routing) keeps the tag-text fit for now - the outline fit moves the 3D racks <= 0.6 m and that flips
+    # routes on a rack edge (UG +119 m on '-2'). Switch when the rack-edge rule is settled (인수인계 열린 질문).
+    tf = twin.fit(pl, ours, base, outlines=False)
     s, tx, tz = tf["s"], tf["tx"], tf["tz"]
     rects, els, lens = [], {}, {}
     eqr = [[(e["box"]["x0"] - tx) / s, (e["box"]["z0"] - tz) / s, (e["box"]["x1"] - tx) / s, (e["box"]["z1"] - tz) / s, tag]
@@ -1388,6 +1390,9 @@ def loop_make(name: str, seven_only: bool = False):
     p11 = [r for r in _csv.reader(open(pk / "evidence" / "plot_vs_3d.csv", encoding="utf-8"))][1:] if (pk / "evidence" / "plot_vs_3d.csv").exists() else []
     (pk / "BASE_SUMMARY.md").write_text(LP.base_summary(name, n, meta_, items, v, cable.DEFAULTS, names, corr, man["sources"], prev, rules,
                                                         LP.zip_list(seven_only), p11), encoding="utf-8")
+    # v13.9 P12: the Copilot conversation guide + an empty answer file (the round folder is new each time)
+    (pk / LP.GUIDE_NAME).write_text(LP.copilot_guide(name, n, OR.load_common(HOME), p11, rules), encoding="utf-8")
+    (pk / LP.ANSWERS_NAME).write_text(json.dumps(LP.answers_template(name, n), ensure_ascii=False, indent=1), encoding="utf-8")
     pl = plot_read(name)
     if pl:
         try:
@@ -1456,14 +1461,17 @@ def plot_vs_3d(name: str, s: dict) -> list:
     for rid, el in (allm.get("cable_el") or {}).items():
         add("높이", f"랙 {rid}", "PLOT에 높이 없음", f"케이블 단 EL {el} m", "", "INFO", "3D 값 사용" if rid in used else "이 랙은 경로에 안 씀")
     # (2) equipment positions after the fit
+    # v13.9 P11 rev 2: measured at the PLOT outline centre (twin.outline), never HOLD - the drawing follows 3D, quantities Base
     eq = tf.get("equipment") or []
     ok = [e for e in eq if e["d"] <= tol]
     if ok:
-        add("장비 위치", f"{len(ok)}개", "", f"차이 ≤ {tol:g} m", "", "INFO", "그림만 3D에 맞춤, 물량은 Base")
+        nb = sum(1 for e in ok if e.get("basis") == "글자")
+        add("장비 위치", f"{len(ok)}개", "PLOT 도형 중심" + (f" (글자 위치 {nb}개)" if nb else ""), f"차이 ≤ {tol:g} m", "", "INFO",
+            "그림은 3D 위치, 물량은 Base")
     for e in eq:
         if e["d"] > tol:
-            add("장비 위치", e["tag"], "PLOT 위치", f"3D와 {e['d']} m 차이 (ΔX {e['dx']}, ΔZ {e['dz']})", "", "HOLD",
-                "어느 도면이 최신인지 확인 (PLOT 리비전 / 3D 리비전)")
+            add("장비 위치", e["tag"], "PLOT " + ("도형 중심" if e.get("basis") == "도형" else "글자 위치 (도형 못 찾음)"),
+                f"3D와 {e['d']} m 차이 (ΔX {e['dx']}, ΔZ {e['dz']})", "", "INFO 큰 차이", "그림은 3D 위치, 물량은 Base (묻지 않음)")
     # (3) racks: same / PLOT only / 3D only
     rects = allm.get("rects") or []
     ov = lambda r, q: max(0, min(r[2], q[2]) - max(r[0], q[0])) * max(0, min(r[3], q[3]) - max(r[1], q[1]))
@@ -1494,9 +1502,10 @@ def plot_vs_3d(name: str, s: dict) -> list:
             imp = f"넣으면 케이블 {with_ - without:+,.0f} m ({dp:+g}%)"
             if on:
                 add("3D에만 있는 구조물", f"{rid} {r['name'][:40]}", "PLOT에 없음", f"EL {r['cable_el']} m", imp,
-                    "HOLD" if dp > det else "INFO", f"사용 중 - 증가가 {det:g}% 넘음, 사람 확인" if dp > det else "사용 중 (사람 결정)")
+                    "INFO 큰 차이" if dp > det else "INFO", "그림은 3D대로, 케이블이 지나감 (Base 설정 · 사람 결정)")
             else:
-                add("3D에만 있는 구조물", f"{rid} {r['name'][:40]}", "PLOT에 없음", f"EL {r['cable_el']} m", imp, "INFO", "제외 중 (사람 결정)")
+                add("3D에만 있는 구조물", f"{rid} {r['name'][:40]}", "PLOT에 없음", f"EL {r['cable_el']} m", imp,
+                    "INFO 큰 차이" if abs(dp) > det else "INFO", "그림은 3D대로, 케이블은 안 지나감 (Base 설정 · 사람 결정)")
     return rows
 
 
@@ -2411,6 +2420,21 @@ class H(BaseHTTPRequestHandler):
                         c_["common_id"] = cm["rules"][-1]["id"]
                         LP.save_rules(pdir(name), dd_)
                     return self._send(200, loop_view(name))
+                if sub == "answers" and method == "POST":   # v13.9 P12: Copilot answer file -> comments
+                    b = self._json()
+                    if b.get("json"):
+                        data = json.loads(b["json"]) if isinstance(b["json"], str) else b["json"]
+                    else:
+                        rs_ = LP.rounds(pdir(name))
+                        rd = next((x for x in rs_ if x["round"] == int(b.get("round", rs_[-1]["round"] if rs_ else 0))), None)
+                        if not rd:
+                            raise ValueError("라운드가 없습니다 - 먼저 3D 인계 파일을 만드세요")
+                        f_ = _loop_pkg(name, rd) / LP.ANSWERS_NAME
+                        if not f_.exists():
+                            raise ValueError(f"R{rd['round']} 폴더에 {LP.ANSWERS_NAME}이 없습니다")
+                        data = json.loads(f_.read_text(encoding="utf-8"))
+                    out_ = LP.import_answers(pdir(name), data)
+                    return self._send(200, {**loop_view(name), "imported": out_})
                 if sub == "ai3d" and method == "POST":
                     fn = Path(unquote(self.headers.get("X-Filename", "ai3d.html"))).name
                     return self._send(200, loop_attach_ai(name, int(q.get("round", ["0"])[0]), fn, self._body()))
@@ -2421,13 +2445,13 @@ class H(BaseHTTPRequestHandler):
                         return self._send(404, {"error": "no round"})
                     pk = _loop_pkg(name, rd)
                     f = {"zip": pk / rd["zip"], "prompt": pk / LP.PROMPT_NAME, "summary": pk / "BASE_SUMMARY.md",
-                         "markup": pk / "PLOT_MARKUP.png", "ai3d": pk / "model" / (rd.get("ai3d") or "-"),
+                         "markup": pk / "PLOT_MARKUP.png", "guide": pk / LP.GUIDE_NAME, "answers": pk / LP.ANSWERS_NAME, "ai3d": pk / "model" / (rd.get("ai3d") or "-"),
                          "ref3d": next(iter(sorted((pk / "model").glob("*_R*[0-9].html"))), pk / "-")}.get(q.get("f", [""])[0])
                     if not f or not f.exists():
                         return self._send(404, {"error": "not found"})
                     from urllib.parse import quote
                     ct = {".zip": "application/zip", ".md": "text/markdown; charset=utf-8", ".png": "image/png",
-                          ".html": "text/html; charset=utf-8"}.get(f.suffix, "application/octet-stream")
+                          ".html": "text/html; charset=utf-8", ".json": "application/json; charset=utf-8"}.get(f.suffix, "application/octet-stream")
                     hd = {} if f.suffix in (".png", ".html") else {"Content-Disposition": f"attachment; filename*=UTF-8''{quote(f.name)}"}
                     return self._send(200, f.read_bytes(), ct, hd)
                 return self._send(200, loop_view(name))

@@ -1,6 +1,6 @@
 # Base 요약 — 계장 (T1-CI) · 서남해 200MW 수전해-2 · R0
 
-scope 01 · rule 01 · model 01 · 2026-11-27T10:20:25+09:00 · 상태 DRAFT_NOT_READY (공종 승인 전)
+scope 01 · rule 01 · model 02 · 2026-11-27T12:15:30+09:00 · 상태 DRAFT_NOT_READY (공종 승인 전)
 
 Base = 산출근거(pid_io 계산: 체크리스트 + STEP 6~9 설정 + 사람 결정) + PLOT 마크업(`PLOT_MARKUP.png`). 원본 큰 파일은 제출하지 않고 아래 '원본 목록'으로 참조합니다.
 
@@ -61,20 +61,20 @@ Base = 산출근거(pid_io 계산: 체크리스트 + STEP 6~9 설정 + 사람 �
 ## 5. 3D와 PLOT이 다른 곳 (프로토콜 P11) — 자세히 evidence/plot_vs_3d.csv
 | 구분 | 항목 | 3D | 물량 영향 | 판정 | 조치 |
 |---|---|---|---|---|---|
-| 장비 위치 | 10-TK-801 | 3D와 9.83 m 차이 (ΔX -1.31, ΔZ -9.75) |  | HOLD | 어느 도면이 최신인지 확인 (PLOT 리비전 / 3D 리비전) |
-| 장비 위치 | 10-D-601 | 3D와 7.41 m 차이 (ΔX -7.41, ΔZ -0.36) |  | HOLD | 어느 도면이 최신인지 확인 (PLOT 리비전 / 3D 리비전) |
-| 장비 위치 | 11개 | 차이 ≤ 5 m |  | INFO | 그림만 3D에 맞춤, 물량은 Base |
+그림은 3D를 따르고 물량은 Base 그대로입니다 (P11). 아래는 차이 기록이며 질문이 아닙니다.
+
+| 3D에만 있는 구조물 | REF-OB3 OVER BRIDGE (GIS ↔ MCB, over N-S road) | EL 9.0 m | 넣으면 케이블 +3,175 m (+5.69%) | INFO 큰 차이 | 그림은 3D대로, 케이블은 안 지나감 (Base 설정 · 사람 결정) |
+| 장비 위치 | 13개 | 차이 ≤ 5 m |  | INFO | 그림은 3D 위치, 물량은 Base |
 | 랙 | 3D 랙 A | 같은 랙 |  | INFO | 하나의 랙으로, 형상은 3D |
 | 랙 | 3D 랙 REF-XR2 | 같은 랙 |  | INFO | 하나의 랙으로, 형상은 3D |
 | 랙 | 3D 랙 REF-XR1 | 같은 랙 |  | INFO | 하나의 랙으로, 형상은 3D |
 | 랙 | 3D 랙 REF-XR3 | 같은 랙 |  | INFO | 하나의 랙으로, 형상은 3D |
 | 랙 | 3D 랙 EW | 같은 랙 |  | INFO | 하나의 랙으로, 형상은 3D |
 | 랙 | 3D 랙 C | 같은 랙 |  | INFO | 하나의 랙으로, 형상은 3D |
-| 3D에만 있는 구조물 | REF-OB1 OVER BRIDGE (Rack A ↔ North / Electrical | EL 9.0 m | 넣으면 케이블 +0 m (+0%) | INFO | 사용 중 (사람 결정) |
-| 3D에만 있는 구조물 | REF-OB2 OVER BRIDGE (Rack C ↔ North / MCB area) | EL 9.0 m | 넣으면 케이블 +0 m (+0%) | INFO | 사용 중 (사람 결정) |
-| 3D에만 있는 구조물 | REF-OB3 OVER BRIDGE (GIS ↔ MCB, over N-S road) | EL 9.0 m | 넣으면 케이블 +3,175 m (+5.69%) | INFO | 제외 중 (사람 결정) |
-| 3D에만 있는 구조물 | REF-SR201N SUB RACK – 10-PK-201 (between A / B) | EL 5.0 m | 넣으면 케이블 +0 m (+0%) | INFO | 사용 중 (사람 결정) |
-| 3D에만 있는 구조물 | REF-SR201S SUB RACK – 10-PK-201 (between C / D) | EL 5.0 m | 넣으면 케이블 +10 m (+0.02%) | INFO | 사용 중 (사람 결정) |
+| 3D에만 있는 구조물 | REF-OB1 OVER BRIDGE (Rack A ↔ North / Electrical | EL 9.0 m | 넣으면 케이블 +0 m (+0%) | INFO | 그림은 3D대로, 케이블이 지나감 (Base 설정 · 사람 결정) |
+| 3D에만 있는 구조물 | REF-OB2 OVER BRIDGE (Rack C ↔ North / MCB area) | EL 9.0 m | 넣으면 케이블 +0 m (+0%) | INFO | 그림은 3D대로, 케이블이 지나감 (Base 설정 · 사람 결정) |
+| 3D에만 있는 구조물 | REF-SR201N SUB RACK – 10-PK-201 (between A / B) | EL 5.0 m | 넣으면 케이블 +0 m (+0%) | INFO | 그림은 3D대로, 케이블이 지나감 (Base 설정 · 사람 결정) |
+| 3D에만 있는 구조물 | REF-SR201S SUB RACK – 10-PK-201 (between C / D) | EL 5.0 m | 넣으면 케이블 +10 m (+0.02%) | INFO | 그림은 3D대로, 케이블이 지나감 (Base 설정 · 사람 결정) |
 
 ## 6. 원본 목록 (제출하지 않음 · 요청 시 제공)
 | source_id | 파일 | Rev | authority | SHA-256 |

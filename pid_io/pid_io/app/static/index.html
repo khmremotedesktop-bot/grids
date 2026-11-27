@@ -374,7 +374,7 @@ async function renderLoop(data) {
   const ST = {OPEN:["y","검토 전"], APPLIED:["g","반영"], HOLD:["","보류"], RETIRED:["","폐기"]};
   const open = d.comments.filter(c => c.status === "OPEN"), done = d.comments.filter(c => c.status !== "OPEN");
   const cmt = c => `<div class="ritem" style="cursor:default;margin-bottom:6px">
-      <div class="a"><b class="mono">${esc(c.id)}</b> <span class="chip ${ST[c.status][0]}">${ST[c.status][1]}</span> <span class="chip">${c.kind==="PROMPT"?"프롬프트 수정":"Base 수정 (STEP 6~9)"}</span>
+      <div class="a"><b class="mono">${esc(c.id)}</b> <span class="chip ${ST[c.status][0]}">${ST[c.status][1]}</span> <span class="chip">${c.kind==="PROMPT"?"프롬프트 수정":"Base 수정 (STEP 6~9)"}</span>${c.src==="copilot"?` <span class="chip b">코파일럿 · ${c.scope==="공통"?"항상":"이번만"}</span>`:""}
         ${c.rule_id?`<span class="chip b">${esc(c.rule_id)} · R${c.round_applied}부터</span>`:c.round_applied!=null&&c.status==="APPLIED"?`<span class="chip b">R${c.round_applied} 반영</span>`:""} <span class="def">R${c.round}에 대한 코멘트${c.target?" · 대상 "+esc(c.target):""}${c.by?" · "+esc(c.by):""}</span></div>
       <div class="b">"${esc(c.text)}"</div>
       ${c.status==="OPEN" ? (c.kind==="PROMPT"
@@ -391,19 +391,28 @@ async function renderLoop(data) {
       ${R.map(r=>`<tr><td><b>R${r.round}</b></td><td style="font-size:12px">${esc(r.at)}</td><td class="mono" style="font-size:11px">s${r.revs.scope_rev}·r${r.revs.rule_rev}·m${r.revs.model_rev}</td>
         <td style="font-size:12px">${r.rules.length?esc(r.rules.join(", ")):"-"}${r.applied_comments.length?`<br><span class="def">이번 반영 ${esc(r.applied_comments.join(", "))}</span>`:""}</td>
         <td>${r.ai3d?`<a class="btn sm" target="_blank" href="${F(r.round,"ai3d")}">열기</a> `:""}<label class="btn sm line">${r.ai3d?"바꾸기":"올리기 (.html)"}<input type="file" accept=".html,.htm" data-lpai="${r.round}" style="display:none"></label></td>
-        <td style="font-size:12px;white-space:nowrap"><a href="${F(r.round,"zip")}">제출 zip</a> · <a href="${F(r.round,"prompt")}">프롬프트</a> · <a href="${F(r.round,"summary")}">요약</a> · <a target="_blank" href="${F(r.round,"markup")}">마크업</a> · <a target="_blank" href="${F(r.round,"ref3d")}">참고 3D</a></td></tr>`).join("")}</table>`
+        <td style="font-size:12px;white-space:nowrap"><a href="${F(r.round,"zip")}">제출 zip</a> · <a href="${F(r.round,"prompt")}">프롬프트</a> · <a href="${F(r.round,"summary")}">요약</a> · <a href="${F(r.round,"guide")}">코파일럿 안내</a> · <a target="_blank" href="${F(r.round,"markup")}">마크업</a> · <a target="_blank" href="${F(r.round,"ref3d")}">참고 3D</a></td></tr>`).join("")}</table>`
       :`<div class="empty">아직 없음 - 'R0 만들기'로 시작합니다 (지금 Base 그대로 프롬프트 + 7종)</div>`}
     <div style="margin-top:14px;border-top:1px dashed var(--line);padding-top:10px"><b>코멘트</b> <span class="def">AI가 그린 3D를 보고 적습니다. 위치는 객체 번호(TR-10-005, JB-10-DA-01)나 말로.</span>
       <textarea id="lptext" rows="2" style="width:100%;margin-top:6px" placeholder="예: 랙 교차부에서 트레이가 끊겨 보임 - 엘보로 이어라 / JB-10-DA-01은 장비 반대편으로"></textarea>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;align-items:center"><input id="lptarget" placeholder="대상 (객체 번호 / 위치)" style="width:200px">
         <select id="lpkind"><option value="PROMPT">프롬프트 수정 (그리는 방법)</option><option value="BASE">Base 수정 (배치·경로·크기 = 물량)</option></select>
-        <input id="lpby" placeholder="이름" style="width:90px"><button class="btn sm" id="lpadd">코멘트 추가</button></div></div>
+        <input id="lpby" placeholder="이름" style="width:90px"><button class="btn sm" id="lpadd">코멘트 추가</button></div>
+      ${last?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center;font-size:12.5px"><b>코파일럿 대화</b>
+        <span class="def">VS Code 코파일럿이 R${last.round} 폴더의 COPILOT_GUIDE.md를 읽고 한국어로 묻고, 답을 COPILOT_ANSWERS.json에 적습니다 (프로토콜 P12).</span>
+        <button class="btn sm" id="lpans">코파일럿 답 읽기 (R${last.round})</button><label class="btn sm line">답 파일 올리기<input type="file" accept=".json" id="lpansf" style="display:none"></label></div>`:""}</div>
     ${open.length?`<div style="margin-top:10px">${open.map(cmt).join("")}</div>`:""}
     ${done.length?`<details style="margin-top:8px"><summary style="cursor:pointer;font-size:12.5px">처리한 코멘트 ${done.length}</summary>${done.map(cmt).join("")}</details>`:""}
     ${d.prompt?`<details style="margin-top:8px"><summary style="cursor:pointer;font-size:12.5px">현재 3D 구현 프롬프트 (R${last.round}) 보기</summary><pre style="white-space:pre-wrap;font-size:11.5px;max-height:420px;overflow:auto;background:#f6f7f6;padding:10px">${esc(d.prompt)}</pre></details>`:""}`;
   box.innerHTML = h;
   const send = async body => { try { renderLoop(await post(P("loop/comment"), body)); } catch(e) { toast(e.message, true); } };
   $("#lpmk").onclick = () => loopMake();
+  const ans = async body => { try { const r = await post(P("loop/answers"), body); const im = r.imported || {};
+      toast(`코파일럿 답: 코멘트 ${im.added.length}건 추가` + (im.skipped.length?`, 이미 읽은 ${im.skipped.length}건`:"") +
+            (im.hold.length?` · 되돌림 ${im.hold.length}건 (${im.hold.map(x=>x.id+" "+x.why).join("; ")})`:""), im.hold.length>0); renderLoop(r); }
+    catch(e) { toast(e.message, true); } };
+  if ($("#lpans")) $("#lpans").onclick = () => ans({round: last.round});
+  if ($("#lpansf")) $("#lpansf").onchange = async e => { const f = e.target.files[0]; if (f) ans({json: await f.text()}); };
   $("#lpseven").onchange = e => { LPS.seven = e.target.checked; };
   $("#lpadd").onclick = () => { const t = $("#lptext").value.trim(); if (!t) return toast("코멘트를 적어 주세요", true);
     send({add:{text:t, target:$("#lptarget").value, kind:$("#lpkind").value, by:$("#lpby").value}}); };

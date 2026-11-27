@@ -1,0 +1,7 @@
+correction_id,kind,object_id,drawing,page,drawing_value,read_value,engineer_value,origin,reason,confirmed_by,decided_at,effect
+CR-0001,노트 해석 (ONLY ONE SHOWN),NOTE:PID-0015,PID-0015,,노트,노트 인식,대수 3,사람 검토,,,,대수 복제
+CR-0002,3D 반영 관문,GATE:설정 랙 출처,3D,,PLOT 인식,3D 팩트 제안,3D 모델 랙,사람 승인,,,2026-11-27 03:57,
+CR-0003,3D 반영 관문,GATE:설정 랙 트레이 EL 출처,3D,,체크리스트 값,3D 팩트 제안,3D 모델 케이블 단,사람 승인,,,2026-11-27 03:57,
+CR-0004,3D 반영 관문,GATE:설정 3D 모델 장비 상자 피하기,3D,,안 함,3D 팩트 제안,사용 (3D 모델 있을 때),사람 승인,,,2026-11-27 03:57,
+CR-0005,3D 반영 관문,GATE:설정 랙 출처,3D,,3D 모델 랙,사람 결정 제안,둘 다,"사용자 (원칙: Base 먼저, 3D는 PLOT에 없는 랙만 추가 - 프로토콜 P11)",,,2026-11-27 09:12,
+CR-0006,합계 (보정 전 → 후),TOTAL,,,,판독값만 (검토 판단 없이),검토 판단 적용,pid_io 재계산,,,,"AI 138→152, AO 23→26, DI 475→484"

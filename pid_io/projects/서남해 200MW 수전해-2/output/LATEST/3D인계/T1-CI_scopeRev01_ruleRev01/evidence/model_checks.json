@@ -6,8 +6,8 @@
  "instruction_rev": "R9-G6",
  "scope_rev": "01",
  "rule_rev": "01",
- "model_rev": "01",
- "checked_at": "2026-11-27T10:20:24+09:00",
+ "model_rev": "02",
+ "checked_at": "2026-11-27T12:15:29+09:00",
  "reconciliation": [
   {
    "scope_id": "CI-CB-MC-48PX125SQOS",
@@ -155,7 +155,7 @@
   },
   "GEOMETRY_ATTRIBUTES": {
    "result": "PASS",
-   "evidence": "records 2284, object_id 중복 0, geometry/attributes 빈 것 0, scope 없는 객체 0"
+   "evidence": "records 2286, object_id 중복 0, geometry/attributes 빈 것 0, scope 없는 객체 0"
   },
   "QUANTITY_RECONCILIATION": {
    "result": "PASS",

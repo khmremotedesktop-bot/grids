@@ -13,6 +13,7 @@ Scale, in order of trust:
 """
 from __future__ import annotations
 
+import math
 import re
 import statistics
 from dataclasses import dataclass, field
@@ -188,6 +189,31 @@ def equipment(page) -> dict[str, list]:
     return out
 
 
+def equipment_shapes(page, eq: dict, m: float, reach_m: float = 6.0) -> dict:
+    """v13.9: closed outlines near each equipment label: tag -> [[cx, cy, w, h, dist_m], ...] (pt, nearest first, max 8).
+    The label sits beside the outline (a 19 m tank's tag is 10 m from its centre), so a position comparison must use the
+    outline. Which outline is the equipment is decided by the caller (twin.fit: same size as the 3D box)."""
+    shapes = []
+    for d in page.get_drawings():
+        r = d["rect"]
+        if 1.0 <= min(r.width, r.height) * m and max(r.width, r.height) * m <= 40 and \
+                (len(d["items"]) >= 4 or any(i[0] in ("re", "qu") for i in d["items"])):
+            shapes.append(r)
+    out = {}
+    for tag, pts in eq.items():
+        if len(pts) != 1:
+            continue
+        x, y = pts[0]
+        near = []
+        for r in shapes:
+            dd = math.hypot(max(r.x0 - x, 0, x - r.x1), max(r.y0 - y, 0, y - r.y1)) * m
+            if dd <= reach_m:
+                near.append([round((r.x0 + r.x1) / 2, 1), round((r.y0 + r.y1) / 2, 1), round(r.width, 1), round(r.height, 1), round(dd, 2)])
+        if near:
+            out[tag] = sorted({tuple(n) for n in near}, key=lambda n: n[4])[:8]
+    return out
+
+
 def labels(page, keys) -> list[dict]:
     out = []
     for b in page.get_text("blocks"):
@@ -213,6 +239,7 @@ def read_plot(pdf: Path, ref_pdf: Path | None = None) -> dict:
         "pdf": Path(pdf).name, "size": [page.rect.width, page.rect.height],
         "scale": {"m_per_pt": sc.m_per_pt, "method": sc.method, "evidence": sc.evidence, "confident": sc.confident},
         "equipment": {t: [[round(x, 1), round(y, 1)] for x, y in v] for t, v in eq.items()},
+        "eq_shapes": {t: [list(n) for n in v] for t, v in equipment_shapes(page, eq, m).items()},
         "rooms": labels(page, ROOM_WORDS),
         "panels": labels(page, PANEL_WORDS),
     }

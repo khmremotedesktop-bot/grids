@@ -6,9 +6,9 @@
  "instruction_rev": "R9-G6",
  "scope_rev": "01",
  "rule_rev": "01",
- "model_rev": "01",
+ "model_rev": "02",
  "case_id": "T-CHANGED-SPARE30",
- "executed_at": "2026-11-27T10:20:24+09:00",
+ "executed_at": "2026-11-27T12:15:29+09:00",
  "overrides": {
   "jb_spare": 0.3
  },

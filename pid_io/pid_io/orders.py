@@ -187,6 +187,8 @@ def load_common(home: Path) -> dict:
     if str(c.get("version", "1")).split(".")[0] < "3":          # v1 / v2 file -> master + translations (learned rules kept)
         c = CR.upgrade(c)
         save_common(home, c)
+    if CR.sync_seed(c):                                         # v13.9: seed rules changed by a user decision
+        save_common(home, c)
     return c
 
 

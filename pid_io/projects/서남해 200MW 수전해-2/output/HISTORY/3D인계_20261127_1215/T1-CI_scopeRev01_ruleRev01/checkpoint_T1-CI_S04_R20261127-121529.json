@@ -5,7 +5,7 @@
   "instruction_rev": "R9-G6",
   "scope_rev": "01",
   "rule_rev": "01",
-  "model_rev": "01"
+  "model_rev": "02"
  },
  "source_registry": [
   {
@@ -195,7 +195,7 @@
     "CI-UG-W1200",
     "CI-PT-100"
    ],
-   "reason": "계기 위치 다수 추정, 좌표 맞춤 잔차 중앙값 3.25 m / 최대 9.71 m",
+   "reason": "계기 위치 다수 추정, 좌표 맞춤 잔차 중앙값 1.65 m / 최대 3.28 m",
    "action": "태그 위치 자료 · 3D 좌표 확인",
    "owner": "CI"
   },
@@ -206,32 +206,6 @@
    "reason": "전기 공용 통로 인터페이스 미합의 (IF-EL-ROUTE)",
    "action": "전기 3D 데이터 수신 후 합의",
    "owner": "CI / EL"
-  },
-  {
-   "issue_id": "IS-P11",
-   "status": "OPEN",
-   "scope_ids": [
-    "CI-CB-MC-48PX125SQOS",
-    "CI-CB-MU-40PX125SQISOS",
-    "CI-CB-MU-40PX125SQOS",
-    "CI-CB-MU-60PX125SQISOS",
-    "CI-CB-MU-60PX125SQOS",
-    "CI-CB-BR-1PX125SQOS",
-    "CI-CB-BR-2CX20SQOS",
-    "CI-CB-CM-FO12CSMARMOURED",
-    "CI-CB-PK-6PX125SQOS",
-    "CI-TR-SIG-300",
-    "CI-TR-SIG-600",
-    "CI-TR-SIG-900",
-    "CI-TR-COM-300",
-    "CI-UG-W300",
-    "CI-UG-W450",
-    "CI-UG-W1200",
-    "CI-PT-100"
-   ],
-   "reason": "3D와 PLOT 불일치 HOLD 2건 (프로토콜 P11): 10-TK-801 3D와 9.83 m 차이 (ΔX -1.31, ΔZ -9.75); 10-D-601 3D와 7.41 m 차이 (ΔX -7.41, ΔZ -0.36)",
-   "action": "evidence/plot_vs_3d.csv 확인 후 사람 결정",
-   "owner": "CI"
   },
   {
    "issue_id": "IS-005",
@@ -278,7 +252,7 @@
  "draft_files": [
   {
    "filename": "00_manifest.json",
-   "revision": "scope01/rule01/model01",
+   "revision": "scope01/rule01/model02",
    "approval_state": "DRAFT_NOT_READY",
    "reattach": "지금 첨부",
    "reason": "상태·Gate·미결",
@@ -286,7 +260,7 @@
   },
   {
    "filename": "01_scope.csv",
-   "revision": "scope01/rule01/model01",
+   "revision": "scope01/rule01/model02",
    "approval_state": "DRAFT_NOT_READY",
    "reattach": "지금 첨부",
    "reason": "범위 승인 (S02)",
@@ -294,7 +268,7 @@
   },
   {
    "filename": "02_input_model_contract.json",
-   "revision": "scope01/rule01/model01",
+   "revision": "scope01/rule01/model02",
    "approval_state": "DRAFT_NOT_READY",
    "reattach": "필요할 때 첨부",
    "reason": "입력·Rule 승인 (S03)",
@@ -302,7 +276,7 @@
   },
   {
    "filename": "03_engineering_rules.json",
-   "revision": "scope01/rule01/model01",
+   "revision": "scope01/rule01/model02",
    "approval_state": "DRAFT_NOT_READY",
    "reattach": "필요할 때 첨부",
    "reason": "입력·Rule 승인 (S03)",
@@ -310,7 +284,7 @@
   },
   {
    "filename": "04_test_inputs.json",
-   "revision": "scope01/rule01/model01",
+   "revision": "scope01/rule01/model02",
    "approval_state": "DRAFT_NOT_READY",
    "reattach": "필요할 때 첨부",
    "reason": "독립 실행 (S05)",
@@ -318,7 +292,7 @@
   },
   {
    "filename": "05_validation.csv",
-   "revision": "scope01/rule01/model01",
+   "revision": "scope01/rule01/model02",
    "approval_state": "DRAFT_NOT_READY",
    "reattach": "필요할 때 첨부",
    "reason": "독립 검증 대조 (S05)",
@@ -326,29 +300,29 @@
   },
   {
    "filename": "06_model_handoff.json",
-   "revision": "scope01/rule01/model01",
+   "revision": "scope01/rule01/model02",
    "approval_state": "DRAFT_NOT_READY",
    "reattach": "필요할 때 첨부",
    "reason": "모델 검토 (S04/S06)",
    "note": ""
   },
   {
-   "filename": "model/T1-CI_Seed03_R01.html",
-   "revision": "model01",
+   "filename": "model/T1-CI_Seed03_R02.html",
+   "revision": "model02",
    "approval_state": "DRAFT_NOT_READY",
    "reattach": "필요할 때 첨부",
    "reason": "모델 검토 (S04~S06)",
-   "note": "sha256 b4659132a5d22451…"
+   "note": "sha256 91ee8eb03b59654a…"
   },
   {
-   "filename": "model/T1-CI_Seed03_R01.json",
-   "revision": "model01",
+   "filename": "model/T1-CI_Seed03_R02.json",
+   "revision": "model02",
    "approval_state": "DRAFT_NOT_READY",
    "reattach": "필요할 때 첨부",
    "reason": "모델 검토 (S04~S06)",
-   "note": "sha256 64c907f713998fbb…"
+   "note": "sha256 c30d22543ca98a7b…"
   }
  ],
  "next_step": "S02 범위 승인 · S03 Rule 승인, STEP 10에서 독립 검증 기대값 잠금 → 다시 만들기",
- "updated_at": "2026-11-27T10:20:24+09:00"
+ "updated_at": "2026-11-27T12:15:29+09:00"
 }

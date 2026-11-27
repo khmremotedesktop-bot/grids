@@ -1,0 +1,908 @@
+{
+ "schema_version": "AI3D-HANDOFF-1.1",
+ "profile_id": "T1-CI",
+ "task_id": "T1",
+ "discipline_id": "CI",
+ "instruction_rev": "R9-G6",
+ "scope_rev": "01",
+ "rule_rev": "01",
+ "model_rev": "02",
+ "rules": [
+  {
+   "rule_id": "R-INST",
+   "title": "계기 수",
+   "rule_kind": "QUANTITY",
+   "scope_ids": [
+    "CI-INST"
+   ],
+   "input_field_ids": [
+    "F-PID-TAG",
+    "F-PID-FUNC",
+    "F-IO-TYPE"
+   ],
+   "preconditions": "추출 완료, 체크리스트·STEP 6~9 설정 적용",
+   "steps": [
+    {
+     "step_id": "S1",
+     "operation": "P&ID 심볼 인식 (태그 글자 + 번호 짝, 외곽선) → 검토 판단(사람) 적용 → 체크리스트 Typical 파생 · 트레인/대수 복제",
+     "result_key": "rows"
+    },
+    {
+     "step_id": "S2",
+     "operation": "count = |{ tag : row.kind = instrument, origin ≠ 스페어 }|",
+     "result_key": "CI-INST"
+    }
+   ],
+   "outputs": [
+    {
+     "scope_id": "CI-INST",
+     "result_key": "CI-INST",
+     "unit": "EA"
+    }
+   ],
+   "grouping": "고유 Tag",
+   "deduplication": "Tag (대소문자·공백 무시)",
+   "rounding": "정수",
+   "exceptions": [
+    "벤더 경계 안 계기는 Skid 위치로 계산하되 수량 포함"
+   ],
+   "missing_policy": "HOLD",
+   "evidence": [
+    {
+     "source_id": "SRC-CHECKLIST",
+     "locator": "산출근거 엑셀 (STEP 5) 해당 시트 - 식에 숫자 대입"
+    }
+   ],
+   "status": "DRAFT",
+   "approved_by": null,
+   "approval_date": null
+  },
+  {
+   "rule_id": "R-IO",
+   "title": "I/O 점수",
+   "rule_kind": "QUANTITY",
+   "scope_ids": [
+    "CI-IO-AI",
+    "CI-IO-AO",
+    "CI-IO-DI",
+    "CI-IO-DO",
+    "CI-IO-COMM"
+   ],
+   "input_field_ids": [
+    "F-CK-H01",
+    "F-CK-H02",
+    "F-CK-H03",
+    "F-CK-H04",
+    "F-CK-C04",
+    "F-PID-TAG",
+    "F-PID-FUNC",
+    "F-IO-TYPE"
+   ],
+   "preconditions": "추출 완료, 체크리스트·STEP 6~9 설정 적용",
+   "steps": [
+    {
+     "step_id": "S1",
+     "operation": "행 생성: 계기 1개 × 기능코드 IO 규칙(io_rules.yaml) → IO 1점 = 1행 (System: DCS/ESD/F&G)",
+     "result_key": "rows"
+    },
+    {
+     "step_id": "S2",
+     "operation": "스페어 = ceil(n(system, io) × H01~H04 율) 행 추가 (RTD는 H01)",
+     "result_key": "spare"
+    },
+    {
+     "step_id": "S3",
+     "operation": "count(io) = |{ row : row.io = io }| (스페어 포함), 통신 포트 = Serial/Comm 행 (C04 ON이면 A/B 2점)",
+     "result_key": "CI-IO-*"
+    }
+   ],
+   "outputs": [
+    {
+     "scope_id": "CI-IO-AI",
+     "result_key": "CI-IO-AI",
+     "unit": "PT"
+    },
+    {
+     "scope_id": "CI-IO-AO",
+     "result_key": "CI-IO-AO",
+     "unit": "PT"
+    },
+    {
+     "scope_id": "CI-IO-DI",
+     "result_key": "CI-IO-DI",
+     "unit": "PT"
+    },
+    {
+     "scope_id": "CI-IO-DO",
+     "result_key": "CI-IO-DO",
+     "unit": "PT"
+    },
+    {
+     "scope_id": "CI-IO-COMM",
+     "result_key": "CI-IO-COMM",
+     "unit": "EA"
+    }
+   ],
+   "grouping": "IO 종류",
+   "deduplication": "행 단위 (IO 1점 = 1행)",
+   "rounding": "정수",
+   "exceptions": [
+    "IO 없는 계기(현장 지시계, PSV) = '-' 행",
+    "벤더 PLC 내부 IO 제외 (A03)"
+   ],
+   "missing_policy": "HOLD",
+   "evidence": [
+    {
+     "source_id": "SRC-CHECKLIST",
+     "locator": "산출근거 엑셀 (STEP 5) 해당 시트 - 식에 숫자 대입"
+    }
+   ],
+   "status": "DRAFT",
+   "approved_by": null,
+   "approval_date": null
+  },
+  {
+   "rule_id": "R-CB-BRANCH",
+   "title": "분기 케이블 (계기 → JB)",
+   "rule_kind": "QUANTITY",
+   "scope_ids": [
+    "CI-CB-BR-1PX125SQOS",
+    "CI-CB-BR-2CX20SQOS"
+   ],
+   "input_field_ids": [
+    "F-AI_form",
+    "F-DI_form",
+    "F-DO_form",
+    "F-route_factor",
+    "F-field_min",
+    "F-len_margin",
+    "F-len_round",
+    "F-inst_el",
+    "F-jb_el",
+    "F-PLOT-SCALE",
+    "F-ROOM-XY",
+    "F-RACK"
+   ],
+   "preconditions": "추출 완료, 체크리스트·STEP 6~9 설정 적용, PLOT 축척·제어실 확인",
+   "steps": [
+    {
+     "step_id": "S1",
+     "operation": "IO 1점 = 1가닥, 사양 = 신호별 구성 × SQ × 차폐 (STEP 6)",
+     "result_key": "spec"
+    },
+    {
+     "step_id": "S2",
+     "operation": "L = roundup((max(수평 PLOT 거리 × 우회계수, 최소) + |계기 EL − JB EL|) × (1 + 여유율), 올림 단위)",
+     "result_key": "length"
+    },
+    {
+     "step_id": "S3",
+     "operation": "Σ L by spec",
+     "result_key": "CI-CB-BR-*"
+    }
+   ],
+   "outputs": [
+    {
+     "scope_id": "CI-CB-BR-1PX125SQOS",
+     "result_key": "CI-CB-BR-1PX125SQOS",
+     "unit": "m"
+    },
+    {
+     "scope_id": "CI-CB-BR-2CX20SQOS",
+     "result_key": "CI-CB-BR-2CX20SQOS",
+     "unit": "m"
+    }
+   ],
+   "grouping": "사양",
+   "deduplication": "케이블 번호 (C-태그)",
+   "rounding": "len_round m 올림",
+   "exceptions": [
+    "PLOT 위치 없는 계기 = 가정 길이 (len_field, '가정' 표시)"
+   ],
+   "missing_policy": "HOLD",
+   "evidence": [
+    {
+     "source_id": "SRC-CHECKLIST",
+     "locator": "산출근거 엑셀 (STEP 5) 해당 시트 - 식에 숫자 대입"
+    }
+   ],
+   "status": "DRAFT",
+   "approved_by": null,
+   "approval_date": null
+  },
+  {
+   "rule_id": "R-CB-MULTI",
+   "title": "멀티 케이블 (JB → 룸)",
+   "rule_kind": "QUANTITY",
+   "scope_ids": [
+    "CI-CB-MU-40PX125SQISOS",
+    "CI-CB-MU-40PX125SQOS",
+    "CI-CB-MU-60PX125SQISOS",
+    "CI-CB-MU-60PX125SQOS"
+   ],
+   "input_field_ids": [
+    "F-J01",
+    "F-J02",
+    "F-multi_sq",
+    "F-multi_shield_A",
+    "F-multi_shield_D",
+    "F-rack_el",
+    "F-room_el",
+    "F-len_margin",
+    "F-len_round",
+    "F-PLOT-SCALE",
+    "F-ROOM-XY",
+    "F-RACK"
+   ],
+   "preconditions": "추출 완료, 체크리스트·STEP 6~9 설정 적용, PLOT 축척·제어실 확인",
+   "steps": [
+    {
+     "step_id": "S1",
+     "operation": "JB 1개 = 멀티 1가닥, 페어 = JB 크기 (R-JB)",
+     "result_key": "spec"
+    },
+    {
+     "step_id": "S2",
+     "operation": "경로 = 제어실에서 1 m 격자 Dijkstra (랙 1/m, 랙 밖 '랙 우선도'/m, 장애물 통과 불가)",
+     "result_key": "route"
+    },
+    {
+     "step_id": "S3",
+     "operation": "L = roundup((랙 m + 랙 밖 m + 오르내림 높이) × (1 + 여유율), 올림)",
+     "result_key": "length"
+    },
+    {
+     "step_id": "S4",
+     "operation": "Σ L by spec",
+     "result_key": "CI-CB-MU-*"
+    }
+   ],
+   "outputs": [
+    {
+     "scope_id": "CI-CB-MU-40PX125SQISOS",
+     "result_key": "CI-CB-MU-40PX125SQISOS",
+     "unit": "m"
+    },
+    {
+     "scope_id": "CI-CB-MU-40PX125SQOS",
+     "result_key": "CI-CB-MU-40PX125SQOS",
+     "unit": "m"
+    },
+    {
+     "scope_id": "CI-CB-MU-60PX125SQISOS",
+     "result_key": "CI-CB-MU-60PX125SQISOS",
+     "unit": "m"
+    },
+    {
+     "scope_id": "CI-CB-MU-60PX125SQOS",
+     "result_key": "CI-CB-MU-60PX125SQOS",
+     "unit": "m"
+    }
+   ],
+   "grouping": "사양",
+   "deduplication": "케이블 번호 (MC-JB)",
+   "rounding": "len_round m 올림",
+   "exceptions": [
+    "룸 위치 미정 = JB→룸 가정 길이"
+   ],
+   "missing_policy": "HOLD",
+   "evidence": [
+    {
+     "source_id": "SRC-CHECKLIST",
+     "locator": "산출근거 엑셀 (STEP 5) 해당 시트 - 식에 숫자 대입"
+    }
+   ],
+   "status": "DRAFT",
+   "approved_by": null,
+   "approval_date": null
+  },
+  {
+   "rule_id": "R-CB-PKG",
+   "title": "패키지 제어반 → 룸 멀티",
+   "rule_kind": "QUANTITY",
+   "scope_ids": [
+    "CI-CB-PK-6PX125SQOS"
+   ],
+   "input_field_ids": [
+    "F-pkg_if",
+    "F-seg_system",
+    "F-J02",
+    "F-multi_sq",
+    "F-PLOT-SCALE",
+    "F-ROOM-XY",
+    "F-RACK"
+   ],
+   "preconditions": "추출 완료, 체크리스트·STEP 6~9 설정 적용, PLOT 축척·제어실 확인",
+   "steps": [
+    {
+     "step_id": "S1",
+     "operation": "패키지 Typical 행을 (패키지 단위, 시스템, 신호) 묶음 → 페어 = ceil(n × (1 + 스페어)) → 표준 규격(6·12·24·36·48) 올림",
+     "result_key": "spec"
+    },
+    {
+     "step_id": "S2",
+     "operation": "L = 패키지 중심 → 룸 경로 (R-CB-MULTI S2~S3)",
+     "result_key": "length"
+    },
+    {
+     "step_id": "S3",
+     "operation": "Σ L by spec",
+     "result_key": "CI-CB-PK-*"
+    }
+   ],
+   "outputs": [
+    {
+     "scope_id": "CI-CB-PK-6PX125SQOS",
+     "result_key": "CI-CB-PK-6PX125SQOS",
+     "unit": "m"
+    }
+   ],
+   "grouping": "사양",
+   "deduplication": "케이블 번호 (MC-패키지-시스템신호)",
+   "rounding": "len_round m 올림",
+   "exceptions": [
+    "중간 마샬링 묶음 안 함 (사용자 결정 2026-11-27)"
+   ],
+   "missing_policy": "HOLD",
+   "evidence": [
+    {
+     "source_id": "SRC-CHECKLIST",
+     "locator": "산출근거 엑셀 (STEP 5) 해당 시트 - 식에 숫자 대입"
+    }
+   ],
+   "status": "DRAFT",
+   "approved_by": null,
+   "approval_date": null
+  },
+  {
+   "rule_id": "R-CB-MCC",
+   "title": "IRP → 룸 멀티",
+   "rule_kind": "QUANTITY",
+   "scope_ids": [
+    "CI-CB-MC-48PX125SQOS"
+   ],
+   "input_field_ids": [
+    "F-mcc_from",
+    "F-mcc_mode",
+    "F-mcc_sq",
+    "F-len_mcc",
+    "F-PLOT-SCALE",
+    "F-ROOM-XY",
+    "F-RACK"
+   ],
+   "preconditions": "추출 완료, 체크리스트·STEP 6~9 설정 적용, PLOT 축척·제어실 확인",
+   "steps": [
+    {
+     "step_id": "S1",
+     "operation": "MCC 행 묶음 (멀티페어 집합 / 모터당 멀티코어)",
+     "result_key": "spec"
+    },
+    {
+     "step_id": "S2",
+     "operation": "L = IRP → 룸 경로",
+     "result_key": "length"
+    },
+    {
+     "step_id": "S3",
+     "operation": "Σ L",
+     "result_key": "CI-CB-MC-*"
+    }
+   ],
+   "outputs": [
+    {
+     "scope_id": "CI-CB-MC-48PX125SQOS",
+     "result_key": "CI-CB-MC-48PX125SQOS",
+     "unit": "m"
+    }
+   ],
+   "grouping": "사양",
+   "deduplication": "케이블 번호 (CC-)",
+   "rounding": "len_round m 올림",
+   "exceptions": [
+    "MCC↔IRP = 전기 범위 (CI-X-MCCIRP)"
+   ],
+   "missing_policy": "HOLD",
+   "evidence": [
+    {
+     "source_id": "SRC-CHECKLIST",
+     "locator": "산출근거 엑셀 (STEP 5) 해당 시트 - 식에 숫자 대입"
+    }
+   ],
+   "status": "DRAFT",
+   "approved_by": null,
+   "approval_date": null
+  },
+  {
+   "rule_id": "R-CB-COMM",
+   "title": "통신 케이블",
+   "rule_kind": "QUANTITY",
+   "scope_ids": [
+    "CI-CB-CM-FO12CSMARMOURED"
+   ],
+   "input_field_ids": [
+    "F-comm_pkg",
+    "F-comm_redund",
+    "F-FO_spec",
+    "F-COMM_spec",
+    "F-ETH_spec",
+    "F-PLOT-SCALE",
+    "F-ROOM-XY",
+    "F-RACK"
+   ],
+   "preconditions": "추출 완료, 체크리스트·STEP 6~9 설정 적용, PLOT 축척·제어실 확인",
+   "steps": [
+    {
+     "step_id": "S1",
+     "operation": "통신 포트 1개 = 1가닥 (C04 이중화) 또는 패키지당 1가닥, 매체 = C03",
+     "result_key": "spec"
+    },
+    {
+     "step_id": "S2",
+     "operation": "L = 패키지 → 룸 경로",
+     "result_key": "length"
+    },
+    {
+     "step_id": "S3",
+     "operation": "Σ L by spec",
+     "result_key": "CI-CB-CM-*"
+    }
+   ],
+   "outputs": [
+    {
+     "scope_id": "CI-CB-CM-FO12CSMARMOURED",
+     "result_key": "CI-CB-CM-FO12CSMARMOURED",
+     "unit": "m"
+    }
+   ],
+   "grouping": "사양",
+   "deduplication": "케이블 번호 (FO-/CB-)",
+   "rounding": "len_round m 올림",
+   "exceptions": [
+    "N/A: 예외 없음"
+   ],
+   "missing_policy": "HOLD",
+   "evidence": [
+    {
+     "source_id": "SRC-CHECKLIST",
+     "locator": "산출근거 엑셀 (STEP 5) 해당 시트 - 식에 숫자 대입"
+    }
+   ],
+   "status": "DRAFT",
+   "approved_by": null,
+   "approval_date": null
+  },
+  {
+   "rule_id": "R-JB",
+   "title": "JB 수 · 크기",
+   "rule_kind": "QUANTITY",
+   "scope_ids": [
+    "CI-JB-40P",
+    "CI-JB-60P"
+   ],
+   "input_field_ids": [
+    "F-group_by",
+    "F-seg_system",
+    "F-seg_ad",
+    "F-seg_do",
+    "F-rtd_mode",
+    "F-is_rule",
+    "F-J01",
+    "F-J02",
+    "F-J03",
+    "F-J06",
+    "F-J10",
+    "F-PLOT-SCALE",
+    "F-ROOM-XY",
+    "F-RACK"
+   ],
+   "preconditions": "추출 완료, 체크리스트·STEP 6~9 설정 적용, PLOT 축척·제어실 확인",
+   "steps": [
+    {
+     "step_id": "S1",
+     "operation": "묶음 = (경로 종류, 유닛, 시스템, 신호, IS) - STEP 6 분리 기준",
+     "result_key": "groups"
+    },
+    {
+     "step_id": "S2",
+     "operation": "묶음 안에서 반경 jb_radius 안 계기끼리 공간 클러스터 (용량 = 최대 JB 크기 / (1 + 스페어))",
+     "result_key": "clusters"
+    },
+    {
+     "step_id": "S3",
+     "operation": "크기 = 가장 작은 T: ceil(n × (1 + jb_spare)) ≤ 페어, ceil(n × (1 + term_spare)) ≤ 단자",
+     "result_key": "size"
+    },
+    {
+     "step_id": "S4",
+     "operation": "위치 = 자리(랙 기둥 옆 · 장비 옆 · 3D 랙) 중 분기 길이 최소, 3D 장비 상자 안 제외",
+     "result_key": "slot"
+    },
+    {
+     "step_id": "S5",
+     "operation": "count by size",
+     "result_key": "CI-JB-*"
+    }
+   ],
+   "outputs": [
+    {
+     "scope_id": "CI-JB-40P",
+     "result_key": "CI-JB-40P",
+     "unit": "EA"
+    },
+    {
+     "scope_id": "CI-JB-60P",
+     "result_key": "CI-JB-60P",
+     "unit": "EA"
+    }
+   ],
+   "grouping": "크기",
+   "deduplication": "JB 번호",
+   "rounding": "정수",
+   "exceptions": [
+    "사람이 옮긴 JB는 그 자리 유지 (결정 보호)"
+   ],
+   "missing_policy": "HOLD",
+   "evidence": [
+    {
+     "source_id": "SRC-CHECKLIST",
+     "locator": "산출근거 엑셀 (STEP 5) 해당 시트 - 식에 숫자 대입"
+    }
+   ],
+   "status": "DRAFT",
+   "approved_by": null,
+   "approval_date": null
+  },
+  {
+   "rule_id": "R-TR",
+   "title": "사다리 트레이",
+   "rule_kind": "QUANTITY",
+   "scope_ids": [
+    "CI-TR-SIG-300",
+    "CI-TR-SIG-600",
+    "CI-TR-SIG-900",
+    "CI-TR-COM-300"
+   ],
+   "input_field_ids": [
+    "F-T01",
+    "F-T02",
+    "F-T03",
+    "F-T04",
+    "F-T05",
+    "F-T06",
+    "F-PLOT-SCALE",
+    "F-ROOM-XY",
+    "F-RACK"
+   ],
+   "preconditions": "추출 완료, 체크리스트·STEP 6~9 설정 적용, PLOT 축척·제어실 확인",
+   "steps": [
+    {
+     "step_id": "S1",
+     "operation": "간선 경로를 격자 변으로 나눠 같은 케이블 묶음 · 같은 종류(랙/AG/UG)가 이어지는 직선 = 구간",
+     "result_key": "segments"
+    },
+    {
+     "step_id": "S2",
+     "operation": "구간 × 트레이 구분(신호/IS/통신): A = Σ π/4 · OD² (OD = 사양별 외경표)",
+     "result_key": "area"
+    },
+    {
+     "step_id": "S3",
+     "operation": "W = 가장 작은 폭: A ≤ W × H × Fill, 가장 넓은 폭으로도 넘치면 단 n = ceil(A / (Wmax × H × Fill))",
+     "result_key": "width"
+    },
+    {
+     "step_id": "S4",
+     "operation": "length(cls, W) = Σ 구간 길이 × 단 수; 물량 = × (1 + tray_fit) → margin",
+     "result_key": "CI-TR-*"
+    }
+   ],
+   "outputs": [
+    {
+     "scope_id": "CI-TR-SIG-300",
+     "result_key": "CI-TR-SIG-300",
+     "unit": "m"
+    },
+    {
+     "scope_id": "CI-TR-SIG-600",
+     "result_key": "CI-TR-SIG-600",
+     "unit": "m"
+    },
+    {
+     "scope_id": "CI-TR-SIG-900",
+     "result_key": "CI-TR-SIG-900",
+     "unit": "m"
+    },
+    {
+     "scope_id": "CI-TR-COM-300",
+     "result_key": "CI-TR-COM-300",
+     "unit": "m"
+    }
+   ],
+   "grouping": "구분 × 폭",
+   "deduplication": "구간 id (끝점 격자 좌표)",
+   "rounding": "m 정수",
+   "exceptions": [
+    "사람이 바꾼 폭·단 / 트렌치↔트레이 종류는 그 값 (tray_size, tray_kind)"
+   ],
+   "missing_policy": "HOLD",
+   "evidence": [
+    {
+     "source_id": "SRC-CHECKLIST",
+     "locator": "산출근거 엑셀 (STEP 5) 해당 시트 - 식에 숫자 대입"
+    }
+   ],
+   "status": "DRAFT",
+   "approved_by": null,
+   "approval_date": null
+  },
+  {
+   "rule_id": "R-UG",
+   "title": "UG 트렌치",
+   "rule_kind": "QUANTITY",
+   "scope_ids": [
+    "CI-UG-W300",
+    "CI-UG-W450",
+    "CI-UG-W1200"
+   ],
+   "input_field_ids": [
+    "F-T22",
+    "F-T23",
+    "F-T24",
+    "F-T21",
+    "F-ug_depth",
+    "F-PLOT-SCALE",
+    "F-ROOM-XY",
+    "F-RACK"
+   ],
+   "preconditions": "추출 완료, 체크리스트·STEP 6~9 설정 적용, PLOT 축척·제어실 확인",
+   "steps": [
+    {
+     "step_id": "S1",
+     "operation": "랙 밖 간선 구간(trunk_off = UG) 단면적 합 → 폭 = A ≤ W × H × Fill 인 가장 작은 폭, 넘치면 브래킷 단",
+     "result_key": "width"
+    },
+    {
+     "step_id": "S2",
+     "operation": "length(W) = Σ 구간 길이; 물량 × (1 + ug_fit) → margin",
+     "result_key": "CI-UG-*"
+    }
+   ],
+   "outputs": [
+    {
+     "scope_id": "CI-UG-W300",
+     "result_key": "CI-UG-W300",
+     "unit": "m"
+    },
+    {
+     "scope_id": "CI-UG-W450",
+     "result_key": "CI-UG-W450",
+     "unit": "m"
+    },
+    {
+     "scope_id": "CI-UG-W1200",
+     "result_key": "CI-UG-W1200",
+     "unit": "m"
+    }
+   ],
+   "grouping": "폭 × 단",
+   "deduplication": "구간 id",
+   "rounding": "m 정수",
+   "exceptions": [
+    "N/A: 예외 없음"
+   ],
+   "missing_policy": "HOLD",
+   "evidence": [
+    {
+     "source_id": "SRC-CHECKLIST",
+     "locator": "산출근거 엑셀 (STEP 5) 해당 시트 - 식에 숫자 대입"
+    }
+   ],
+   "status": "DRAFT",
+   "approved_by": null,
+   "approval_date": null
+  },
+  {
+   "rule_id": "R-PT",
+   "title": "Perforated 트레이",
+   "rule_kind": "QUANTITY",
+   "scope_ids": [
+    "CI-PT-100"
+   ],
+   "input_field_ids": [
+    "F-T20",
+    "F-route_factor",
+    "F-PLOT-SCALE",
+    "F-ROOM-XY",
+    "F-RACK"
+   ],
+   "preconditions": "추출 완료, 체크리스트·STEP 6~9 설정 적용, PLOT 축척·제어실 확인",
+   "steps": [
+    {
+     "step_id": "S1",
+     "operation": "분기 케이블 1가닥 = Perforated 1개, 길이 = 분기 케이블 길이",
+     "result_key": "pt"
+    },
+    {
+     "step_id": "S2",
+     "operation": "Σ 길이",
+     "result_key": "CI-PT-*"
+    }
+   ],
+   "outputs": [
+    {
+     "scope_id": "CI-PT-100",
+     "result_key": "CI-PT-100",
+     "unit": "m"
+    }
+   ],
+   "grouping": "폭",
+   "deduplication": "PT 번호",
+   "rounding": "m 정수",
+   "exceptions": [
+    "N/A: 예외 없음"
+   ],
+   "missing_policy": "HOLD",
+   "evidence": [
+    {
+     "source_id": "SRC-CHECKLIST",
+     "locator": "산출근거 엑셀 (STEP 5) 해당 시트 - 식에 숫자 대입"
+    }
+   ],
+   "status": "DRAFT",
+   "approved_by": null,
+   "approval_date": null
+  },
+  {
+   "rule_id": "R-SP",
+   "title": "트레이 서포트 · 강재",
+   "rule_kind": "QUANTITY",
+   "scope_ids": [
+    "CI-SP-RT",
+    "CI-SP-RF",
+    "CI-SP-RC",
+    "CI-SP-UB",
+    "CI-SP-PB",
+    "CI-SP-KG"
+   ],
+   "input_field_ids": [
+    "F-S01",
+    "F-S03",
+    "F-S11",
+    "F-S05",
+    "F-S06",
+    "F-S30",
+    "F-S13",
+    "F-PLOT-SCALE",
+    "F-ROOM-XY",
+    "F-RACK"
+   ],
+   "preconditions": "추출 완료, 체크리스트·STEP 6~9 설정 적용, PLOT 축척·제어실 확인",
+   "steps": [
+    {
+     "step_id": "S1",
+     "operation": "고정점: 구간 끝, 피팅 끝 600 mm 안 (NEMA VE 2), 익스펜션 조인트 → 사이를 간격 규칙표 span 이하로 채움",
+     "result_key": "points"
+    },
+    {
+     "step_id": "S2",
+     "operation": "형식: 랙 위 1단 = 클램프, 적층 = T(RT), 빔 멀면 보조 빔(RF), AG = L/T/문형(H) 규칙표(폭·단), UG = 브래킷",
+     "result_key": "type"
+    },
+    {
+     "step_id": "S3",
+     "operation": "강재 kg = Σ 부재 길이 × 단위중량; 물량 × 할증 → margin",
+     "result_key": "CI-SP-*"
+    }
+   ],
+   "outputs": [
+    {
+     "scope_id": "CI-SP-RT",
+     "result_key": "CI-SP-RT",
+     "unit": "EA"
+    },
+    {
+     "scope_id": "CI-SP-RF",
+     "result_key": "CI-SP-RF",
+     "unit": "EA"
+    },
+    {
+     "scope_id": "CI-SP-RC",
+     "result_key": "CI-SP-RC",
+     "unit": "EA"
+    },
+    {
+     "scope_id": "CI-SP-UB",
+     "result_key": "CI-SP-UB",
+     "unit": "EA"
+    },
+    {
+     "scope_id": "CI-SP-PB",
+     "result_key": "CI-SP-PB",
+     "unit": "EA"
+    },
+    {
+     "scope_id": "CI-SP-KG",
+     "result_key": "CI-SP-KG",
+     "unit": "kg"
+    }
+   ],
+   "grouping": "형식",
+   "deduplication": "서포트 번호",
+   "rounding": "정수 / kg 0.1",
+   "exceptions": [
+    "랙 빔 위치 = 구간 시작부터 베이 간격 가정 (S11)"
+   ],
+   "missing_policy": "HOLD",
+   "evidence": [
+    {
+     "source_id": "SRC-CHECKLIST",
+     "locator": "산출근거 엑셀 (STEP 5) 해당 시트 - 식에 숫자 대입"
+    },
+    {
+     "source_id": "SRC-NEMA",
+     "locator": "fitting / expansion"
+    }
+   ],
+   "status": "DRAFT",
+   "approved_by": null,
+   "approval_date": null
+  },
+  {
+   "rule_id": "R-SP-EXP",
+   "title": "익스펜션 조인트",
+   "rule_kind": "QUANTITY",
+   "scope_ids": [
+    "CI-SP-EXP"
+   ],
+   "input_field_ids": [
+    "F-S54",
+    "F-S56",
+    "F-S57",
+    "F-PLOT-SCALE",
+    "F-ROOM-XY",
+    "F-RACK"
+   ],
+   "preconditions": "추출 완료, 체크리스트·STEP 6~9 설정 적용, PLOT 축척·제어실 확인",
+   "steps": [
+    {
+     "step_id": "S1",
+     "operation": "조인트 간격 Lmax = 이동량 / (α × ΔT) (강 11.7e-6, ΔT 70°C → 31 m)",
+     "result_key": "spacing"
+    },
+    {
+     "step_id": "S2",
+     "operation": "직선 사다리 길이 > Lmax 이면 조인트 ceil(L / Lmax) − 1개, 플레이트 = 조인트 × 2",
+     "result_key": "CI-SP-EXP"
+    }
+   ],
+   "outputs": [
+    {
+     "scope_id": "CI-SP-EXP",
+     "result_key": "CI-SP-EXP",
+     "unit": "SET"
+    }
+   ],
+   "grouping": "구간",
+   "deduplication": "조인트 번호",
+   "rounding": "정수",
+   "exceptions": [
+    "NEMA VE 2 판본 확인 전 (열린 질문 7)"
+   ],
+   "missing_policy": "HOLD",
+   "evidence": [
+    {
+     "source_id": "SRC-CHECKLIST",
+     "locator": "산출근거 엑셀 (STEP 5) 해당 시트 - 식에 숫자 대입"
+    },
+    {
+     "source_id": "SRC-NEMA",
+     "locator": "fitting / expansion"
+    }
+   ],
+   "status": "DRAFT",
+   "approved_by": null,
+   "approval_date": null
+  }
+ ],
+ "note": "status = DRAFT: 공종 책임자 승인 전. 근거가 REFERENCE · SEED_PROTOTYPE 뿐이라 승인 전에는 G3 HOLD."
+}

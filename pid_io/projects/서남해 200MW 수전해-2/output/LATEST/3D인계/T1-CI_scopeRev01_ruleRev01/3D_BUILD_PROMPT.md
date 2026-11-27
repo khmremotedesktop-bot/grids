@@ -1,18 +1,18 @@
 # 3D 구현 프롬프트 — 계장 (T1-CI) · 서남해 200MW 수전해-2 · R0
 
-버전: R0 · scope 01 · rule 01 · model 01 · 작성 2026-11-27T10:20:25+09:00 · 생성 pid_io
+버전: R0 · scope 01 · rule 01 · model 02 · 작성 2026-11-27T12:15:30+09:00 · 생성 pid_io
 
 ## 0. 역할과 결과물
 당신은 계장 3D 개념설계 모델러입니다. 아래 **기준 Seed(배관 3D)** 복제본에 **계장 레이어**를 추가한 HTML 한 개를 만듭니다.
 - 결과 파일명: `T1-CI_Seed03_R0_AI.html` (원본 Seed는 수정·덮어쓰기 금지, 복제본에 추가만)
 - 기준 Seed: `02-AI-Assisted.Conceptual.3D.Model_Final.html` SHA-256 `35d0e456ad1bbb7fe95a8046adcd96e7c56fc52aba4f7aeafa1f9d498fd79f9a` · Three.js 0.164.1 (importmap · OrbitControls 그대로, 버전 변경·새 외부 라이브러리 금지)
 - 배관·장비·랙 등 Seed 객체는 **읽기만** (삭제·이동·색 변경 금지). 계장 객체는 별도 그룹 `inst_*` 레이어에.
-- 모든 계장 객체의 위치·치수는 **데이터 파일 `model/T1-CI_Seed03_R01.json`(STRUCTURED_MODEL_DATA, DELTA)의 records**를 그대로 씁니다. 좌표를 임의로 옮기거나 객체를 추가·생략하지 마세요. 문제를 발견하면 고치지 말고 끝의 '보고'에 object_id로 적습니다.
+- 모든 계장 객체의 위치·치수는 **데이터 파일 `model/T1-CI_Seed03_R02.json`(STRUCTURED_MODEL_DATA, DELTA)의 records**를 그대로 씁니다. 좌표를 임의로 옮기거나 객체를 추가·생략하지 마세요. 문제를 발견하면 고치지 말고 끝의 '보고'에 object_id로 적습니다.
 - 물량의 기준은 `01_scope.csv`·`05_validation.csv`입니다. 3D는 물량을 바꾸지 않습니다.
 
 ## 1. 좌표
 - Seed 좌표계: X 동쪽, Y 위(EL), Z 남쪽, 단위 m, 원점 = Seed 원점 (Rack A × E-W 랙 교점).
-- records의 좌표는 이미 Seed 좌표계입니다 (PLOT 변환 X = 0.15562·x_pt + -87.57 · Z = 0.15562·y_pt + -130.91 · Y = EL (cable tier on racks = model RK.cable), 장비 기준 잔차 중앙값 3.25 m · 최대 9.71 m - 다시 변환하지 마세요).
+- records의 좌표는 이미 Seed 좌표계입니다 (PLOT 변환 X = 0.15597·x_pt + -87.60 · Z = 0.15597·y_pt + -131.91 · Y = EL (cable tier on racks = model RK.cable), 장비 기준 잔차 중앙값 1.65 m · 최대 3.28 m - 다시 변환하지 마세요).
 
 ## 2. 그릴 것 (레이어 · 데이터 · 형상)
 레이어 이름(체크박스로 켜고 끄기): `inst_tray`(트레이·트렌치·피팅), `inst_cable`(케이블), `inst_jb`(JB·JB 서포트), `inst_support`(트레이 서포트·조인트). 객체 수 = records 수와 같아야 합니다.
@@ -25,7 +25,7 @@
 ### 2-2. UG 트렌치 (kind = ug_trench) — 57개
 - a→b = 트렌치 바닥 중심선(EL 음수), width_m = 안쪽 폭. 형상: 콘크리트 U형(바닥 100 mm, 벽 두께 100 mm, 벽은 지면 EL 0까지) + 반투명 덮개(두께 50 mm, 지면). tiers > 1이면 단마다 브래킷 선반.
 
-### 2-3. 트레이 꺾임 피팅 (E-FITTING) — 5개: REDUCER 2, ELBOW_90_H 1, TEE_H 2
+### 2-3. 트레이 꺾임 피팅 (E-FITTING) — 7개: REDUCER 2, ELBOW_90_H 3, TEE_H 2
 - geometry.type: ELBOW_90_H(수평 90° 엘보), TEE_H(수평 티), CROSS_H(수평 크로스), REDUCER(폭 변경). point = 교점, dirs = 이어지는 방향들(XZ 단위벡터), width_m = 가장 넓은 폭, radius_m = 엘보 안쪽 반경(600 mm), tiers = 단 수.
 - 형상: 트레이와 같은 레일·러그를 곡선으로 (엘보는 반경 radius_m의 1/4 원호, 티·크로스는 곡선 모서리). 피팅 구간만큼 직선 트레이를 겹치지 말고 끝에서 이어지게.
 - **extend**: 랙마다 차선(lane)과 케이블 단 EL이 달라 트레이 끝이 피팅까지 닿지 않는 곳입니다. 각 항목의 tray를 from → to까지 같은 형상으로 연장해서 피팅에 붙이세요 (빈틈 금지).
@@ -84,7 +84,7 @@
 ## 6. 코멘트 반영 규칙 (사람 승인, 이전 Rev에서 누적)
 - (아직 없음 - R0)
 
-## 6-1. 공통 프로토콜 v3.0 — 컴퓨터 관점 (번역본)
+## 6-1. 공통 프로토콜 v3.2 — 컴퓨터 관점 (번역본)
 - 기준은 엔지니어 관점(마스터)입니다 (COMMON_PROTOCOL.md). 아래 번역본이 마스터와 다르게 읽히면 **마스터를 따르세요**.
 - **P00 이 프로토콜 읽는 법 · 고치는 법** (번역 확인 전): 권위 순서: master(엔지니어 관점) > translations.computer / translations.maintenance. 각 번역본은 from_master(마스터 지문)와 state를 가진다. from_master ≠ 현재 마스터 지문이면 state = '다시 번역 필요'로 보고 그 번역본을 근거로 쓰지 않는다 (마스터 원문을 쓴다). state = '질문 있음'이면 questions를 엔지니어에게 돌려준다. 번역본 수정은 마스터 지문 갱신과 함께만. 숫자는 params만 참조, 문장 안 숫자 기준 금지. 검사: tests/check_protocol.py (다시 번역 필요 · 질문 있음 = FAIL, 확인 필요 = 참고).
 - **P01 같은 입력이면 같은 물량** (번역 확인 전): 출력 = f(입력 파일 SHA-256, 설정값, 사람 결정 기록). 같은 상태 ID(엑셀 '_지문' 시트)면 같은 물량. 결과 파일 직접 편집 금지, 변경은 입력·설정·결정 기록으로만. 검사: 같은 입력으로 다시 계산한 STRUCTURED_MODEL_DATA records 해시가 같아야 함 (06 REPRODUCIBILITY).
@@ -97,7 +97,8 @@
 - **P08 3D 점검 HOLD는 사람이 판단** (번역 확인 전): 3D 사전 점검 V01~V09 결과: HOLD 항목은 자동 수정 금지, 3D_REVIEW_PRECHECK에 객체 ID로 기록, 회사 AI 리뷰 답(CONFIRMED / FALSE_ALARM / NEEDS_PERSON)도 제안일 뿐.
 - **P09 출력 관리** (번역 확인 전): output/LATEST(종류마다 하나, 덮어씀) · ISSUED/R*_날짜(읽기 전용) · HISTORY(시각 붙은 원본, 지우지 않음). 모든 엑셀 끝 '_지문' 시트: 지문 ID, 상태 ID, Rev, 입력 SHA-256, 설정·결정 해시.
 - **P10 AI는 제안만** (번역 확인 전): AI 출력(심볼 판정, 주문 해석, 3D 리뷰, 교훈 후보, 프로토콜 번역) = status pending/OPEN/'확인 필요' 제안. 반영은 사람 승인 이벤트(이름·시각)가 있을 때만. 공통 규칙 추가는 decide_lesson(accept) 또는 코멘트 승인으로만.
-- **P11 3D와 PLOT이 다를 때** (번역 확인 전): 입력: PLOT 랙(pt), 3D 랙·참조 구조물(모델 좌표 → 좌표 맞춤 후 pt). (1) 높이: 랙 케이블 단 EL = 3D RK.cable, 참조 구조물 = 높이 h. (2) 랙 출처 '둘 다': PLOT 랙이 3D 랙과 면적 30% 이상 겹치면 같은 랙 → 3D 사각형, 아니면 PLOT 랙 유지. (3) 장비 잔차 d: d ≤ 5 m → INFO(그림만 맞춤), d > 5 m → HOLD. (4) 3D에만 있는 구조물: 넣었을 때와 뺐을 때 케이블 m 차이 Δ%를 계산, 사용 여부는 사람 설정(rack_refs, rack_refs_off); 사용 중이고 Δ > 2% → HOLD. (5) PLOT에만 있는 랙 → INFO '배관팀 보고'. 결과 evidence/plot_vs_3d.csv.
+- **P11 3D와 PLOT이 다를 때** (번역 확인 전): 입력: PLOT 랙(pt), PLOT 장비 글자 위치와 주변 닫힌 도형(plot.eq_shapes), 3D 랙·참조 구조물·장비 상자(모델 좌표 → 좌표 맞춤 후 pt). (1) 높이: 랙 케이블 단 EL = 3D RK.cable, 참조 구조물 = 높이 h. (2) 랙 출처 '둘 다': PLOT 랙이 3D 랙과 면적 30% 이상 겹치면 같은 랙 → 3D 사각형, 아니면 PLOT 랙 유지. (3) 장비 위치: 글자 주변 닫힌 도형 중 3D 상자와 크기 오차 합 ≤ 0.5 인 도형의 중심(twin.outline), 없으면 글자 위치(basis='글자'). 잔차 d > 5 m → INFO '큰 차이', 아니면 INFO. (4) 3D에만 있는 구조물: 넣었을 때와 뺐을 때 케이블 m 차이 Δ%를 계산해 적음, 사용 여부는 사람 설정(rack_refs, rack_refs_off), Δ > 2% → INFO '큰 차이'. (5) PLOT에만 있는 랙 → INFO '배관팀 보고'. HOLD는 내지 않는다. 3D 그림: 장비·랙·구조물은 3D 좌표, 트레이·케이블 물량은 Base. 결과 evidence/plot_vs_3d.csv.
+- **P12 3D 코멘트를 규칙으로 바꾸기 (코파일럿 대화)** (번역 확인 전): 대화 상대: VS Code 코파일럿 (한국어). 라운드 폴더의 COPILOT_GUIDE.md를 읽고 시작한다. 금지: PLOT/3D 중 어느 쪽이 맞는지 묻기, 길이·위치·물량 계산. 질문 = ① 미정 배치 ② 3D를 따랐더니 그림이 이상한 곳만, 한 번에 한 건, 그림 파일 이름 + 추천안 + 선택별 결과(pid_io 숫자) + '응 / 다르게', 라운드당 5건 이하, 추천안이 없으면 묻지 않음. 코멘트나 '다르게' → '왜요?' 1회 → '이번만 / 항상'. 결과는 같은 폴더 COPILOT_ANSWERS.json (format pid_io-copilot-answers-1, items[]: id, about, picture, question, recommendation, answer, what, reason, scope 이번만|항상, kind 3D|BASE, by). reason 또는 scope가 비면 그 항목은 HOLD로 되돌아온다. 이번만 → 프로젝트 코멘트(scope 프로젝트), 항상 → 코멘트(scope 공통) → 승인 시 공통 프로토콜 DRAFT 규칙.
 
 ## 7. 끝나면 확인하고 보고
 1. 레이어별 객체 수 = records 수 (계기·분기·Perforated 제외).

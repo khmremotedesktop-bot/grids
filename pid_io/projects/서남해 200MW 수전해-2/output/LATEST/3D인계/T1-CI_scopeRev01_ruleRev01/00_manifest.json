@@ -6,7 +6,7 @@
  "instruction_rev": "R9-G6",
  "scope_rev": "01",
  "rule_rev": "01",
- "model_rev": "01",
+ "model_rev": "02",
  "status": "DRAFT_NOT_READY",
  "scope_approval": {
   "by": null,
@@ -286,7 +286,7 @@
     "CI-UG-W1200",
     "CI-PT-100"
    ],
-   "reason": "계기 위치 다수 추정, 좌표 맞춤 잔차 중앙값 3.25 m / 최대 9.71 m",
+   "reason": "계기 위치 다수 추정, 좌표 맞춤 잔차 중앙값 1.65 m / 최대 3.28 m",
    "action": "태그 위치 자료 · 3D 좌표 확인",
    "owner": "CI"
   },
@@ -297,32 +297,6 @@
    "reason": "전기 공용 통로 인터페이스 미합의 (IF-EL-ROUTE)",
    "action": "전기 3D 데이터 수신 후 합의",
    "owner": "CI / EL"
-  },
-  {
-   "issue_id": "IS-P11",
-   "status": "OPEN",
-   "scope_ids": [
-    "CI-CB-MC-48PX125SQOS",
-    "CI-CB-MU-40PX125SQISOS",
-    "CI-CB-MU-40PX125SQOS",
-    "CI-CB-MU-60PX125SQISOS",
-    "CI-CB-MU-60PX125SQOS",
-    "CI-CB-BR-1PX125SQOS",
-    "CI-CB-BR-2CX20SQOS",
-    "CI-CB-CM-FO12CSMARMOURED",
-    "CI-CB-PK-6PX125SQOS",
-    "CI-TR-SIG-300",
-    "CI-TR-SIG-600",
-    "CI-TR-SIG-900",
-    "CI-TR-COM-300",
-    "CI-UG-W300",
-    "CI-UG-W450",
-    "CI-UG-W1200",
-    "CI-PT-100"
-   ],
-   "reason": "3D와 PLOT 불일치 HOLD 2건 (프로토콜 P11): 10-TK-801 3D와 9.83 m 차이 (ΔX -1.31, ΔZ -9.75); 10-D-601 3D와 7.41 m 차이 (ΔX -7.41, ΔZ -0.36)",
-   "action": "evidence/plot_vs_3d.csv 확인 후 사람 결정",
-   "owner": "CI"
   },
   {
    "issue_id": "IS-005",
@@ -372,7 +346,7 @@
   "tool": "pid_io",
   "version": "v13.3",
   "project": "서남해 200MW 수전해-2",
-  "made_at": "2026-11-27T10:20:24+09:00",
+  "made_at": "2026-11-27T12:15:29+09:00",
   "pid_io_check": "pid_io audit NG 0 · HOLD 2"
  }
 }
