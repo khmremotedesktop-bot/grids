@@ -642,7 +642,6 @@
    "scope_ids": [
     "CI-UG-W300",
     "CI-UG-W450",
-    "CI-UG-W900",
     "CI-UG-W1200"
    ],
    "input_field_ids": [
@@ -677,11 +676,6 @@
     {
      "scope_id": "CI-UG-W450",
      "result_key": "CI-UG-W450",
-     "unit": "m"
-    },
-    {
-     "scope_id": "CI-UG-W900",
-     "result_key": "CI-UG-W900",
      "unit": "m"
     },
     {

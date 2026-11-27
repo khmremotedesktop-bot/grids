@@ -41,7 +41,8 @@ def build(project, res, layout, tray, sup, s, plot=None):
     else:
         off_el = float(v["sup_el"])
     branch_el = -float(v["ug_depth"]) if v["no_rack"].startswith("UG") else float(v["sup_el"])
-    on_rack = lambda x, y: any(r[0] <= x <= r[2] and r[1] <= y <= r[3] for r in racks_pt)
+    from .plot import on_rack_fn
+    on_rack = on_rack_fn(racks_pt, m)                # same cells as the router (v13.6)
 
     def P(x, y, z):
         return {"pt": [_r(x, 1), _r(y, 1)], "m": [_r(x * m), _r(y * m), _r(z)]}

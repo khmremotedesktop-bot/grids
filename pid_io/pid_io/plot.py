@@ -406,7 +406,7 @@ class Layout:
     def measure(self, poly, width_m=6.0, use_racks=True):
         """A route drawn by hand: walk it every 0.5 m and split rack / off-rack metres like the router does."""
         racks = self.rack_rects(width_m) if use_racks else []
-        on = lambda x, y: any(r[0] <= x <= r[2] and r[1] <= y <= r[3] for r in racks)
+        on = on_rack_fn(racks, self.m_per_pt)
         g = rk = 0.0
         changes = 0
         prev = None
@@ -437,6 +437,21 @@ class Layout:
 
 # ------------------------------------------------------------------ pipe racks and obstacles
 RACK_PAD_M = 1.0                     # PLOT rack: beyond the column centre lines (m)
+
+
+def rack_cells(racks, m_per_pt: float, cell: float = 1.0):
+    """racks (pt rectangles) as the router's 1 m grid cells - the ONE definition of 'on a rack' (v13.6):
+    a cell the rack touches is rack (Router marks it so). Before, the tray / 3D / hand-route checks used the exact
+    rectangle, so a route on the rack's edge cell counted as rack for the router but UG for the trays."""
+    f = m_per_pt / cell
+    return [(int(r[0] * f), int(r[1] * f), int(r[2] * f), int(r[3] * f)) for r in racks]
+
+
+def on_rack_fn(racks, m_per_pt: float, cell: float = 1.0):
+    """(x_pt, y_pt) -> on a rack, same rule as the router's cells."""
+    cs = rack_cells(racks, m_per_pt, cell)
+    f = m_per_pt / cell
+    return lambda x, y: any(c[0] <= int(x * f + 1e-6) <= c[2] and c[1] <= int(y * f + 1e-6) <= c[3] for c in cs)
 
 
 def detect_racks(page, m_per_pt: float, tol=1.5, cols_out: list | None = None):

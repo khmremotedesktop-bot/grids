@@ -144,7 +144,6 @@
     "CI-TR-COM-300",
     "CI-UG-W300",
     "CI-UG-W450",
-    "CI-UG-W900",
     "CI-UG-W1200",
     "CI-PT-100",
     "CI-SP-RT",
@@ -188,7 +187,6 @@
     "CI-TR-COM-300",
     "CI-UG-W300",
     "CI-UG-W450",
-    "CI-UG-W900",
     "CI-UG-W1200",
     "CI-PT-100"
    ],
@@ -231,7 +229,6 @@
     "CI-TR-COM-300",
     "CI-UG-W300",
     "CI-UG-W450",
-    "CI-UG-W900",
     "CI-UG-W1200",
     "CI-PT-100",
     "CI-SP-RT",
@@ -310,7 +307,7 @@
    "approval_state": "DRAFT_NOT_READY",
    "reattach": "필요할 때 첨부",
    "reason": "모델 검토 (S04~S06)",
-   "note": "sha256 13b7e1c67f9cd4c8…"
+   "note": "sha256 358c2cb17cd4deaf…"
   },
   {
    "filename": "model/T1-CI_Seed03_R01.json",
@@ -318,9 +315,9 @@
    "approval_state": "DRAFT_NOT_READY",
    "reattach": "필요할 때 첨부",
    "reason": "모델 검토 (S04~S06)",
-   "note": "sha256 65c6a3ff41c140a8…"
+   "note": "sha256 cbda58523583d3ca…"
   }
  ],
  "next_step": "S02 범위 승인 · S03 Rule 승인, STEP 10에서 독립 검증 기대값 잠금 → 다시 만들기",
- "updated_at": "2026-11-27T08:32:30+09:00"
+ "updated_at": "2026-11-27T08:39:13+09:00"
 }

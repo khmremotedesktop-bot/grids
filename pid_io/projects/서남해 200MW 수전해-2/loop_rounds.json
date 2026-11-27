@@ -1,15 +1,15 @@
 [
  {
   "round": 0,
-  "at": "2026-11-27 08:32",
-  "set": "3D인계_20261127_0832",
+  "at": "2026-11-27 08:39",
+  "set": "3D인계_20261127_0839",
   "package": "T1-CI_scopeRev01_ruleRev01",
   "revs": {
    "scope_rev": "01",
    "rule_rev": "01",
    "model_rev": "01"
   },
-  "prompt_sha": "3f613a332828b2af",
+  "prompt_sha": "0efddb571bef9444",
   "rules": [],
   "applied_comments": [],
   "qty": {
@@ -30,30 +30,29 @@
    "CI-CB-PK-6PX125SQOS": 38400,
    "CI-JB-40P": 28,
    "CI-JB-60P": 2,
-   "CI-TR-SIG-300": 363,
-   "CI-TR-SIG-600": 90,
-   "CI-TR-SIG-900": 114,
-   "CI-TR-COM-300": 233,
-   "CI-UG-W300": 735,
-   "CI-UG-W450": 86,
-   "CI-UG-W900": 52,
-   "CI-UG-W1200": 117,
+   "CI-TR-SIG-300": 355,
+   "CI-TR-SIG-600": 84,
+   "CI-TR-SIG-900": 256,
+   "CI-TR-COM-300": 311,
+   "CI-UG-W300": 715,
+   "CI-UG-W450": 78,
+   "CI-UG-W1200": 111,
    "CI-PT-100": 4335,
-   "CI-SP-RT": 8,
-   "CI-SP-RF": 138,
-   "CI-SP-RC": 33,
-   "CI-SP-UB": 728,
+   "CI-SP-RT": 16,
+   "CI-SP-RF": 146,
+   "CI-SP-RC": 30,
+   "CI-SP-UB": 667,
    "CI-SP-PB": 2988,
-   "CI-SP-KG": 10882.8,
+   "CI-SP-KG": 11217.5,
    "CI-SP-EXP": 6
   },
   "ai3d": null,
   "zip": "T1-CI_R0_제출.zip",
   "validation": {
-   "rows": 198,
+   "rows": 192,
    "pass": 0,
    "fail": 0,
-   "hold": 198
+   "hold": 192
   }
  }
 ]

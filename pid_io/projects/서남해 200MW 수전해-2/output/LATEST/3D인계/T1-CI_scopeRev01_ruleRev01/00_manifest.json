@@ -125,7 +125,6 @@
   "CI-TR-COM-300",
   "CI-UG-W300",
   "CI-UG-W450",
-  "CI-UG-W900",
   "CI-UG-W1200",
   "CI-PT-100",
   "CI-SP-RT",
@@ -163,7 +162,6 @@
   "CI-TR-COM-300",
   "CI-UG-W300",
   "CI-UG-W450",
-  "CI-UG-W900",
   "CI-UG-W1200",
   "CI-PT-100",
   "CI-SP-RT",
@@ -180,7 +178,7 @@
   {
    "gate_id": "G1",
    "status": "HOLD",
-   "evidence": "01_scope.csv 36개 (DIRECT 33, OTHER_PACKAGE 2, HOLD 1) - 범위 승인 전",
+   "evidence": "01_scope.csv 35개 (DIRECT 32, OTHER_PACKAGE 2, HOLD 1) - 범위 승인 전",
    "reviewed_by": null
   },
   {
@@ -204,7 +202,7 @@
   {
    "gate_id": "G5",
    "status": "HOLD",
-   "evidence": "05 198행 중 PASS 0 (잠근 사례 0/6), 06 checks 자동 결과 evidence/model_checks.json",
+   "evidence": "05 192행 중 PASS 0 (잠근 사례 0/6), 06 checks 자동 결과 evidence/model_checks.json",
    "reviewed_by": null
   },
   {
@@ -242,7 +240,6 @@
     "CI-TR-COM-300",
     "CI-UG-W300",
     "CI-UG-W450",
-    "CI-UG-W900",
     "CI-UG-W1200",
     "CI-PT-100",
     "CI-SP-RT",
@@ -286,7 +283,6 @@
     "CI-TR-COM-300",
     "CI-UG-W300",
     "CI-UG-W450",
-    "CI-UG-W900",
     "CI-UG-W1200",
     "CI-PT-100"
    ],
@@ -329,7 +325,6 @@
     "CI-TR-COM-300",
     "CI-UG-W300",
     "CI-UG-W450",
-    "CI-UG-W900",
     "CI-UG-W1200",
     "CI-PT-100",
     "CI-SP-RT",
@@ -351,7 +346,7 @@
   "tool": "pid_io",
   "version": "v13.3",
   "project": "서남해 200MW 수전해-2",
-  "made_at": "2026-11-27T08:32:30+09:00",
+  "made_at": "2026-11-27T08:39:13+09:00",
   "pid_io_check": "pid_io audit NG 0 · HOLD 1"
  }
 }

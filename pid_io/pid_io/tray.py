@@ -196,7 +196,9 @@ def build(res, layout, s, dec=None):
     routes = {r["rid"]: r for r in g.get("routes") or []}
     mode = v["main_route"]
     racks = layout.rack_rects(float(v["rack_width"])) if mode.startswith("랙") else []
-    on_rack = lambda x, y: any(r[0] <= x <= r[2] and r[1] <= y <= r[3] for r in racks)
+    from .plot import rack_cells
+    rk_c = rack_cells(racks, m)                     # the router's rule: a grid node in a rack cell is on the rack
+    on_node = lambda q: any(c[0] <= q[0] <= c[2] and c[1] <= q[1] <= c[3] for c in rk_c)
     off = "UG" if (mode.startswith("UG") or (mode.startswith("랙") and v["trunk_off"].startswith("UG"))) else "AG"
     if mode.startswith("AG"):
         off = "AG"
@@ -205,8 +207,7 @@ def build(res, layout, s, dec=None):
     for i, c in enumerate(trunk):
         by_rid.setdefault(rid_of(c), []).append(i)
     # inside a rack every cable rides the one tray on its top tier: snap to the rack centre line
-    rk_m = [(r[0] * m, r[1] * m, r[2] * m, r[3] * m) for r in racks]
-    snap = lambda nodes: _snap(nodes, rk_m)
+    snap = lambda nodes: _snap(nodes, rk_c)
     edges = {}                                      # (node, node) -> [set(cable idx), kind]
     for rid, idx in by_rid.items():
         nodes = snap(_grid_nodes(routes[rid]["poly"], m))
@@ -214,8 +215,7 @@ def build(res, layout, s, dec=None):
             k = (a, b) if a <= b else (b, a)
             e = edges.get(k)
             if e is None:
-                mx, my = (a[0] + b[0]) / 2 / m, (a[1] + b[1]) / 2 / m
-                e = edges[k] = [set(), "랙" if on_rack(mx, my) else off]
+                e = edges[k] = [set(), "랙" if (on_node(a) and on_node(b)) else off]
             e[0].update(idx)
     # chain straight edges carrying the same cables into segments
     nb = {}

@@ -7,7 +7,7 @@
  "scope_rev": "01",
  "rule_rev": "01",
  "model_rev": "01",
- "checked_at": "2026-11-27T08:32:30+09:00",
+ "checked_at": "2026-11-27T08:39:13+09:00",
  "reconciliation": [
   {
    "scope_id": "CI-CB-MC-48PX125SQOS",
@@ -77,50 +77,44 @@
   },
   {
    "scope_id": "CI-TR-SIG-300",
-   "model": 363.0,
-   "quantity": 363,
+   "model": 355.0,
+   "quantity": 355,
    "match": true
   },
   {
    "scope_id": "CI-TR-SIG-600",
-   "model": 90.0,
-   "quantity": 90,
+   "model": 84.0,
+   "quantity": 84,
    "match": true
   },
   {
    "scope_id": "CI-TR-SIG-900",
-   "model": 114.0,
-   "quantity": 114,
+   "model": 256.0,
+   "quantity": 256,
    "match": true
   },
   {
    "scope_id": "CI-TR-COM-300",
-   "model": 233.0,
-   "quantity": 233,
+   "model": 311.0,
+   "quantity": 311,
    "match": true
   },
   {
    "scope_id": "CI-UG-W300",
-   "model": 735.0,
-   "quantity": 735,
+   "model": 715.0,
+   "quantity": 715,
    "match": true
   },
   {
    "scope_id": "CI-UG-W450",
-   "model": 86.0,
-   "quantity": 86,
-   "match": true
-  },
-  {
-   "scope_id": "CI-UG-W900",
-   "model": 52.0,
-   "quantity": 52,
+   "model": 78.0,
+   "quantity": 78,
    "match": true
   },
   {
    "scope_id": "CI-UG-W1200",
-   "model": 117.0,
-   "quantity": 117,
+   "model": 111.0,
+   "quantity": 111,
    "match": true
   },
   {
@@ -131,26 +125,26 @@
   },
   {
    "scope_id": "CI-SP-RT",
-   "model": 8,
-   "quantity": 8,
+   "model": 16,
+   "quantity": 16,
    "match": true
   },
   {
    "scope_id": "CI-SP-RF",
-   "model": 138,
-   "quantity": 138,
+   "model": 146,
+   "quantity": 146,
    "match": true
   },
   {
    "scope_id": "CI-SP-RC",
-   "model": 33,
-   "quantity": 33,
+   "model": 30,
+   "quantity": 30,
    "match": true
   },
   {
    "scope_id": "CI-SP-UB",
-   "model": 728,
-   "quantity": 728,
+   "model": 667,
+   "quantity": 667,
    "match": true
   }
  ],
@@ -161,11 +155,11 @@
   },
   "GEOMETRY_ATTRIBUTES": {
    "result": "PASS",
-   "evidence": "records 2395, object_id 중복 0, geometry/attributes 빈 것 0, scope 없는 객체 0"
+   "evidence": "records 2346, object_id 중복 0, geometry/attributes 빈 것 0, scope 없는 객체 0"
   },
   "QUANTITY_RECONCILIATION": {
    "result": "PASS",
-   "evidence": "모델 records 합 vs 01 물량 24/24 일치 (evidence/model_checks.json)"
+   "evidence": "모델 records 합 vs 01 물량 23/23 일치 (evidence/model_checks.json)"
   },
   "REPRODUCIBILITY": {
    "result": "PASS",
