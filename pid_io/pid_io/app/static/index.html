@@ -327,6 +327,64 @@ async function render() {
   } catch (e) { toast(e.message, true); }
 }
 
+/* ---------------------------------------------------------------- v13.5 독립 검증 기대값 잠금 (STEP 10 패널 6) */
+const VP = {open:null};
+async function renderVPlan(data) {
+  const box = $("#vpbox"); if (!box) return;
+  let d = data; if (!d) { try { d = await api(P("vplan")); } catch(e) { box.innerHTML = `<h2>6. 독립 검증 기대값 잠금 (S05)</h2><p style="color:var(--red)">${esc(e.message)}</p>`; return; } }
+  if (!$("#vpbox")) return;
+  const cases = d.plan.cases.filter(c => !c.superseded), L = d.last;
+  const TT = {NORMAL:"정상", CHANGED:"변경", MISSING:"누락", HOLDOUT:"독립 실적"};
+  const caseRow = c => `<div class="kv" style="cursor:pointer" data-vpopen="${esc(c.case_id)}"><span><b class="mono">${esc(c.case_id)}</b> <span class="chip">${TT[c.test_type]||c.test_type}</span> ${esc(c.title||"")}
+      ${Object.keys(c.overrides||{}).length?`<span class="def">${esc(Object.entries(c.overrides).map(([k,v])=>k+"="+v).join(", "))}</span>`:""}</span>
+    <span>${c.locked_at?`<span class="chip g">잠금 ${esc(c.locked_by)} · ${esc(c.locked_at.slice(0,16).replace("T"," "))}</span>`:`<span class="chip y">기대값 ${c.expected.length}개 · 잠금 전</span>`}</span></div>`;
+  let h = `<h2>6. 독립 검증 기대값 잠금 (S05)</h2>
+    <p class="xnote">회사 가이드: 사례별 기대값·허용차를 <b>실행 전에</b> 공종이 잠그고, 실행은 기대값을 모른 채 → 05_validation.csv에서 대조. 잠그지 않은 사례는 HOLD.
+    기대값은 <b>독립 근거</b>(엔지니어 수기 계산, 이전 사업 실적)로 적어 주세요 - 이 화면은 프로그램 계산값을 보여주지 않습니다. 다음 '만들기' 때 실행·대조됩니다.</p>
+    ${cases.map(caseRow).join("")}
+    <div style="margin-top:8px"><button class="btn sm line" id="vpadd">독립 실적 사례 추가 (HOLDOUT)</button></div>`;
+  const c = cases.find(x => x.case_id === VP.open);
+  if (c) {
+    const ex = Object.fromEntries((c.expected||[]).map(e=>[e.scope_id,e])), miss = c.test_type === "MISSING", lk = !!c.locked_at;
+    h += `<div style="margin-top:12px;border-top:1px dashed var(--line);padding-top:10px"><b>${esc(c.case_id)}</b> ${esc(c.title||"")}
+      ${miss?`<div class="xnote">누락 사례: 필수 입력(${esc((c.removed||[]).join(", ")||"-")})을 뺐을 때 <b>HOLD로 멈춰야 하는 항목</b>만 체크하세요 (가이드: MISSING은 기대·실제 모두 HOLD).</div>`:""}
+      <div style="overflow-x:auto"><table class="mini" style="margin-top:6px"><tr><th>scope_id</th><th>항목</th><th>단위</th>${miss?`<th>HOLD 기대</th>`:`<th>비교</th><th>허용차</th><th>기대값</th>`}<th>근거 ID</th><th>근거 위치</th></tr>
+      ${d.scope.map(x => { const e = ex[x.scope_id] || {}; const dis = lk ? "disabled" : "";
+        return `<tr data-vprow="${esc(x.scope_id)}"><td class="mono" style="font-size:11.5px">${esc(x.scope_id)}</td><td style="font-size:12px">${esc(x.item_name)}<br><span class="def">${esc(x.spec)}</span></td><td>${esc(x.unit)}</td>
+          ${miss?`<td><input type="checkbox" data-f="hold" ${e.scope_id?"checked":""} ${dis}></td>`
+                :`<td><select data-f="cmp" ${dis}>${["PCT","ABS","EXACT"].map(o=>`<option ${o===(e.comparator||"PCT")?"selected":""}>${o}</option>`).join("")}</select></td>
+                  <td><input type="number" data-f="tol" value="${e.tolerance??""}" style="width:64px" ${dis} placeholder="${(e.comparator||"PCT")==="PCT"?"%":""}"></td>
+                  <td><input type="number" data-f="exp" value="${e.expected_value??""}" style="width:90px" ${dis}></td>`}
+          <td><input data-f="src" value="${esc(e.expected_source_id||"")}" style="width:110px" placeholder="SRC-ENG-CALC" ${dis}></td>
+          <td><input data-f="loc" value="${esc(e.expected_locator||"")}" style="width:150px" placeholder="계산서 Rev·쪽 / 실적 표" ${dis}></td></tr>`; }).join("")}</table></div>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap">
+        ${lk?`<span class="chip g">잠금 ${esc(c.locked_by)} · ${esc(c.locked_at)}</span><button class="btn sm line" id="vprev">새 리비전으로 다시 작성 (잠금 기록 보존)</button>`
+            :`<button class="btn sm line" id="vpsave">저장</button><input id="vpby" placeholder="확인자 이름" style="width:120px"><button class="btn sm" id="vplock">잠금 (이후 수정 불가)</button>`}
+        <button class="btn sm line" id="vpclose">닫기</button></div></div>`;
+  }
+  if (L) h += `<div style="margin-top:14px;border-top:1px solid var(--line-l);padding-top:10px;font-size:12.5px"><b>마지막 패키지</b> <span class="mono">${esc(L.set)}\\${esc(L.dir)}</span> · ${esc(L.rev)} · <b>${esc(L.status)}</b>
+      <div style="margin-top:4px">05 판정: ${Object.entries(L.verdict).map(([k,v])=>`<span class="chip ${k==="PASS"?"g":k==="FAIL"?"r":"y"}">${k} ${v}</span>`).join(" ")}
+      · Gate ${L.gates.map(([g,st])=>`<span class="chip ${st==="PASS"?"g":st==="FAIL"?"r":"y"}" title="${esc(g)}">${esc(g)} ${esc(st)}</span>`).join(" ")}</div>
+      ${L.fails.length?`<table class="mini" style="margin-top:6px"><tr><th>사례</th><th>scope</th><th>기대</th><th>실행</th><th>허용차</th></tr>${L.fails.map(r=>`<tr><td class="mono">${esc(r.case_id)}</td><td class="mono">${esc(r.scope_id)}</td><td>${esc(r.expected_value||r.expected_status)}</td><td>${esc(r.actual_value||r.actual_status)}</td><td>${esc(r.comparator)} ${esc(r.tolerance)}</td></tr>`).join("")}</table>`:""}
+      <details style="margin-top:6px"><summary style="cursor:pointer">모델 점검 · 미결</summary>${L.checks.map(([k,e])=>`<div class="kv"><span class="mono">${esc(k)}</span><span style="font-size:11.5px">${esc(e)}</span></div>`).join("")}
+        ${L.issues.map(([k,r])=>`<div class="kv"><span class="mono">${esc(k)}</span><span style="font-size:11.5px">${esc(r)}</span></div>`).join("")}</details></div>`;
+  box.innerHTML = h;
+  box.querySelectorAll("[data-vpopen]").forEach(el => el.onclick = () => { VP.open = VP.open === el.dataset.vpopen ? null : el.dataset.vpopen; renderVPlan(d); });
+  const send = async body => { try { const r = await post(P("vplan"), body); renderVPlan(r); return r; } catch(e) { toast(e.message, true); } };
+  const collect = () => [...box.querySelectorAll("[data-vprow]")].map(tr => { const g = f => tr.querySelector(`[data-f="${f}"]`);
+    if (c.test_type === "MISSING") return g("hold").checked ? {scope_id: tr.dataset.vprow, comparator:"STATUS", expected_status:"HOLD", expected_source_id:g("src").value, expected_locator:g("loc").value} : null;
+    return {scope_id: tr.dataset.vprow, comparator:g("cmp").value, tolerance:g("tol").value, expected_value:g("exp").value, expected_source_id:g("src").value, expected_locator:g("loc").value}; }).filter(Boolean);
+  if ($("#vpsave")) $("#vpsave").onclick = async () => { if (await send({case_id:c.case_id, expected:collect()})) toast("저장했습니다 (아직 잠금 전)"); };
+  if ($("#vplock")) $("#vplock").onclick = async () => { const by = $("#vpby").value.trim(); if (!by) return toast("확인자 이름을 적어 주세요", true);
+    if (!confirm(`${c.case_id} 기대값을 잠급니다. 잠근 뒤에는 바꿀 수 없고 새 리비전으로만 다시 씁니다. 계속할까요?`)) return;
+    const r1 = await send({case_id:c.case_id, expected:collect()}); if (!r1) return;
+    if (await send({case_id:c.case_id, lock:true, by})) toast("잠갔습니다. 다음 '만들기'에서 실행·대조합니다"); };
+  if ($("#vprev")) $("#vprev").onclick = async () => { const r = await send({case_id:c.case_id, revise:true}); if (r) { VP.open = r.plan.cases[r.plan.cases.length-1].case_id; renderVPlan(r); } };
+  if ($("#vpclose")) $("#vpclose").onclick = () => { VP.open = null; renderVPlan(d); };
+  $("#vpadd").onclick = async () => { const t = prompt("독립 실적 사례 이름 (예: 이전 사업 ○○ 계장 물량 실적)"); if (!t) return;
+    const r = await send({add:{title:t, test_type:"HOLDOUT"}}); if (r) { VP.open = r.plan.cases[r.plan.cases.length-1].case_id; renderVPlan(r); } };
+}
+
 /* ---------------------------------------------------------------- v13.4 설정 · 간이 모드 */
 const APP = {simple:false, fit:true};
 async function loadApp() { try { Object.assign(APP, await api("app_settings")); } catch(e) {} navState(); setTog(); fitZoom(); }
@@ -1935,7 +1993,7 @@ async function renderTwin(m) {
   if (t !== S.tok) return;
   m.className = "ext-page";
   const f = d.fit, b = d.base;
-  const files = [["00_manifest.json","버전·출처·승인 범위·Gate·미결"],["01_scope.csv","확정 물량 범위 (담당·분류·규격·단위·수량·Rule)"],
+  const files = [["00_manifest.json","버전·출처·승인 범위·Gate·미결"],["01_scope.csv","물량 범위 (분류·규격·단위·처리 구분·Rule·포함/제외 경계)"],
     ["02_input_model_contract.json","입력·모델 구조 (엔티티 ID, 최소/파생/승인 값, 좌표·인터페이스)"],["03_engineering_rules.json","승인 Rule Set (계산식·판정·예외·단위)"],
     ["04_test_inputs.json","독립 실행 입력 (NORMAL / CHANGED / MISSING / HOLDOUT, 기대값 없음)"],["05_validation.csv","기대값 vs 실행값 (허용차·판정·확인자)"],
     ["06_model_handoff.json","원본 대비 보강 모델 목록·변경·해시·검증 근거"]];
@@ -1973,14 +2031,18 @@ async function renderTwin(m) {
     </div>
     <div class="panel"><h2>5. 만든 인계 세트</h2>
       ${d.sets.length?d.sets.map(st=>`<div class="kv"><span class="mono">${esc(st)}</span><span style="display:flex;gap:6px"><a class="btn sm" target="_blank" data-twopen="${esc(st)}">보강 모델 열기</a></span></div>`).join(""):`<div class="empty">아직 없음</div>`}
-      <p class="xnote">세트 폴더: <span class="mono">projects\\${esc(S.project)}\\output\\3D인계_날짜\\</span> - 보강 모델 HTML, 표준 7종, STRUCTURED_MODEL_DATA_FULL.json. 보강 모델은 원본처럼 인터넷(cdn.jsdelivr.net)에서 Three.js를 불러옵니다.</p></div>
+      <p class="xnote">세트 폴더: <span class="mono">projects\\${esc(S.project)}\\output\\3D인계_날짜\\</span> - 보강 모델 HTML, STRUCTURED_MODEL_DATA_FULL.json, 3D 리뷰 · 프로토콜, 그리고 회사 규격 패키지 <b class="mono">T1-CI_scopeRevNN_ruleRevNN\\</b> (00~06 · model\\ · evidence\\ · checkpoint). 보강 모델은 원본처럼 인터넷(cdn.jsdelivr.net)에서 Three.js를 불러옵니다.</p></div>
+    <div class="panel" id="vpbox"><h2>6. 독립 검증 기대값 잠금 (S05)</h2><div class="empty">불러오는 중…</div></div>
   </div>
   <div class="side"><div class="panel" style="font-size:12.5px;line-height:1.6"><b>표준 인계 7종 (회사 가이드 T1-CI)</b>
     ${files.map(([n,x])=>`<div style="margin-top:6px"><span class="mono" style="font-size:12px">${n}</span><br><span style="color:var(--sub)">${x}</span></div>`).join("")}
     <div style="margin-top:10px"><b>+ 보강 모델 실파일</b> (SUPPLEMENTED_MODEL)<br><span style="color:var(--sub)">원본 HTML + 계장 레이어. 레이어 패널 '계장 (pid_io)', 객체 클릭 = 속성, '계장 찾기' 칸</span></div>
-    <div style="margin-top:6px"><b>+ 구조화 모델 데이터</b> (STRUCTURED_MODEL_DATA, FULL)</div>
-    <p class="xnote" style="margin-top:8px">필드 이름은 가이드 사진 기준 초안입니다. 가이드 원문(HTML)이 저장소에 오면 맞춥니다.</p></div></div>
+    <div style="margin-top:6px"><b>+ 구조화 모델 데이터</b> (STRUCTURED_MODEL_DATA, DELTA records)</div>
+    <div style="margin-top:6px"><b>+ evidence\\</b> 실행 기록 run_*.json, 원도 보정 이력 correction_log.csv, 모델 자동 점검, 3D 리뷰·프로토콜</div>
+    <div style="margin-top:6px"><b>+ checkpoint</b> 회사 Copilot 새 채팅 RESUME용</div>
+    <p class="xnote" style="margin-top:8px">회사 가이드 Rev.6 (AI3D-HANDOFF-1.1) 필드 그대로. 승인·확인자는 비워 두고 DRAFT_NOT_READY로 냅니다 (사람 몫).</p></div></div>
   </div>`;
+  renderVPlan();
   const twset = async body => { try { await post(P("cable"), body); renderTwin(m); } catch(e) { toast(e.message, true); } };
   m.querySelectorAll("[data-ck]").forEach(el => el.onchange = () => twset({set:{[el.dataset.ck]: el.value}}));
   m.querySelectorAll("[data-cktog]").forEach(el => el.onclick = () => { const it = d.schema[0].items.find(x=>x.id===el.dataset.cktog);

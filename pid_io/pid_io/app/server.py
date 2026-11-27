@@ -1310,6 +1310,108 @@ def twin_view(name: str):
     return out
 
 
+def vplan_view(name: str):
+    """cases + the scope list to write expected values against (IDs, names, units - never the computed quantities)."""
+    from collections import Counter
+    from .. import handoff as HO
+    c = computed(name)
+    if not c:
+        raise ValueError("먼저 추출을 실행해 주세요")
+    s, res, lay = cable_result(name)
+    dd = _plot_dec(name)
+    tr = cable.TR.build(res, lay, s, dd)
+    sp = cable.SP.build(tr, s["values"], lay.m_per_pt if lay else None, dd, _obstacles(lay))
+    items = [{k: x[k] for k in ("scope_id", "item_name", "spec", "unit", "rule_id")} for x in HO.scope_items(c[4], res, tr, sp, s["values"])
+             if x["disposition"] == "DIRECT"]
+    last = None
+    od = pdir(name) / "output"
+    pk = sorted(od.glob("**/3D인계_*/T1-CI_*/00_manifest.json"), key=lambda p: p.stat().st_mtime)
+    if pk:
+        mf = json.loads(pk[-1].read_text(encoding="utf-8"))
+        import csv as _csv
+        v5 = list(_csv.DictReader(open(pk[-1].parent / "05_validation.csv", encoding="utf-8")))
+        h6 = json.loads((pk[-1].parent / "06_model_handoff.json").read_text(encoding="utf-8"))
+        last = {"set": pk[-1].parent.parent.name, "dir": pk[-1].parent.name, "status": mf["status"],
+                "rev": f"scope {mf['scope_rev']} · rule {mf['rule_rev']} · model {mf['model_rev']}",
+                "verdict": dict(Counter(r["verdict"] for r in v5)), "gates": [[g["gate_id"], g["status"]] for g in mf["gate_results"]],
+                "checks": [[c_["check_id"], c_["evidence"][:90]] for c_ in h6["checks"]],
+                "issues": [[i["issue_id"], i["reason"]] for i in mf["issues"] if i["status"] == "OPEN"],
+                "fails": [r for r in v5 if r["verdict"] == "FAIL"][:30]}
+    return {"plan": HO.load_plan(pdir(name)), "scope": items, "last": last}
+
+
+def _handoff_ctx(name, version, base, base_path, model_file, inst, tf, s, c, res, tr, sp, lay, dd, am, ob, srcs, val, chk, od, d3_args):
+    """everything handoff.write_package needs: inputs, a case runner (independent execution), a reproducer, corrections."""
+    import copy as _cp
+    from .. import basis, threed, twin, handoff as HO
+    data, syms, notes, con, rows, log = c
+    plot_rules = HO.PLOT_RULES
+
+    def run_case(case):
+        s2 = _cp.deepcopy(s)
+        s2["values"].update(case.get("overrides") or {})
+        r2, t2, p2 = basis.chain(rows, s2, am, lay, dd, ob)
+        q = HO.quantities(rows, r2, t2, p2, s2["values"])
+        items = {x["scope_id"]: x for x in HO.scope_items(rows, r2, t2, p2, s2["values"])}
+        st = {}
+        plot_gone = s2["values"].get("plot_use") != "사용" or not (r2.get("summary") or {}).get("by_plot")
+        for sid in q:
+            rid = (items.get(sid) or {}).get("rule_id", "")
+            st[sid] = "HOLD" if (plot_gone and rid.startswith(plot_rules)) else "VALUE"
+        return q, st, {"cables": len(r2["cables"]), "jbs": len(r2["jbs"]), "by_plot": (r2.get("summary") or {}).get("by_plot"), "plot_gone": plot_gone,
+                       "note": "PLOT 좌표가 없어 길이·배치 물량은 가정값 → HOLD" if plot_gone else ""}
+
+    def reproduce():
+        s3, r3, l3 = cable_result(name)
+        t3 = cable.TR.build(r3, l3, s3, _plot_dec(name))
+        p3 = cable.SP.build(t3, s3["values"], l3.m_per_pt if l3 else None, _plot_dec(name), _obstacles(l3))
+        d3 = threed.build(name, r3, l3, t3, p3, s3, d3_args[1])
+        idx = {r.tag: r for r in rows if r.kind == "instrument"}
+        for x in d3["instruments"]:
+            r = idx.get(x["tag"])
+            if r:
+                x["index"] = {"Instrument Type": r.desc, "Service": getattr(r, "service", ""), "System": r.system, "I/O Type": r.io,
+                              "P&ID No": r.dwg, "Equipment No": getattr(r, "equip", ""), "Status": r.status, "산출구분": r.origin}
+        jbi = {j["no"]: j for j in r3["jbs"]}
+        for j in d3["jbs"]:
+            jj = jbi.get(j["no"]) or {}
+            j["extra"] = {"멀티": jj.get("multi", ""), "멀티 크기": jj.get("multi_size", ""), "스페어": jj.get("spare", ""),
+                          "단자": jj.get("terminals", ""), "태그": ", ".join(jj.get("tags") or [])[:300]}
+        i3 = twin.to_model(d3, tf, base, s3["values"])
+        if inst.get("moves"):
+            files = meta(name).get("files", {})
+            twin.avoid(i3, twin.load_other(pdir(name) / "input" / files["other3d"]), base, s3["values"])
+        return i3
+
+    io_of = lambda rr: dict(Counter(r.io for r in rr if r.kind != "function"))
+    from collections import Counter
+    rows0, _ = compute(syms, notes, con, overrides=None)
+    corr = HO.corrections(syms, overrides(name), ait.load(pdir(name) / "ai_suggestions.json", []), dec.load(pdir(name)), dd,
+                          ait.load(pdir(name) / "decision_log.json", []), io_of(rows0), io_of(rows))
+    bt = Path(base_path).read_text(encoding="utf-8")
+    mods = [{"object_id": "SEED-CODE:title", "before": "<title>", "after": "<title>[계장 보강] ", "why": "보강본 표시"}]
+    f_ = "(!state.section || h.point.y <= state.sectionH)"
+    if f_ in bt:
+        mods.insert(0, {"object_id": "SEED-CODE:raycast-filter", "before": f_,
+                        "after": f_ + " && (!window.__pidClip || window.__pidClip(h.point))",
+                        "why": "수직 단면(Section view)에서 잘려 안 보이는 쪽 객체는 클릭되지 않게"})
+    d = pdir(name)
+    latest_basis = sorted((d / "output").glob("**/산출근거_*.xlsx"), key=lambda p: p.stat().st_mtime)
+    ev = [od / n for n in ("3D_REVIEW_PRECHECK.csv", "3D_REVIEW_PRECHECK.json", "3D_REVIEW_PROMPT.md", "3D_REVIEW_ANSWER_SCHEMA.json",
+                           "COMMON_PROTOCOL.json", "COMMON_PROTOCOL.md", "clash_moves.json", "RULE_PROTOCOL.json")]
+    ev += [d / "decision_log.json", d / "cable.json", d / "concept_values.json", d / "validation_plan.json", d / "plot_decisions.json"]
+    ev += latest_basis[-1:]
+    decisions_ = [{"decision": f"{x.get('what')}: {x.get('before')} → {x.get('after')}", "ref": f"decision_log.json {x.get('at')}",
+                   "approved": x.get("approved")} for x in ait.load(d / "decision_log.json", [])]
+    decisions_ += [{"decision": "중복 설정 합침 (C03·C04·H06 → STEP 6)", "ref": "인수인계 0-1c", "approved": "사용자 2026-11-27"},
+                   {"decision": "패키지 멀티 중간 묶음 안 함", "ref": "인수인계 0-1c", "approved": "사용자 2026-11-27"}]
+    return {"project": name, "version": version, "pdir": d, "base": base, "base_path": base_path, "model_file": model_file, "inst": inst,
+            "tf": tf, "s": s, "rows": rows, "res": res, "tr": tr, "sp": sp, "sources": srcs, "audit": val, "check_summary": chk,
+            "run_case": run_case, "reproduce": reproduce, "corrections": corr, "seed_modifications": mods,
+            "concept_items": {k: {"name": v.get("name"), "value": v.get("value")} for k, v in con.items.items()},
+            "evidence_files": ev, "decisions": decisions_}
+
+
 def export_twin(name: str):
     """supplemented model + standard 7 files + STRUCTURED_MODEL_DATA into output/3D인계_<stamp>/."""
     from .. import twin, basis, threed
@@ -1385,8 +1487,8 @@ def export_twin(name: str):
     chk = f"pid_io audit NG {sum(1 for r in val if r[4] == 'FAIL')} · HOLD {sum(1 for r in val if r[4] == 'HOLD')}"
     srcs = {k: files.get(k) for k in ("pdf", "plot", "plotref", "template", "ref")}
     from .. import protocol
-    twin.standard_files(od, name, VERSION, base, base_path, inst, tf, s, res, tr, sp, base_m["HW IO"], srcs, val,
-                        model_file, data_file, chk, protocol.build(con, s["values"]))
+    (od / "RULE_PROTOCOL.json").write_text(json.dumps(protocol.build(con, s["values"]), ensure_ascii=False, indent=1, default=str),
+                                           encoding="utf-8")
     try:
         take_snapshot(name, "3D 인계 " + od.name)
     except Exception:                                      # noqa: BLE001
@@ -1399,8 +1501,13 @@ def export_twin(name: str):
             shutil.copy2(OR.proto_dir(HOME) / fn, od / ("COMMON_PROTOCOL.json" if fn.endswith(".json") else "COMMON_PROTOCOL.md"))
     except Exception:                                      # noqa: BLE001
         pass
+    # v13.5 company standard package (AI3D-HANDOFF-1.1, 회사 가이드 Rev.6 T1-CI) inside the set folder
+    prog(80, "회사 규격 패키지 (7종 · 모델 · 근거 · 독립 검증 실행)")
+    from .. import handoff as HO
+    pkg = HO.write_package(od, _handoff_ctx(name, VERSION, base, base_path, model_file, inst, tf, s, c, res, tr, sp, lay, dd, am, ob,
+                                            srcs, val, chk, od, d3_args=(name, plot_read(name))))
     _finish(name, "twin", od)
-    return {"files": [od.name], "dir": od.name, "counts": inst["counts"], "moves": len(moves), "review": sm,
+    return {"files": [od.name], "dir": od.name, "counts": inst["counts"], "moves": len(moves), "review": sm, "package": pkg,
             "left": len(left), "fit": {k: tf[k] for k in ("median_m", "max_m", "anchors", "rack_anchors")}}
 
 
@@ -2079,6 +2186,11 @@ class H(BaseHTTPRequestHandler):
                     (d / "cache" / "page_texts.json").unlink(missing_ok=True)
                     cache_pages(name)                    # readable now: save page images for later
                 return self._send(200, {"ok": True, "meta": m})
+            if act == "vplan":                           # v13.5 독립 검증 기대값 (사전 잠금) - actual values are not sent here
+                from .. import handoff as HO
+                if method == "POST":
+                    HO.plan_update(pdir(name), self._json())
+                return self._send(200, vplan_view(name))
             if act == "simple":
                 return self._send(200, simple_view(name))
             if act == "ref_score":                       # v13.4 레퍼런스 채점 (+ 열 지정 저장)

@@ -1,4 +1,4 @@
-﻿case_id,항목,기대값/허용차 (사전 잠금),실행값,판정,확인자,비고
+case_id,check,expected,actual,result,by,detail
 T-NORMAL,케이블이 필요한 IO 행 → 인덱스 JB·케이블 열,OK (불변 조건),OK,PASS,pid_io audit,"케이블 대상 811행 중 인덱스 열이 빈 행 0. 케이블 없는 행 604 = IO 없음 441, 스페어 IO (JB 스페어 페어로 반영) 163"
 T-NORMAL,IO 1점 = 케이블 하나에 정확히 한 번,OK (불변 조건),OK,PASS,pid_io audit,"케이블에 없는 IO 0, 두 케이블에 들어간 태그 0 (같은 태그 번호를 쓰는 트레인 복제·XXXX 태그는 제외)"
 T-NORMAL,분기 케이블 → Perforated 트레이 (길이 같음),OK (불변 조건),OK,PASS,pid_io audit,"Perforated 없는 분기 0, 길이 다른 것 0"
