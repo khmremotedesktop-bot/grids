@@ -8,7 +8,7 @@
  "rule_rev": "01",
  "model_rev": "01",
  "case_id": "T-CHANGED-JB60",
- "executed_at": "2026-11-27T08:39:12+09:00",
+ "executed_at": "2026-11-27T08:50:58+09:00",
  "overrides": {
   "jb_sizes": "60"
  },
@@ -59,17 +59,17 @@
    "unit": "m"
   },
   "CI-CB-MU-60PX125SQISOS": {
-   "value": 4860,
+   "value": 4875,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-CB-MU-60PX125SQOS": {
-   "value": 3675,
+   "value": 3695,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-CB-BR-1PX125SQOS": {
-   "value": 4090,
+   "value": 4035,
    "status": "VALUE",
    "unit": "m"
   },
@@ -84,7 +84,7 @@
    "unit": "m"
   },
   "CI-CB-PK-6PX125SQOS": {
-   "value": 38400,
+   "value": 38610,
    "status": "VALUE",
    "unit": "m"
   },
@@ -99,17 +99,17 @@
    "unit": "EA"
   },
   "CI-TR-SIG-300": {
-   "value": 274,
+   "value": 368,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-TR-SIG-600": {
-   "value": 102,
+   "value": 91,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-TR-SIG-900": {
-   "value": 323,
+   "value": 330,
    "status": "VALUE",
    "unit": "m"
   },
@@ -119,7 +119,7 @@
    "unit": "m"
   },
   "CI-UG-W300": {
-   "value": 683,
+   "value": 573,
    "status": "VALUE",
    "unit": "m"
   },
@@ -134,7 +134,7 @@
    "unit": "m"
   },
   "CI-PT-100": {
-   "value": 4335,
+   "value": 4280,
    "status": "VALUE",
    "unit": "m"
   },
@@ -144,27 +144,27 @@
    "unit": "EA"
   },
   "CI-SP-RF": {
-   "value": 146,
+   "value": 142,
    "status": "VALUE",
    "unit": "EA"
   },
   "CI-SP-RC": {
-   "value": 30,
+   "value": 54,
    "status": "VALUE",
    "unit": "EA"
   },
   "CI-SP-UB": {
-   "value": 667,
+   "value": 587,
    "status": "VALUE",
    "unit": "EA"
   },
   "CI-SP-PB": {
-   "value": 2988,
+   "value": 2955,
    "status": "VALUE",
    "unit": "EA"
   },
   "CI-SP-KG": {
-   "value": 11321.5,
+   "value": 10885.7,
    "status": "VALUE",
    "unit": "kg"
   },

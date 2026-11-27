@@ -286,7 +286,7 @@
     "CI-UG-W1200",
     "CI-PT-100"
    ],
-   "reason": "계기 위치 다수 추정, 좌표 맞춤 잔차 중앙값 3.36 m / 최대 9.63 m",
+   "reason": "계기 위치 다수 추정, 좌표 맞춤 잔차 중앙값 3.25 m / 최대 9.71 m",
    "action": "태그 위치 자료 · 3D 좌표 확인",
    "owner": "CI"
   },
@@ -346,7 +346,7 @@
   "tool": "pid_io",
   "version": "v13.3",
   "project": "서남해 200MW 수전해-2",
-  "made_at": "2026-11-27T08:39:13+09:00",
-  "pid_io_check": "pid_io audit NG 0 · HOLD 1"
+  "made_at": "2026-11-27T08:50:59+09:00",
+  "pid_io_check": "pid_io audit NG 0 · HOLD 2"
  }
 }

@@ -7,7 +7,7 @@
  "scope_rev": "01",
  "rule_rev": "01",
  "model_rev": "01",
- "checked_at": "2026-11-27T08:39:13+09:00",
+ "checked_at": "2026-11-27T08:50:59+09:00",
  "reconciliation": [
   {
    "scope_id": "CI-CB-MC-48PX125SQOS",
@@ -17,14 +17,14 @@
   },
   {
    "scope_id": "CI-CB-MU-40PX125SQISOS",
-   "model": 4575.0,
-   "quantity": 4575,
+   "model": 4590.0,
+   "quantity": 4590,
    "match": true
   },
   {
    "scope_id": "CI-CB-MU-40PX125SQOS",
-   "model": 3390.0,
-   "quantity": 3390,
+   "model": 3410.0,
+   "quantity": 3410,
    "match": true
   },
   {
@@ -41,8 +41,8 @@
   },
   {
    "scope_id": "CI-CB-BR-1PX125SQOS",
-   "model": 4090.0,
-   "quantity": 4090,
+   "model": 4035.0,
+   "quantity": 4035,
    "match": true
   },
   {
@@ -59,8 +59,8 @@
   },
   {
    "scope_id": "CI-CB-PK-6PX125SQOS",
-   "model": 38400.0,
-   "quantity": 38400,
+   "model": 38610.0,
+   "quantity": 38610,
    "match": true
   },
   {
@@ -77,20 +77,20 @@
   },
   {
    "scope_id": "CI-TR-SIG-300",
-   "model": 355.0,
-   "quantity": 355,
+   "model": 455.0,
+   "quantity": 455,
    "match": true
   },
   {
    "scope_id": "CI-TR-SIG-600",
-   "model": 84.0,
-   "quantity": 84,
+   "model": 74.0,
+   "quantity": 74,
    "match": true
   },
   {
    "scope_id": "CI-TR-SIG-900",
-   "model": 256.0,
-   "quantity": 256,
+   "model": 250.0,
+   "quantity": 250,
    "match": true
   },
   {
@@ -101,8 +101,8 @@
   },
   {
    "scope_id": "CI-UG-W300",
-   "model": 715.0,
-   "quantity": 715,
+   "model": 605.0,
+   "quantity": 605,
    "match": true
   },
   {
@@ -119,32 +119,32 @@
   },
   {
    "scope_id": "CI-PT-100",
-   "model": 4335.0,
-   "quantity": 4335,
+   "model": 4280.0,
+   "quantity": 4280,
    "match": true
   },
   {
    "scope_id": "CI-SP-RT",
-   "model": 16,
-   "quantity": 16,
+   "model": 15,
+   "quantity": 15,
    "match": true
   },
   {
    "scope_id": "CI-SP-RF",
-   "model": 146,
-   "quantity": 146,
+   "model": 142,
+   "quantity": 142,
    "match": true
   },
   {
    "scope_id": "CI-SP-RC",
-   "model": 30,
-   "quantity": 30,
+   "model": 55,
+   "quantity": 55,
    "match": true
   },
   {
    "scope_id": "CI-SP-UB",
-   "model": 667,
-   "quantity": 667,
+   "model": 587,
+   "quantity": 587,
    "match": true
   }
  ],
@@ -155,7 +155,7 @@
   },
   "GEOMETRY_ATTRIBUTES": {
    "result": "PASS",
-   "evidence": "records 2346, object_id 중복 0, geometry/attributes 빈 것 0, scope 없는 객체 0"
+   "evidence": "records 2284, object_id 중복 0, geometry/attributes 빈 것 0, scope 없는 객체 0"
   },
   "QUANTITY_RECONCILIATION": {
    "result": "PASS",

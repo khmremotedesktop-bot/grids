@@ -102,6 +102,25 @@ def parse_base(path: Path) -> dict:
                           "a0": rm.get("a0"), "a1": rm.get("a1"), "levels": lv,
                           "cable_el": float(g("cable", "11") or 11),
                           "name": ((re.search(r"name:\s*'([^']*)'", body) or [None, rid])[1])}
+    # v13.6 (사용자 결정 2026-11-27): over bridges and sub / cross racks of the model carry trays too. The model edits its
+    # REFS at load time (drops some, moves OB3, shifts the east block by DX_E) - the same edits are replayed here.
+    drop = {"REF-RCP", "REF-GIS", "REF-EYW", "REF-EYE", *(f"REF-TR{k}" for k in range(1, 15))}
+    ob3 = re.search(r"r\.id === 'REF-OB3'\)\s*\{\s*Object\.assign\(b,\s*\{([^}]*)\}", mod)
+    for r in refs:
+        if r.get("kind") not in ("Over Bridge", "Cross Rack") or r.get("id") in drop or not r.get("box"):
+            continue
+        b = dict(r["box"])
+        if r["id"] == "REF-OB3" and ob3:
+            b.update({k: float(v) for k, v in re.findall(r"(\w+):\s*([-\d.]+)", ob3.group(1))})
+        elif dx and (b["x0"] + b["x1"]) / 2 > 42:
+            b["x0"], b["x1"] = b["x0"] + dx, b["x1"] + dx
+        ns = (b["z1"] - b["z0"]) >= (b["x1"] - b["x0"])
+        racks[r["id"]] = {"id": r["id"], "dir": "NS" if ns else "EW",
+                          "off": (b["x0"] + b["x1"]) / 2 if ns else (b["z0"] + b["z1"]) / 2,
+                          "half": ((b["x1"] - b["x0"]) if ns else (b["z1"] - b["z0"])) / 2,
+                          "a0": b["z0"] if ns else b["x0"], "a1": b["z1"] if ns else b["x1"], "levels": [],
+                          "cable_el": float(r.get("h") or 9.0), "name": r.get("label", r["id"]), "ref": True,
+                          "kind": "bridge" if r["kind"] == "Over Bridge" else "sub"}
     return {"file": Path(path).name, "sha256": hashlib.sha256(raw).hexdigest(), "bytes": len(raw), "three": three,
             "title": (re.search(r"<title>(.*?)</title>", s) or [None, ""])[1], "meta": meta, "dx_e": dx,
             "equipment": equipment, "racks": racks, "refs": len(refs)}
@@ -139,7 +158,7 @@ def fit(plot: dict, our_racks: list, base: dict, w_rack: float = 3.0) -> dict:
             if r["axis"] == "y":                 # N-S rack: centre x
                 xc = (x0 + x1) / 2
                 X = s * xc + tx
-                cand = [k for k in base["racks"].values() if k["dir"] == "NS"]
+                cand = [k for k in base["racks"].values() if k["dir"] == "NS" and not k.get("ref")]
                 best = min(cand, key=lambda k: abs(k["off"] - X), default=None)
                 if best and abs(best["off"] - X) < 15:
                     E2.append([xc, 1, 0]); R2.append(best["off"]); W2.append(w_rack)
@@ -147,7 +166,7 @@ def fit(plot: dict, our_racks: list, base: dict, w_rack: float = 3.0) -> dict:
             else:                                # E-W rack: centre z
                 yc = (y0 + y1) / 2
                 Z = s * yc + tz
-                cand = [k for k in base["racks"].values() if k["dir"] == "EW"]
+                cand = [k for k in base["racks"].values() if k["dir"] == "EW" and not k.get("ref")]
                 best = min(cand, key=lambda k: abs(k["off"] - Z), default=None)
                 if best and abs(best["off"] - Z) < 15:
                     E2.append([yc, 0, 1]); R2.append(best["off"]); W2.append(w_rack)

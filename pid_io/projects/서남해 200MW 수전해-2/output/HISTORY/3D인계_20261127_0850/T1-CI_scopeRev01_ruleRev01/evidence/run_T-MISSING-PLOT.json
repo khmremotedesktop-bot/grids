@@ -1,0 +1,184 @@
+{
+ "schema_version": "AI3D-HANDOFF-1.1",
+ "profile_id": "T1-CI",
+ "task_id": "T1",
+ "discipline_id": "CI",
+ "instruction_rev": "R9-G6",
+ "scope_rev": "01",
+ "rule_rev": "01",
+ "model_rev": "01",
+ "case_id": "T-MISSING-PLOT",
+ "executed_at": "2026-11-27T08:50:59+09:00",
+ "overrides": {
+  "plot_use": "가정 길이만"
+ },
+ "results": {
+  "CI-INST": {
+   "value": 1252,
+   "status": "VALUE",
+   "unit": "EA"
+  },
+  "CI-IO-AI": {
+   "value": 152,
+   "status": "VALUE",
+   "unit": "PT"
+  },
+  "CI-IO-AO": {
+   "value": 26,
+   "status": "VALUE",
+   "unit": "PT"
+  },
+  "CI-IO-DI": {
+   "value": 484,
+   "status": "VALUE",
+   "unit": "PT"
+  },
+  "CI-IO-DO": {
+   "value": 300,
+   "status": "VALUE",
+   "unit": "PT"
+  },
+  "CI-IO-COMM": {
+   "value": 12,
+   "status": "VALUE",
+   "unit": "EA"
+  },
+  "CI-CB-MC-48PX125SQOS": {
+   "value": 275,
+   "status": "HOLD",
+   "unit": "m"
+  },
+  "CI-CB-MU-40PX125SQISOS": {
+   "value": 1980,
+   "status": "HOLD",
+   "unit": "m"
+  },
+  "CI-CB-MU-40PX125SQOS": {
+   "value": 1760,
+   "status": "HOLD",
+   "unit": "m"
+  },
+  "CI-CB-MU-60PX125SQISOS": {
+   "value": 440,
+   "status": "HOLD",
+   "unit": "m"
+  },
+  "CI-CB-MU-60PX125SQOS": {
+   "value": 440,
+   "status": "HOLD",
+   "unit": "m"
+  },
+  "CI-CB-BR-1PX125SQOS": {
+   "value": 8260,
+   "status": "HOLD",
+   "unit": "m"
+  },
+  "CI-CB-BR-2CX20SQOS": {
+   "value": 490,
+   "status": "HOLD",
+   "unit": "m"
+  },
+  "CI-CB-CM-FO12CSMARMOURED": {
+   "value": 2640,
+   "status": "HOLD",
+   "unit": "m"
+  },
+  "CI-CB-PK-6PX125SQOS": {
+   "value": 25960,
+   "status": "HOLD",
+   "unit": "m"
+  },
+  "CI-JB-40P": {
+   "value": 17,
+   "status": "HOLD",
+   "unit": "EA"
+  },
+  "CI-JB-60P": {
+   "value": 4,
+   "status": "HOLD",
+   "unit": "EA"
+  },
+  "CI-TR-SIG-300": {
+   "value": null,
+   "status": "VALUE",
+   "unit": "m"
+  },
+  "CI-TR-SIG-600": {
+   "value": null,
+   "status": "VALUE",
+   "unit": "m"
+  },
+  "CI-TR-SIG-900": {
+   "value": null,
+   "status": "VALUE",
+   "unit": "m"
+  },
+  "CI-TR-COM-300": {
+   "value": null,
+   "status": "VALUE",
+   "unit": "m"
+  },
+  "CI-UG-W300": {
+   "value": null,
+   "status": "VALUE",
+   "unit": "m"
+  },
+  "CI-UG-W450": {
+   "value": null,
+   "status": "VALUE",
+   "unit": "m"
+  },
+  "CI-UG-W1200": {
+   "value": null,
+   "status": "VALUE",
+   "unit": "m"
+  },
+  "CI-PT-100": {
+   "value": 8750,
+   "status": "HOLD",
+   "unit": "m"
+  },
+  "CI-SP-RT": {
+   "value": null,
+   "status": "VALUE",
+   "unit": "EA"
+  },
+  "CI-SP-RF": {
+   "value": null,
+   "status": "VALUE",
+   "unit": "EA"
+  },
+  "CI-SP-RC": {
+   "value": null,
+   "status": "VALUE",
+   "unit": "EA"
+  },
+  "CI-SP-UB": {
+   "value": null,
+   "status": "VALUE",
+   "unit": "EA"
+  },
+  "CI-SP-PB": {
+   "value": 6000,
+   "status": "HOLD",
+   "unit": "EA"
+  },
+  "CI-SP-KG": {
+   "value": 13300.0,
+   "status": "HOLD",
+   "unit": "kg"
+  },
+  "CI-SP-EXP": {
+   "value": 0,
+   "status": "HOLD",
+   "unit": "SET"
+  }
+ },
+ "info": {
+  "cables": 406,
+  "jbs": 21,
+  "by_plot": 0,
+  "plot_gone": true,
+  "note": "PLOT 좌표가 없어 길이·배치 물량은 가정값 → HOLD"
+ }
+}

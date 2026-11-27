@@ -8,7 +8,7 @@
  "rule_rev": "01",
  "model_rev": "01",
  "case_id": "T-NORMAL",
- "executed_at": "2026-11-27T08:39:12+09:00",
+ "executed_at": "2026-11-27T08:50:58+09:00",
  "overrides": {},
  "results": {
   "CI-INST": {
@@ -47,12 +47,12 @@
    "unit": "m"
   },
   "CI-CB-MU-40PX125SQISOS": {
-   "value": 4575,
+   "value": 4590,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-CB-MU-40PX125SQOS": {
-   "value": 3390,
+   "value": 3410,
    "status": "VALUE",
    "unit": "m"
   },
@@ -67,7 +67,7 @@
    "unit": "m"
   },
   "CI-CB-BR-1PX125SQOS": {
-   "value": 4090,
+   "value": 4035,
    "status": "VALUE",
    "unit": "m"
   },
@@ -82,7 +82,7 @@
    "unit": "m"
   },
   "CI-CB-PK-6PX125SQOS": {
-   "value": 38400,
+   "value": 38610,
    "status": "VALUE",
    "unit": "m"
   },
@@ -97,17 +97,17 @@
    "unit": "EA"
   },
   "CI-TR-SIG-300": {
-   "value": 355,
+   "value": 455,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-TR-SIG-600": {
-   "value": 84,
+   "value": 74,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-TR-SIG-900": {
-   "value": 256,
+   "value": 250,
    "status": "VALUE",
    "unit": "m"
   },
@@ -117,7 +117,7 @@
    "unit": "m"
   },
   "CI-UG-W300": {
-   "value": 715,
+   "value": 605,
    "status": "VALUE",
    "unit": "m"
   },
@@ -132,37 +132,37 @@
    "unit": "m"
   },
   "CI-PT-100": {
-   "value": 4335,
+   "value": 4280,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-SP-RT": {
-   "value": 16,
+   "value": 15,
    "status": "VALUE",
    "unit": "EA"
   },
   "CI-SP-RF": {
-   "value": 146,
+   "value": 142,
    "status": "VALUE",
    "unit": "EA"
   },
   "CI-SP-RC": {
-   "value": 30,
+   "value": 55,
    "status": "VALUE",
    "unit": "EA"
   },
   "CI-SP-UB": {
-   "value": 667,
+   "value": 587,
    "status": "VALUE",
    "unit": "EA"
   },
   "CI-SP-PB": {
-   "value": 2988,
+   "value": 2955,
    "status": "VALUE",
    "unit": "EA"
   },
   "CI-SP-KG": {
-   "value": 11217.5,
+   "value": 10759.2,
    "status": "VALUE",
    "unit": "kg"
   },

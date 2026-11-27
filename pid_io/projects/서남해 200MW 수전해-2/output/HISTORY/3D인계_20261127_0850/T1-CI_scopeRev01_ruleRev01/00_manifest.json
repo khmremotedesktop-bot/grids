@@ -1,0 +1,352 @@
+{
+ "schema_version": "AI3D-HANDOFF-1.1",
+ "profile_id": "T1-CI",
+ "task_id": "T1",
+ "discipline_id": "CI",
+ "instruction_rev": "R9-G6",
+ "scope_rev": "01",
+ "rule_rev": "01",
+ "model_rev": "01",
+ "status": "DRAFT_NOT_READY",
+ "scope_approval": {
+  "by": null,
+  "date": null,
+  "rev": "01"
+ },
+ "engineering_approval": {
+  "by": null,
+  "date": null,
+  "rev": "01",
+  "status": "PENDING"
+ },
+ "sources": [
+  {
+   "source_id": "SRC-PID",
+   "filename": "200MW PEM 수전해 플랜트 PID_Rev.A 1.pdf",
+   "revision": "Rev.A (파일명·타이틀 블록)",
+   "authority": "VERIFIED_SOURCE",
+   "checksum": "sha256:a29f5fc969b8f4f5466813bd8be921e63e4201d1cd50ab91ce48e987dd048041",
+   "note": "원도. 프로그램 판독값은 후보 - 엔지니어 검토 판단은 evidence/correction_log.csv"
+  },
+  {
+   "source_id": "SRC-PLOT",
+   "filename": "Plot_plan_261109_r2.pdf",
+   "revision": "파일명 기준",
+   "authority": "VERIFIED_SOURCE",
+   "checksum": "sha256:fc4d967b8d623511bf0b5d1fa1198319c1e5e45d67bd17326b2facab2ae8c261",
+   "note": "배치 원도. 축척·제어실·랙은 사람 확인 질문 카드"
+  },
+  {
+   "source_id": "SRC-PLOTREF",
+   "filename": "Plot_Plan_Rev.2_260202.pdf",
+   "revision": "파일명 기준",
+   "authority": "REFERENCE",
+   "checksum": "sha256:55c0bfec8aa4e471412ac273af7894f0a9c63ce7983196ca9ef31dcc3a815025",
+   "note": "축척 참고용"
+  },
+  {
+   "source_id": "SRC-TEMPLATE",
+   "filename": "Instrument_Index_Template.xlsx",
+   "revision": "회사 양식",
+   "authority": "APPROVED_STANDARD",
+   "checksum": "sha256:f2032d021f24eba5dc3f50aecbf60a8ba6ebc41572c6b2f9e509dfcff09174ff",
+   "note": "Instrument Index 양식"
+  },
+  {
+   "source_id": "SRC-REF",
+   "filename": "(서남해 수전해) Instrument Index_Rev.A_26.03.20_Metering IO 삭제.xlsx",
+   "revision": "이전 리비전",
+   "authority": "REFERENCE",
+   "checksum": "sha256:4da0e12c5272f94a9e51fad3d71a0faf9843e451d42be1f011c7685bc0ac7f9b",
+   "note": "채점용 레퍼런스 인덱스 (보정·검증 전용)"
+  },
+  {
+   "source_id": "SRC-CHECKLIST",
+   "filename": "concept.xlsx + cable.json",
+   "revision": "프로젝트 현재값",
+   "authority": "REFERENCE",
+   "checksum": "sha256:c5b5f9661263f67589df44d0c2fcb4528b461ff4ef07b6f653fd24e44173bb34",
+   "note": "설계 가정 (체크리스트 · STEP 6~9 설정). 공종 승인 전이라 REFERENCE - 승인되면 APPROVED_ENGINEERING"
+  },
+  {
+   "source_id": "SRC-BASE",
+   "filename": "02-AI-Assisted.Conceptual.3D.Model_Final.html",
+   "revision": "3d-rev0",
+   "authority": "SEED_PROTOTYPE",
+   "checksum": "sha256:35d0e456ad1bbb7fe95a8046adcd96e7c56fc52aba4f7aeafa1f9d498fd79f9a",
+   "note": "기준 Seed. 가이드의 03_3D_Digital_Twin_Final.html과 SHA-256 일치"
+  },
+  {
+   "source_id": "SRC-CATALOGUE",
+   "filename": "케이블 외경표 (STEP 8 T10~T15E)",
+   "revision": "외장형 제조사 공개 카탈로그 값",
+   "authority": "REFERENCE",
+   "checksum": null,
+   "note": "회사 데이터시트 받기 전"
+  },
+  {
+   "source_id": "SRC-NEMA",
+   "filename": "NEMA VE 2",
+   "revision": "판본 확인 전",
+   "authority": "REFERENCE",
+   "checksum": null,
+   "note": "피팅·익스펜션 서포트 규칙 근거"
+  },
+  {
+   "source_id": "SRC-PIDIO",
+   "filename": "pid_io v13.3",
+   "revision": "프로그램",
+   "authority": "REFERENCE",
+   "checksum": null,
+   "note": "산출 엔진 (개발자는 독립 구현)"
+  }
+ ],
+ "expected_scope_ids": [
+  "CI-INST",
+  "CI-IO-AI",
+  "CI-IO-AO",
+  "CI-IO-DI",
+  "CI-IO-DO",
+  "CI-IO-COMM",
+  "CI-CB-MC-48PX125SQOS",
+  "CI-CB-MU-40PX125SQISOS",
+  "CI-CB-MU-40PX125SQOS",
+  "CI-CB-MU-60PX125SQISOS",
+  "CI-CB-MU-60PX125SQOS",
+  "CI-CB-BR-1PX125SQOS",
+  "CI-CB-BR-2CX20SQOS",
+  "CI-CB-CM-FO12CSMARMOURED",
+  "CI-CB-PK-6PX125SQOS",
+  "CI-JB-40P",
+  "CI-JB-60P",
+  "CI-TR-SIG-300",
+  "CI-TR-SIG-600",
+  "CI-TR-SIG-900",
+  "CI-TR-COM-300",
+  "CI-UG-W300",
+  "CI-UG-W450",
+  "CI-UG-W1200",
+  "CI-PT-100",
+  "CI-SP-RT",
+  "CI-SP-RF",
+  "CI-SP-RC",
+  "CI-SP-UB",
+  "CI-SP-PB",
+  "CI-SP-KG",
+  "CI-SP-EXP",
+  "CI-X-MCCIRP",
+  "CI-X-VENDOR",
+  "CI-X-FG"
+ ],
+ "model_required_scope_ids": [
+  "CI-INST",
+  "CI-IO-AI",
+  "CI-IO-AO",
+  "CI-IO-DI",
+  "CI-IO-DO",
+  "CI-IO-COMM",
+  "CI-CB-MC-48PX125SQOS",
+  "CI-CB-MU-40PX125SQISOS",
+  "CI-CB-MU-40PX125SQOS",
+  "CI-CB-MU-60PX125SQISOS",
+  "CI-CB-MU-60PX125SQOS",
+  "CI-CB-BR-1PX125SQOS",
+  "CI-CB-BR-2CX20SQOS",
+  "CI-CB-CM-FO12CSMARMOURED",
+  "CI-CB-PK-6PX125SQOS",
+  "CI-JB-40P",
+  "CI-JB-60P",
+  "CI-TR-SIG-300",
+  "CI-TR-SIG-600",
+  "CI-TR-SIG-900",
+  "CI-TR-COM-300",
+  "CI-UG-W300",
+  "CI-UG-W450",
+  "CI-UG-W1200",
+  "CI-PT-100",
+  "CI-SP-RT",
+  "CI-SP-RF",
+  "CI-SP-RC",
+  "CI-SP-UB",
+  "CI-SP-PB",
+  "CI-SP-KG",
+  "CI-SP-EXP"
+ ],
+ "required_standard_codes": [],
+ "linked_standard_codes": [],
+ "gate_results": [
+  {
+   "gate_id": "G1",
+   "status": "HOLD",
+   "evidence": "01_scope.csv 35개 (DIRECT 32, OTHER_PACKAGE 2, HOLD 1) - 범위 승인 전",
+   "reviewed_by": null
+  },
+  {
+   "gate_id": "G2",
+   "status": "HOLD",
+   "evidence": "02 fields·entities·좌표계, evidence/correction_log.csv (원도 보정 5건) - 확인자 미기록",
+   "reviewed_by": null
+  },
+  {
+   "gate_id": "G3",
+   "status": "HOLD",
+   "evidence": "03 rules 13개 (DRAFT, 근거 REFERENCE) - 승인 전",
+   "reviewed_by": null
+  },
+  {
+   "gate_id": "G4",
+   "status": "HOLD",
+   "evidence": "02 interfaces 5개 PROPOSED - 합의 전",
+   "reviewed_by": null
+  },
+  {
+   "gate_id": "G5",
+   "status": "HOLD",
+   "evidence": "05 192행 중 PASS 0 (잠근 사례 0/6), 06 checks 자동 결과 evidence/model_checks.json",
+   "reviewed_by": null
+  },
+  {
+   "gate_id": "G6",
+   "status": "HOLD",
+   "evidence": "표준 7종 + model/ 2개 + evidence/ - 승인·확인자 없음",
+   "reviewed_by": null
+  }
+ ],
+ "issues": [
+  {
+   "issue_id": "IS-001",
+   "status": "OPEN",
+   "scope_ids": [
+    "CI-INST",
+    "CI-IO-AI",
+    "CI-IO-AO",
+    "CI-IO-DI",
+    "CI-IO-DO",
+    "CI-IO-COMM",
+    "CI-CB-MC-48PX125SQOS",
+    "CI-CB-MU-40PX125SQISOS",
+    "CI-CB-MU-40PX125SQOS",
+    "CI-CB-MU-60PX125SQISOS",
+    "CI-CB-MU-60PX125SQOS",
+    "CI-CB-BR-1PX125SQOS",
+    "CI-CB-BR-2CX20SQOS",
+    "CI-CB-CM-FO12CSMARMOURED",
+    "CI-CB-PK-6PX125SQOS",
+    "CI-JB-40P",
+    "CI-JB-60P",
+    "CI-TR-SIG-300",
+    "CI-TR-SIG-600",
+    "CI-TR-SIG-900",
+    "CI-TR-COM-300",
+    "CI-UG-W300",
+    "CI-UG-W450",
+    "CI-UG-W1200",
+    "CI-PT-100",
+    "CI-SP-RT",
+    "CI-SP-RF",
+    "CI-SP-RC",
+    "CI-SP-UB",
+    "CI-SP-PB",
+    "CI-SP-KG",
+    "CI-SP-EXP"
+   ],
+   "reason": "범위·Rule·모델 공종 승인 없음",
+   "action": "공종 책임자 확인 후 scope_approval / engineering_approval 기록",
+   "owner": "CI 책임자"
+  },
+  {
+   "issue_id": "IS-002",
+   "status": "OPEN",
+   "scope_ids": [
+    "CI-X-FG"
+   ],
+   "reason": "F&G 검지기가 P&ID에 없음",
+   "action": "F&G 배치도 받기",
+   "owner": "CI"
+  },
+  {
+   "issue_id": "IS-003",
+   "status": "OPEN",
+   "scope_ids": [
+    "CI-CB-MC-48PX125SQOS",
+    "CI-CB-MU-40PX125SQISOS",
+    "CI-CB-MU-40PX125SQOS",
+    "CI-CB-MU-60PX125SQISOS",
+    "CI-CB-MU-60PX125SQOS",
+    "CI-CB-BR-1PX125SQOS",
+    "CI-CB-BR-2CX20SQOS",
+    "CI-CB-CM-FO12CSMARMOURED",
+    "CI-CB-PK-6PX125SQOS",
+    "CI-TR-SIG-300",
+    "CI-TR-SIG-600",
+    "CI-TR-SIG-900",
+    "CI-TR-COM-300",
+    "CI-UG-W300",
+    "CI-UG-W450",
+    "CI-UG-W1200",
+    "CI-PT-100"
+   ],
+   "reason": "계기 위치 다수 추정, 좌표 맞춤 잔차 중앙값 3.25 m / 최대 9.71 m",
+   "action": "태그 위치 자료 · 3D 좌표 확인",
+   "owner": "CI"
+  },
+  {
+   "issue_id": "IS-004",
+   "status": "OPEN",
+   "scope_ids": [],
+   "reason": "전기 공용 통로 인터페이스 미합의 (IF-EL-ROUTE)",
+   "action": "전기 3D 데이터 수신 후 합의",
+   "owner": "CI / EL"
+  },
+  {
+   "issue_id": "IS-005",
+   "status": "OPEN",
+   "scope_ids": [
+    "CI-INST",
+    "CI-IO-AI",
+    "CI-IO-AO",
+    "CI-IO-DI",
+    "CI-IO-DO",
+    "CI-IO-COMM",
+    "CI-CB-MC-48PX125SQOS",
+    "CI-CB-MU-40PX125SQISOS",
+    "CI-CB-MU-40PX125SQOS",
+    "CI-CB-MU-60PX125SQISOS",
+    "CI-CB-MU-60PX125SQOS",
+    "CI-CB-BR-1PX125SQOS",
+    "CI-CB-BR-2CX20SQOS",
+    "CI-CB-CM-FO12CSMARMOURED",
+    "CI-CB-PK-6PX125SQOS",
+    "CI-JB-40P",
+    "CI-JB-60P",
+    "CI-TR-SIG-300",
+    "CI-TR-SIG-600",
+    "CI-TR-SIG-900",
+    "CI-TR-COM-300",
+    "CI-UG-W300",
+    "CI-UG-W450",
+    "CI-UG-W1200",
+    "CI-PT-100",
+    "CI-SP-RT",
+    "CI-SP-RF",
+    "CI-SP-RC",
+    "CI-SP-UB",
+    "CI-SP-PB",
+    "CI-SP-KG",
+    "CI-SP-EXP"
+   ],
+   "reason": "독립 검증 기대값 잠금 없음 (05 전부 HOLD)",
+   "action": "STEP 10 '독립 검증 기대값 잠금'",
+   "owner": "CI 책임자"
+  }
+ ],
+ "correction_policy": "보정 계수 없음. 원도 판독 보정은 사람 결정(evidence/correction_log.csv)으로만 입력을 바꾸고 다시 계산",
+ "margin_policy": "피팅·할증은 margin_value로 분리 (트레이 T06, 트렌치 T21, 강재 할증). 케이블 여유율은 R-CB 식 안 (len_margin)",
+ "generator": {
+  "tool": "pid_io",
+  "version": "v13.3",
+  "project": "서남해 200MW 수전해-2",
+  "made_at": "2026-11-27T08:50:59+09:00",
+  "pid_io_check": "pid_io audit NG 0 · HOLD 2"
+ }
+}

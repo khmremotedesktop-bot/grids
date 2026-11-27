@@ -887,10 +887,15 @@ def model_racks(name: str):
     f = pdir(name) / "input" / files["model3d"]
     if not f.exists():
         return None
-    key = (name, files["model3d"], f.stat().st_mtime_ns, str(pl.get("_key")))
+    cv = cable.load(pdir(name))["values"]
+    use_refs = str(cv.get("rack_refs", "사용"))
+    refs_off = {x.strip() for x in str(cv.get("rack_refs_off") or "").split(",") if x.strip()}
+    key = (name, files["model3d"], f.stat().st_mtime_ns, str(pl.get("_key")), use_refs, tuple(sorted(refs_off)))
     if key in _MODEL_RACKS:
         return _MODEL_RACKS[key]
     base = twin.parse_base(f)
+    base["racks"] = {k: r for k, r in base["racks"].items()
+                     if not r.get("ref") or (use_refs == "사용" or (use_refs == "서브 랙만" and r.get("kind") == "sub")) and k not in refs_off}
     ours = [{"id": f"RACK-{i + 1:02d}", "rect_pt": r[:4], "axis": "x" if (r[4] if len(r) > 4 else "H") == "H" else "y"}
             for i, r in enumerate(pl.get("racks") or [])]
     tf = twin.fit(pl, ours, base)

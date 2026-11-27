@@ -1,6 +1,6 @@
 # 3D 구현 프롬프트 — 계장 (T1-CI) · 서남해 200MW 수전해-2 · R0
 
-버전: R0 · scope 01 · rule 01 · model 01 · 작성 2026-11-27T08:39:14+09:00 · 생성 pid_io
+버전: R0 · scope 01 · rule 01 · model 01 · 작성 2026-11-27T08:51:00+09:00 · 생성 pid_io
 
 ## 0. 역할과 결과물
 당신은 계장 3D 개념설계 모델러입니다. 아래 **기준 Seed(배관 3D)** 복제본에 **계장 레이어**를 추가한 HTML 한 개를 만듭니다.
@@ -12,20 +12,20 @@
 
 ## 1. 좌표
 - Seed 좌표계: X 동쪽, Y 위(EL), Z 남쪽, 단위 m, 원점 = Seed 원점 (Rack A × E-W 랙 교점).
-- records의 좌표는 이미 Seed 좌표계입니다 (PLOT 변환 X = 0.15583·x_pt + -87.36 · Z = 0.15583·y_pt + -131.13 · Y = EL (cable tier on racks = model RK.cable), 장비 기준 잔차 중앙값 3.36 m · 최대 9.63 m - 다시 변환하지 마세요).
+- records의 좌표는 이미 Seed 좌표계입니다 (PLOT 변환 X = 0.15562·x_pt + -87.57 · Z = 0.15562·y_pt + -130.91 · Y = EL (cable tier on racks = model RK.cable), 장비 기준 잔차 중앙값 3.25 m · 최대 9.71 m - 다시 변환하지 마세요).
 
 ## 2. 그릴 것 (레이어 · 데이터 · 형상)
 레이어 이름(체크박스로 켜고 끄기): `inst_tray`(트레이·트렌치·피팅), `inst_cable`(케이블), `inst_jb`(JB·JB 서포트), `inst_support`(트레이 서포트·조인트). 객체 수 = records 수와 같아야 합니다.
 
-### 2-1. 사다리 트레이 (E-ROUTE_SEGMENT, kind = ladder_on_rack / ladder_on_supports) — 102개
+### 2-1. 사다리 트레이 (E-ROUTE_SEGMENT, kind = ladder_on_rack / ladder_on_supports) — 105개
 - geometry: a→b = 1단 바닥 중심선, width_m = 폭, height_m = 레일 높이(150 mm), tiers = 단 수, tier_pitch_m = 단 간격(300 mm).
 - 형상: 양쪽 C형 레일(웨브 4 mm × 레일 높이, 위·아래 플랜지 30 mm, 안쪽으로) + 러그(가로대) 300 mm 간격(폭 × 20 × 40 mm). 단이 여럿이면 tier_pitch_m씩 위로 같은 형상.
 - 색: 랙 위 하늘색, AG 서포트 위 파랑, 금속 질감. 통신 트레이(구분 '통신')는 같은 형상, 속성에 표시.
 
-### 2-2. UG 트렌치 (kind = ug_trench) — 61개
+### 2-2. UG 트렌치 (kind = ug_trench) — 57개
 - a→b = 트렌치 바닥 중심선(EL 음수), width_m = 안쪽 폭. 형상: 콘크리트 U형(바닥 100 mm, 벽 두께 100 mm, 벽은 지면 EL 0까지) + 반투명 덮개(두께 50 mm, 지면). tiers > 1이면 단마다 브래킷 선반.
 
-### 2-3. 트레이 꺾임 피팅 (E-FITTING) — 6개: REDUCER 2, TEE_H 2, ELBOW_90_H 2
+### 2-3. 트레이 꺾임 피팅 (E-FITTING) — 5개: REDUCER 2, ELBOW_90_H 1, TEE_H 2
 - geometry.type: ELBOW_90_H(수평 90° 엘보), TEE_H(수평 티), CROSS_H(수평 크로스), REDUCER(폭 변경). point = 교점, dirs = 이어지는 방향들(XZ 단위벡터), width_m = 가장 넓은 폭, radius_m = 엘보 안쪽 반경(600 mm), tiers = 단 수.
 - 형상: 트레이와 같은 레일·러그를 곡선으로 (엘보는 반경 radius_m의 1/4 원호, 티·크로스는 곡선 모서리). 피팅 구간만큼 직선 트레이를 겹치지 말고 끝에서 이어지게.
 - **extend**: 랙마다 차선(lane)과 케이블 단 EL이 달라 트레이 끝이 피팅까지 닿지 않는 곳입니다. 각 항목의 tray를 from → to까지 같은 형상으로 연장해서 피팅에 붙이세요 (빈틈 금지).
@@ -46,7 +46,7 @@
 - geometry.mount = PIPE_STAND: 2" 파이프 스탠드(Ø60.3 mm, 높이 = 하단 EL + JB 높이 + 100 mm), 베이스 플레이트 250×250×12 mm, 콘크리트 패드 400×400×150 mm(지면). JB는 스탠드 앞면에 U볼트 브래킷 2개로.
 - JB 아래 → 트레이까지 멀티 케이블 라이저(수직)를 2-4 규칙으로.
 
-### 2-6. 트레이 서포트 (E-SUPPORT) — UB 667, RF 146, RC 30, RT 16, 익스펜션 조인트(E-JOINT) 3
+### 2-6. 트레이 서포트 (E-SUPPORT) — UB 587, RF 142, RC 55, RT 15, 익스펜션 조인트(E-JOINT) 3
 - 주 부재 C100×50×5/7.5 (포스트·팔·빔). point = 트레이 받침 높이의 서포트 중심.
 - RT 랙 위 T: 랙 빔 위 포스트 + 단마다 양팔(팔 길이 = 트레이 폭 합 + 150 mm). RF 랙 위 보조: 랙 빔 사이 짧은 보조 빔(피팅 끝 600 mm 안). RC 클램프: 레일을 랙 빔에 누르는 홀드다운 클램프(작은 금속 블록 2개).
 - L형: 바닥 포스트 + 한쪽 팔(캔틸레버). T형: 포스트 + 양팔. 문형(H): 포스트 2 + 단마다 빔. 바닥에 베이스 플레이트.

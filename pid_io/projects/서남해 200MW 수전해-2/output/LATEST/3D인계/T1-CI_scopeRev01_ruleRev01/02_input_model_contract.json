@@ -15,13 +15,13 @@
   "source_id": "SRC-BASE",
   "locator": "Seed ASSUMPTIONS 'Origin = …'",
   "plot_transform": {
-   "formula": "X = 0.15583·x_pt + -87.36 · Z = 0.15583·y_pt + -131.13 · Y = EL (cable tier on racks = model RK.cable)",
-   "s": 0.15583250947910796,
-   "tx": -87.3649489617079,
-   "tz": -131.12513685068177,
+   "formula": "X = 0.15562·x_pt + -87.57 · Z = 0.15562·y_pt + -130.91 · Y = EL (cable tier on racks = model RK.cable)",
+   "s": 0.15562134390355756,
+   "tx": -87.5679561826573,
+   "tz": -130.9063266013744,
    "anchors": 13,
-   "residual_median_m": 3.36,
-   "residual_max_m": 9.63
+   "residual_median_m": 3.25,
+   "residual_max_m": 9.71
   }
  },
  "entities": [
@@ -815,6 +815,36 @@
    "default_value": null,
    "approved_by": null,
    "default_application": null
+  },
+  {
+   "field_id": "F-rack_refs",
+   "entity_id": "E-QUANTITY",
+   "path": "settings.rack_refs",
+   "data_type": "string",
+   "unit": null,
+   "required": true,
+   "input_mode": "APPROVED_DEFAULT",
+   "source_id": "SRC-CHECKLIST",
+   "locator": "3D 모델 오버브리지 · 서브 랙 = 사용",
+   "missing_action": "HOLD",
+   "default_value": "사용",
+   "approved_by": null,
+   "default_application": "pid_io 기본값 / 회사 프리셋 (승인 전)"
+  },
+  {
+   "field_id": "F-rack_refs_off",
+   "entity_id": "E-QUANTITY",
+   "path": "settings.rack_refs_off",
+   "data_type": "string",
+   "unit": null,
+   "required": true,
+   "input_mode": "APPROVED_DEFAULT",
+   "source_id": "SRC-CHECKLIST",
+   "locator": "빼는 3D 참조 랙 (ID) = REF-OB3",
+   "missing_action": "HOLD",
+   "default_value": "REF-OB3",
+   "approved_by": null,
+   "default_application": "pid_io 기본값 / 회사 프리셋 (승인 전)"
   },
   {
    "field_id": "F-no_rack",
