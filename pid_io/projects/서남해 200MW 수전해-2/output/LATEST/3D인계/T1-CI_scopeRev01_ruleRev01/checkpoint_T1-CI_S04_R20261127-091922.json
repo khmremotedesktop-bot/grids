@@ -1,25 +1,13 @@
 {
- "schema_version": "AI3D-HANDOFF-1.1",
  "profile_id": "T1-CI",
- "task_id": "T1",
- "discipline_id": "CI",
- "instruction_rev": "R9-G6",
- "scope_rev": "01",
- "rule_rev": "01",
- "model_rev": "01",
- "status": "DRAFT_NOT_READY",
- "scope_approval": {
-  "by": null,
-  "date": null,
-  "rev": "01"
+ "stage": "S04",
+ "versions": {
+  "instruction_rev": "R9-G6",
+  "scope_rev": "01",
+  "rule_rev": "01",
+  "model_rev": "01"
  },
- "engineering_approval": {
-  "by": null,
-  "date": null,
-  "rev": "01",
-  "status": "PENDING"
- },
- "sources": [
+ "source_registry": [
   {
    "source_id": "SRC-PID",
    "filename": "200MW PEM 수전해 플랜트 PID_Rev.A 1.pdf",
@@ -65,7 +53,7 @@
    "filename": "concept.xlsx + cable.json",
    "revision": "프로젝트 현재값",
    "authority": "REFERENCE",
-   "checksum": "sha256:c5b5f9661263f67589df44d0c2fcb4528b461ff4ef07b6f653fd24e44173bb34",
+   "checksum": "sha256:568e7f090ea302aba97bd25f10bf940962ab2e61eeeb26d8a8044de2d6c095d6",
    "note": "설계 가정 (체크리스트 · STEP 6~9 설정). 공종 승인 전이라 REFERENCE - 승인되면 APPROVED_ENGINEERING"
   },
   {
@@ -101,118 +89,39 @@
    "note": "산출 엔진 (개발자는 독립 구현)"
   }
  ],
- "expected_scope_ids": [
-  "CI-INST",
-  "CI-IO-AI",
-  "CI-IO-AO",
-  "CI-IO-DI",
-  "CI-IO-DO",
-  "CI-IO-COMM",
-  "CI-CB-MC-48PX125SQOS",
-  "CI-CB-MU-40PX125SQISOS",
-  "CI-CB-MU-40PX125SQOS",
-  "CI-CB-MU-60PX125SQISOS",
-  "CI-CB-MU-60PX125SQOS",
-  "CI-CB-BR-1PX125SQOS",
-  "CI-CB-BR-2CX20SQOS",
-  "CI-CB-CM-FO12CSMARMOURED",
-  "CI-CB-PK-6PX125SQOS",
-  "CI-JB-40P",
-  "CI-JB-60P",
-  "CI-TR-SIG-300",
-  "CI-TR-SIG-600",
-  "CI-TR-SIG-900",
-  "CI-TR-COM-300",
-  "CI-UG-W300",
-  "CI-UG-W450",
-  "CI-UG-W1200",
-  "CI-PT-100",
-  "CI-SP-RT",
-  "CI-SP-RF",
-  "CI-SP-RC",
-  "CI-SP-UB",
-  "CI-SP-PB",
-  "CI-SP-KG",
-  "CI-SP-EXP",
-  "CI-X-MCCIRP",
-  "CI-X-VENDOR",
-  "CI-X-FG"
- ],
- "model_required_scope_ids": [
-  "CI-INST",
-  "CI-IO-AI",
-  "CI-IO-AO",
-  "CI-IO-DI",
-  "CI-IO-DO",
-  "CI-IO-COMM",
-  "CI-CB-MC-48PX125SQOS",
-  "CI-CB-MU-40PX125SQISOS",
-  "CI-CB-MU-40PX125SQOS",
-  "CI-CB-MU-60PX125SQISOS",
-  "CI-CB-MU-60PX125SQOS",
-  "CI-CB-BR-1PX125SQOS",
-  "CI-CB-BR-2CX20SQOS",
-  "CI-CB-CM-FO12CSMARMOURED",
-  "CI-CB-PK-6PX125SQOS",
-  "CI-JB-40P",
-  "CI-JB-60P",
-  "CI-TR-SIG-300",
-  "CI-TR-SIG-600",
-  "CI-TR-SIG-900",
-  "CI-TR-COM-300",
-  "CI-UG-W300",
-  "CI-UG-W450",
-  "CI-UG-W1200",
-  "CI-PT-100",
-  "CI-SP-RT",
-  "CI-SP-RF",
-  "CI-SP-RC",
-  "CI-SP-UB",
-  "CI-SP-PB",
-  "CI-SP-KG",
-  "CI-SP-EXP"
- ],
- "required_standard_codes": [],
- "linked_standard_codes": [],
- "gate_results": [
+ "confirmed_decisions": [
   {
-   "gate_id": "G1",
-   "status": "HOLD",
-   "evidence": "01_scope.csv 35개 (DIRECT 32, OTHER_PACKAGE 2, HOLD 1) - 범위 승인 전",
-   "reviewed_by": null
+   "decision": "설정 랙 출처: PLOT 인식 → 3D 모델 랙",
+   "ref": "decision_log.json 2026-11-27 03:57",
+   "approved": "사람 승인"
   },
   {
-   "gate_id": "G2",
-   "status": "HOLD",
-   "evidence": "02 fields·entities·좌표계, evidence/correction_log.csv (원도 보정 5건) - 확인자 미기록",
-   "reviewed_by": null
+   "decision": "설정 랙 트레이 EL 출처: 체크리스트 값 → 3D 모델 케이블 단",
+   "ref": "decision_log.json 2026-11-27 03:57",
+   "approved": "사람 승인"
   },
   {
-   "gate_id": "G3",
-   "status": "HOLD",
-   "evidence": "03 rules 13개 (DRAFT, 근거 REFERENCE) - 승인 전",
-   "reviewed_by": null
+   "decision": "설정 3D 모델 장비 상자 피하기: 안 함 → 사용 (3D 모델 있을 때)",
+   "ref": "decision_log.json 2026-11-27 03:57",
+   "approved": "사람 승인"
   },
   {
-   "gate_id": "G4",
-   "status": "HOLD",
-   "evidence": "02 interfaces 5개 PROPOSED - 합의 전",
-   "reviewed_by": null
+   "decision": "설정 랙 출처: 3D 모델 랙 → 둘 다",
+   "ref": "decision_log.json 2026-11-27 09:12",
+   "approved": "사용자 (원칙: Base 먼저, 3D는 PLOT에 없는 랙만 추가 - 프로토콜 P11)"
   },
   {
-   "gate_id": "G5",
-   "status": "HOLD",
-   "evidence": "05 192행 중 PASS 0 (잠근 사례 0/6), 06 checks 자동 결과 evidence/model_checks.json",
-   "reviewed_by": null
+   "decision": "중복 설정 합침 (C03·C04·H06 → STEP 6)",
+   "ref": "인수인계 0-1c",
+   "approved": "사용자 2026-11-27"
   },
   {
-   "gate_id": "G6",
-   "status": "HOLD",
-   "evidence": "표준 7종 + model/ 2개 + evidence/ - 승인·확인자 없음",
-   "reviewed_by": null
+   "decision": "패키지 멀티 중간 묶음 안 함",
+   "ref": "인수인계 0-1c",
+   "approved": "사용자 2026-11-27"
   }
  ],
- "issues": [
+ "pending_issues": [
   {
    "issue_id": "IS-001",
    "status": "OPEN",
@@ -299,6 +208,32 @@
    "owner": "CI / EL"
   },
   {
+   "issue_id": "IS-P11",
+   "status": "OPEN",
+   "scope_ids": [
+    "CI-CB-MC-48PX125SQOS",
+    "CI-CB-MU-40PX125SQISOS",
+    "CI-CB-MU-40PX125SQOS",
+    "CI-CB-MU-60PX125SQISOS",
+    "CI-CB-MU-60PX125SQOS",
+    "CI-CB-BR-1PX125SQOS",
+    "CI-CB-BR-2CX20SQOS",
+    "CI-CB-CM-FO12CSMARMOURED",
+    "CI-CB-PK-6PX125SQOS",
+    "CI-TR-SIG-300",
+    "CI-TR-SIG-600",
+    "CI-TR-SIG-900",
+    "CI-TR-COM-300",
+    "CI-UG-W300",
+    "CI-UG-W450",
+    "CI-UG-W1200",
+    "CI-PT-100"
+   ],
+   "reason": "3D와 PLOT 불일치 HOLD 2건 (프로토콜 P11): 10-TK-801 3D와 9.83 m 차이 (ΔX -1.31, ΔZ -9.75); 10-D-601 3D와 7.41 m 차이 (ΔX -7.41, ΔZ -0.36)",
+   "action": "evidence/plot_vs_3d.csv 확인 후 사람 결정",
+   "owner": "CI"
+  },
+  {
    "issue_id": "IS-005",
    "status": "OPEN",
    "scope_ids": [
@@ -340,13 +275,80 @@
    "owner": "CI 책임자"
   }
  ],
- "correction_policy": "보정 계수 없음. 원도 판독 보정은 사람 결정(evidence/correction_log.csv)으로만 입력을 바꾸고 다시 계산",
- "margin_policy": "피팅·할증은 margin_value로 분리 (트레이 T06, 트렌치 T21, 강재 할증). 케이블 여유율은 R-CB 식 안 (len_margin)",
- "generator": {
-  "tool": "pid_io",
-  "version": "v13.3",
-  "project": "서남해 200MW 수전해-2",
-  "made_at": "2026-11-27T08:50:59+09:00",
-  "pid_io_check": "pid_io audit NG 0 · HOLD 2"
- }
+ "draft_files": [
+  {
+   "filename": "00_manifest.json",
+   "revision": "scope01/rule01/model01",
+   "approval_state": "DRAFT_NOT_READY",
+   "reattach": "지금 첨부",
+   "reason": "상태·Gate·미결",
+   "note": ""
+  },
+  {
+   "filename": "01_scope.csv",
+   "revision": "scope01/rule01/model01",
+   "approval_state": "DRAFT_NOT_READY",
+   "reattach": "지금 첨부",
+   "reason": "범위 승인 (S02)",
+   "note": ""
+  },
+  {
+   "filename": "02_input_model_contract.json",
+   "revision": "scope01/rule01/model01",
+   "approval_state": "DRAFT_NOT_READY",
+   "reattach": "필요할 때 첨부",
+   "reason": "입력·Rule 승인 (S03)",
+   "note": ""
+  },
+  {
+   "filename": "03_engineering_rules.json",
+   "revision": "scope01/rule01/model01",
+   "approval_state": "DRAFT_NOT_READY",
+   "reattach": "필요할 때 첨부",
+   "reason": "입력·Rule 승인 (S03)",
+   "note": ""
+  },
+  {
+   "filename": "04_test_inputs.json",
+   "revision": "scope01/rule01/model01",
+   "approval_state": "DRAFT_NOT_READY",
+   "reattach": "필요할 때 첨부",
+   "reason": "독립 실행 (S05)",
+   "note": ""
+  },
+  {
+   "filename": "05_validation.csv",
+   "revision": "scope01/rule01/model01",
+   "approval_state": "DRAFT_NOT_READY",
+   "reattach": "필요할 때 첨부",
+   "reason": "독립 검증 대조 (S05)",
+   "note": ""
+  },
+  {
+   "filename": "06_model_handoff.json",
+   "revision": "scope01/rule01/model01",
+   "approval_state": "DRAFT_NOT_READY",
+   "reattach": "필요할 때 첨부",
+   "reason": "모델 검토 (S04/S06)",
+   "note": ""
+  },
+  {
+   "filename": "model/T1-CI_Seed03_R01.html",
+   "revision": "model01",
+   "approval_state": "DRAFT_NOT_READY",
+   "reattach": "필요할 때 첨부",
+   "reason": "모델 검토 (S04~S06)",
+   "note": "sha256 b4659132a5d22451…"
+  },
+  {
+   "filename": "model/T1-CI_Seed03_R01.json",
+   "revision": "model01",
+   "approval_state": "DRAFT_NOT_READY",
+   "reattach": "필요할 때 첨부",
+   "reason": "모델 검토 (S04~S06)",
+   "note": "sha256 64c907f713998fbb…"
+  }
+ ],
+ "next_step": "S02 범위 승인 · S03 Rule 승인, STEP 10에서 독립 검증 기대값 잠금 → 다시 만들기",
+ "updated_at": "2026-11-27T09:19:22+09:00"
 }

@@ -1753,7 +1753,7 @@
    "group": "R-RT",
    "name": "랙 출처",
    "key": "rack_src",
-   "value": "3D 모델 랙",
+   "value": "둘 다",
    "default": "PLOT 인식",
    "options": [
     "PLOT 인식",
@@ -1764,7 +1764,7 @@
    "reads": "F-PLOT · F-3D",
    "changes": "케이블 길이 · 트레이/트렌치 종류 · 높이",
    "formula": "PLOT 1 m 격자 경로(랙 1/m, 랙 밖 '랙 우선도'/m) + 높이 오르내림",
-   "basis": "3D 모델(STEP 10에 올린 배관 Three.js)이 있으면 그 랙 위치·길이를 PLOT 좌표로 옮겨 경로에 씁니다. PLOT 인식은 일부 랙만 잡힘",
+   "basis": "둘 다 (프로토콜 P11, 3D 모델 있을 때 권장): PLOT과 3D에 같은 랙이 있으면 하나로 보고 형상은 3D, PLOT에만 있는 랙은 그대로, 3D에만 있는 랙(오버브리지·서브 랙)은 아래 설정대로. 3D 모델 랙: 3D 랙만 (PLOT 랙 버림)",
    "status": "적용",
    "note": ""
   },

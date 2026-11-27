@@ -876,7 +876,16 @@ def plot_read(name: str):
 _MODEL_RACKS = {}
 
 
-def model_racks(name: str):
+def proto_params() -> dict:
+    """common protocol params (all rules) - the program reads its criteria here (protocol = behaviour)."""
+    from .. import orders as OR, common_rules as CR
+    try:
+        return CR.params_flat(OR.load_common(HOME))
+    except Exception:                                      # noqa: BLE001
+        return CR.params_flat({"rules": CR.RULES})
+
+
+def model_racks(name: str, values: dict | None = None):
     """racks of the 3D model (STEP 10) moved into plot pt with the fitted transform; cached per file version.
     -> {"rects": [[x0,y0,x1,y1,rack id]], "cable_el": {rack id: EL}, "main_el": EL of the longest rack, "fit": summary}"""
     from .. import twin
@@ -887,7 +896,7 @@ def model_racks(name: str):
     f = pdir(name) / "input" / files["model3d"]
     if not f.exists():
         return None
-    cv = cable.load(pdir(name))["values"]
+    cv = values or cable.load(pdir(name))["values"]
     use_refs = str(cv.get("rack_refs", "사용"))
     refs_off = {x.strip() for x in str(cv.get("rack_refs_off") or "").split(",") if x.strip()}
     key = (name, files["model3d"], f.stat().st_mtime_ns, str(pl.get("_key")), use_refs, tuple(sorted(refs_off)))
@@ -937,13 +946,14 @@ def plot_layout(name: str, rows, values: dict | None = None, dec: dict | None = 
     use_eq = str(vals.get("slot_3d_eq", "")).startswith("사용")
     if src != "PLOT 인식" or use_eq:
         try:
-            mr = model_racks(name)
+            mr = model_racks(name, vals)
         except Exception:                                  # noqa: BLE001 - a broken model must not stop STEP 6
             mr = None
         if mr:
             if src != "PLOT 인식":
                 dd["racks_model"] = mr["rects"]
                 dd["rack_src"] = src
+                dd["same_rack_pct"] = proto_params().get("P11.same_rack_pct")
             if use_eq:
                 dd["eq_model"] = mr.get("eq") or []
     return plotmod.Layout(pl, pt, [r.unit for r in rows if r.unit], dd)
@@ -1032,7 +1042,7 @@ def cable_result(name: str, values: dict | None = None, dec: dict | None = None)
         s["concept_notes"] = []
     if s["values"].get("rack_el_src", "").startswith("3D"):     # tray EL from the model's cable tier (not saved)
         try:
-            mr = model_racks(name)
+            mr = model_racks(name, s["values"])
         except Exception:                                  # noqa: BLE001
             mr = None
         if mr and mr.get("main_el"):
@@ -1361,7 +1371,9 @@ def loop_make(name: str, seven_only: bool = False):
     rules = LP.load_rules(d)["comments"]
     s, res, lay = cable_result(name)
     v = s["values"]
-    (pk / LP.PROMPT_NAME).write_text(LP.build_prompt(name, n, v, base, meta_, recs, tf, rules, "model/" + mj.name), encoding="utf-8")
+    from .. import orders as OR
+    (pk / LP.PROMPT_NAME).write_text(LP.build_prompt(name, n, v, base, meta_, recs, tf, rules, "model/" + mj.name, OR.load_common(HOME)),
+                                     encoding="utf-8")
     # base summary: quantities from the T-NORMAL run, margins from 05
     sc = list(_csv.DictReader(open(pk / "01_scope.csv", encoding="utf-8")))
     run = json.loads((pk / "evidence" / "run_T-NORMAL.json").read_text(encoding="utf-8"))["results"]
@@ -1373,8 +1385,9 @@ def loop_make(name: str, seven_only: bool = False):
     corr = list(_csv.DictReader(open(pk / "evidence" / "correction_log.csv", encoding="utf-8")))
     names = {k: it["name"] for k, it in cable.ITEMS.items()}
     prev = rs[-1] if rs else None
+    p11 = [r for r in _csv.reader(open(pk / "evidence" / "plot_vs_3d.csv", encoding="utf-8"))][1:] if (pk / "evidence" / "plot_vs_3d.csv").exists() else []
     (pk / "BASE_SUMMARY.md").write_text(LP.base_summary(name, n, meta_, items, v, cable.DEFAULTS, names, corr, man["sources"], prev, rules,
-                                                        LP.zip_list(seven_only)), encoding="utf-8")
+                                                        LP.zip_list(seven_only), p11), encoding="utf-8")
     pl = plot_read(name)
     if pl:
         try:
@@ -1419,6 +1432,72 @@ def loop_attach_ai(name: str, n: int, fname: str, data: bytes):
     rd["ai3d"] = info["file"]
     LP.save_rounds(d, rs)
     return loop_view(name)
+
+
+def plot_vs_3d(name: str, s: dict) -> list:
+    """protocol P11: where the plot plan and the 3D model differ, with the program's verdict. Criteria from the protocol."""
+    from .. import twin
+    P = proto_params()
+    tol, det, same = float(P["P11.pos_tol_m"]), float(P["P11.detour_pct"]), float(P["P11.same_rack_pct"]) / 100
+    files = meta(name).get("files", {})
+    pl = plot_read(name)
+    if not files.get("model3d") or not pl:
+        return []
+    v = s["values"]
+    base = twin.parse_base(pdir(name) / "input" / files["model3d"])
+    ours = [{"id": f"RACK-{i + 1:02d}", "rect_pt": r[:4], "axis": "x" if (r[4] if len(r) > 4 else "H") == "H" else "y"}
+            for i, r in enumerate(pl.get("racks") or [])]
+    tf = twin.fit(pl, ours, base)
+    rows = []
+    add = lambda kind, item, a, b, imp, verdict, action: rows.append([kind, item, a, b, imp, verdict, action, "P11"])
+    # (1) heights
+    allm = model_racks(name, {**v, "rack_refs": "사용", "rack_refs_off": ""}) or {}
+    used = {r[4] for r in (model_racks(name, v) or {}).get("rects", [])} if v.get("rack_src") != "PLOT 인식" else set()
+    for rid, el in (allm.get("cable_el") or {}).items():
+        add("높이", f"랙 {rid}", "PLOT에 높이 없음", f"케이블 단 EL {el} m", "", "INFO", "3D 값 사용" if rid in used else "이 랙은 경로에 안 씀")
+    # (2) equipment positions after the fit
+    eq = tf.get("equipment") or []
+    ok = [e for e in eq if e["d"] <= tol]
+    if ok:
+        add("장비 위치", f"{len(ok)}개", "", f"차이 ≤ {tol:g} m", "", "INFO", "그림만 3D에 맞춤, 물량은 Base")
+    for e in eq:
+        if e["d"] > tol:
+            add("장비 위치", e["tag"], "PLOT 위치", f"3D와 {e['d']} m 차이 (ΔX {e['dx']}, ΔZ {e['dz']})", "", "HOLD",
+                "어느 도면이 최신인지 확인 (PLOT 리비전 / 3D 리비전)")
+    # (3) racks: same / PLOT only / 3D only
+    rects = allm.get("rects") or []
+    ov = lambda r, q: max(0, min(r[2], q[2]) - max(r[0], q[0])) * max(0, min(r[3], q[3]) - max(r[1], q[1]))
+    area = lambda r: max(1e-6, (r[2] - r[0]) * (r[3] - r[1]))
+    pr = [r for r in (pl.get("racks") or [])]
+    same_n = {}
+    for i, r in enumerate(pr):
+        best = max(rects, key=lambda q: ov(r, q), default=None)
+        if best is not None and ov(r, best) / area(r) >= same:
+            same_n[best[4]] = same_n.get(best[4], 0) + 1
+        else:
+            add("랙", f"PLOT 랙 {i + 1}", f"{[round(x) for x in r[:4]]} pt", "3D에 없음", "", "INFO", "Base(PLOT) 랙 유지, 배관팀에 알림")
+    for rid, n in same_n.items():
+        add("랙", f"3D 랙 {rid}", f"PLOT 랙 조각 {n}개", "같은 랙", "", "INFO", "하나의 랙으로, 형상은 3D")
+    refs = {k: r for k, r in base["racks"].items() if r.get("ref")}
+    if v.get("rack_src") in ("둘 다", "3D 모델 랙"):
+        c0 = sum(c["length"] for c in cable_result(name)[1]["cables"])
+        offs = {x.strip() for x in str(v.get("rack_refs_off") or "").split(",") if x.strip()}
+        for rid, r in refs.items():
+            if rid in same_n:                               # the plot shows it too: it is the same rack, not 3D-only
+                continue
+            on = (v.get("rack_refs") == "사용" or (v.get("rack_refs") == "서브 랙만" and r.get("kind") == "sub")) and rid not in offs
+            alt = sorted(offs - {rid}) if not on else sorted(offs | {rid})
+            c1 = sum(c["length"] for c in cable_result(name, {"rack_refs": "사용" if not on else v.get("rack_refs"),
+                                                             "rack_refs_off": ",".join(alt)})[1]["cables"])
+            with_, without = (c0, c1) if on else (c1, c0)
+            dp = round(100 * (with_ - without) / max(1, without), 2)
+            imp = f"넣으면 케이블 {with_ - without:+,.0f} m ({dp:+g}%)"
+            if on:
+                add("3D에만 있는 구조물", f"{rid} {r['name'][:40]}", "PLOT에 없음", f"EL {r['cable_el']} m", imp,
+                    "HOLD" if dp > det else "INFO", f"사용 중 - 증가가 {det:g}% 넘음, 사람 확인" if dp > det else "사용 중 (사람 결정)")
+            else:
+                add("3D에만 있는 구조물", f"{rid} {r['name'][:40]}", "PLOT에 없음", f"EL {r['cable_el']} m", imp, "INFO", "제외 중 (사람 결정)")
+    return rows
 
 
 def vplan_view(name: str):
@@ -1488,7 +1567,7 @@ def _handoff_ctx(name, version, base, base_path, model_file, inst, tf, s, c, res
             jj = jbi.get(j["no"]) or {}
             j["extra"] = {"멀티": jj.get("multi", ""), "멀티 크기": jj.get("multi_size", ""), "스페어": jj.get("spare", ""),
                           "단자": jj.get("terminals", ""), "태그": ", ".join(jj.get("tags") or [])[:300]}
-        i3 = twin.to_model(d3, tf, base, s3["values"])
+        i3 = twin.to_model(d3, tf, base, s3["values"], proto_params())
         if inst.get("moves"):
             files = meta(name).get("files", {})
             twin.avoid(i3, twin.load_other(pdir(name) / "input" / files["other3d"]), base, s3["values"])
@@ -1516,7 +1595,11 @@ def _handoff_ctx(name, version, base, base_path, model_file, inst, tf, s, c, res
                    "approved": x.get("approved")} for x in ait.load(d / "decision_log.json", [])]
     decisions_ += [{"decision": "중복 설정 합침 (C03·C04·H06 → STEP 6)", "ref": "인수인계 0-1c", "approved": "사용자 2026-11-27"},
                    {"decision": "패키지 멀티 중간 묶음 안 함", "ref": "인수인계 0-1c", "approved": "사용자 2026-11-27"}]
-    return {"project": name, "version": version, "pdir": d, "base": base, "base_path": base_path, "model_file": model_file, "inst": inst,
+    try:
+        p11 = plot_vs_3d(name, s)
+    except Exception as e:                                 # noqa: BLE001 - the package still goes out
+        p11 = [["오류", str(e)[:200], "", "", "", "HOLD", "plot_vs_3d 확인", "P11"]]
+    return {"plot_vs_3d": p11, "project": name, "version": version, "pdir": d, "base": base, "base_path": base_path, "model_file": model_file, "inst": inst,
             "tf": tf, "s": s, "rows": rows, "res": res, "tr": tr, "sp": sp, "sources": srcs, "audit": val, "check_summary": chk,
             "run_case": run_case, "reproduce": reproduce, "corrections": corr, "seed_modifications": mods,
             "concept_items": {k: {"name": v.get("name"), "value": v.get("value")} for k, v in con.items.items()},
@@ -1552,7 +1635,7 @@ def export_twin(name: str):
     base_path = pdir(name) / "input" / files["model3d"]
     base = twin.parse_base(base_path)
     tf = twin.fit(plot_read(name) or {}, d3["racks"], base)
-    inst = twin.to_model(d3, tf, base, s["values"])
+    inst = twin.to_model(d3, tf, base, s["values"], proto_params())
     inst.update(version=VERSION, project=name)
     moves, other = [], None
     if files.get("other3d") and (pdir(name) / "input" / files["other3d"]).exists():
@@ -1623,8 +1706,8 @@ def export_twin(name: str):
 
 
 # ------------------------------------------------------------------ v13.2 결정 보호 + 3D 반영 관문
-GATE_3D = {"rack_src": "3D 모델 랙", "rack_el_src": "3D 모델 케이블 단", "slot_3d_eq": "사용 (3D 모델 있을 때)"}
-GATE_WHY = {"rack_src": "경로가 PLOT 인식 랙 대신 배관 3D 모델 랙을 탐 (사람이 그린 랙은 그대로 더해짐)",
+GATE_3D = {"rack_src": "둘 다", "rack_el_src": "3D 모델 케이블 단", "slot_3d_eq": "사용 (3D 모델 있을 때)"}
+GATE_WHY = {"rack_src": "같은 랙은 하나로(형상은 3D), PLOT에만 있는 랙은 그대로, 3D에만 있는 랙은 추가 (프로토콜 P11, 사람이 그린 랙도 그대로)",
             "rack_el_src": "랙 위 트레이 EL = 3D 모델 케이블 단 EL",
             "slot_3d_eq": "3D 모델 장비 상자 안 자리에는 JB를 두지 않음 (자동 배치만, 사람이 옮긴 JB는 그대로)"}
 
@@ -2304,7 +2387,14 @@ class H(BaseHTTPRequestHandler):
                     b = self._json()
                     return self._send(200, loop_make(name, bool(b.get("seven_only"))))
                 if sub == "comment" and method == "POST":
-                    LP.comment_update(pdir(name), self._json())
+                    b = self._json()
+                    dd_ = LP.comment_update(pdir(name), b)
+                    c_ = next((x for x in dd_["comments"] if x["id"] == b.get("id")), None)
+                    if b.get("approve") and c_ and c_.get("scope") == "공통" and not c_.get("common_id"):
+                        from .. import orders as OR
+                        cm = OR.add_common_rule(HOME, c_["rule_text"], c_["computer_text"], c_["maintenance_text"], c_["text"], "comment", c_.get("approved_by", ""))
+                        c_["common_id"] = cm["rules"][-1]["id"]
+                        LP.save_rules(pdir(name), dd_)
                     return self._send(200, loop_view(name))
                 if sub == "ai3d" and method == "POST":
                     fn = Path(unquote(self.headers.get("X-Filename", "ai3d.html"))).name

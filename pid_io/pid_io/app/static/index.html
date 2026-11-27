@@ -346,11 +346,12 @@ async function renderLoop(data) {
         ${c.rule_id?`<span class="chip b">${esc(c.rule_id)} · R${c.round_applied}부터</span>`:c.round_applied!=null&&c.status==="APPLIED"?`<span class="chip b">R${c.round_applied} 반영</span>`:""} <span class="def">R${c.round}에 대한 코멘트${c.target?" · 대상 "+esc(c.target):""}${c.by?" · "+esc(c.by):""}</span></div>
       <div class="b">"${esc(c.text)}"</div>
       ${c.status==="OPEN" ? (c.kind==="PROMPT"
-        ? `<div style="margin-top:6px;font-size:12px">프롬프트에 넣을 문장 (고쳐도 됨):</div><textarea data-lprule="${esc(c.id)}" rows="2" style="width:100%">${esc(c.rule_text)}</textarea>
+        ? `<div style="margin-top:6px;font-size:12px">엔지니어 관점 (설계 언어):</div><textarea data-lprule="${esc(c.id)}" rows="2" style="width:100%">${esc(c.rule_text)}</textarea>
+           <div style="margin-top:4px;font-size:12px">컴퓨터 관점 (회사 AI에게 줄 문장: 대상 ID·수치·판정을 구체적으로, 뜻은 위와 같게):</div><textarea data-lpcomp="${esc(c.id)}" rows="2" style="width:100%" placeholder="비우면 엔지니어 문장 그대로 (승인 뒤 '확인 필요' 표시)">${esc(c.computer_text||"")}</textarea>
            <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;align-items:center"><select data-lpscope="${esc(c.id)}"><option ${c.scope==="프로젝트"?"selected":""}>프로젝트</option><option ${c.scope==="공통"?"selected":""}>공통</option></select>
              <button class="btn sm" data-lpok="${esc(c.id)}">승인 → 다음 Rev 프롬프트에</button><button class="btn sm line" data-lphold="${esc(c.id)}">보류</button><button class="btn sm line" data-lpdel="${esc(c.id)}">삭제</button></div>`
         : `<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap"><span class="def">STEP 6~9에서 Base(설정·PLOT 마크업)를 고친 뒤</span><button class="btn sm" data-lpdone="${esc(c.id)}">반영 완료</button><button class="btn sm line" data-lphold="${esc(c.id)}">보류</button><button class="btn sm line" data-lpdel="${esc(c.id)}">삭제</button></div>`)
-        : (c.status==="APPLIED"&&c.rule_id?`<div style="margin-top:4px;font-size:12px">프롬프트 문장: ${esc(c.rule_text)} <a data-lpret="${esc(c.id)}" style="cursor:pointer;color:var(--sub)">· 폐기</a></div>`:"")}</div>`;
+        : (c.status==="APPLIED"&&c.rule_id?`<div style="margin-top:4px;font-size:12px"><b>엔지니어</b> ${esc(c.rule_text)}<br><b>컴퓨터</b> ${esc(c.computer_text||c.rule_text)}${c.needs_review?' <span class="chip y">두 관점 같은 문장 - 확인 필요</span>':""}<br><b>유지보수</b> ${esc(c.maintenance_text||"")}${c.common_id?` <span class="chip b">공통 ${esc(c.common_id)}</span>`:""} <a data-lpret="${esc(c.id)}" style="cursor:pointer;color:var(--sub)">· 폐기</a></div>`:"")}</div>`;
   let h = `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">3D 구현 루프 ${last?`<span class="chip b">현재 R${last.round}</span>`:""}</h2>
       <span style="display:flex;gap:8px;align-items:center"><label style="font-size:12px"><input type="checkbox" id="lpseven" ${LPS.seven?"checked":""}> 제출 zip 7종만</label><button class="btn" id="lpmk">R${d.next} 만들기</button></span></div>
     <p class="xnote">① R 만들기 → 제출 zip(7종 + 3D 구현 프롬프트 + Base 요약 + PLOT 마크업 + 좌표 데이터)을 회사 AI에 넣어 3D 작성 ② AI가 그린 3D HTML을 여기 올려 보고 ③ 코멘트 → 프롬프트 수정은 승인하면 다음 Rev 프롬프트에, Base 수정은 STEP 6~9에서 고친 뒤 '반영 완료' ④ 다음 R 만들기. 최종 Rev의 제출 zip을 냅니다.</p>
@@ -375,7 +376,8 @@ async function renderLoop(data) {
   $("#lpadd").onclick = () => { const t = $("#lptext").value.trim(); if (!t) return toast("코멘트를 적어 주세요", true);
     send({add:{text:t, target:$("#lptarget").value, kind:$("#lpkind").value, by:$("#lpby").value}}); };
   box.querySelectorAll("[data-lpok]").forEach(b => b.onclick = () => { const id = b.dataset.lpok;
-    send({id, rule_text: box.querySelector(`[data-lprule="${id}"]`).value, scope: box.querySelector(`[data-lpscope="${id}"]`).value, approve:true, by:$("#lpby").value}); });
+    send({id, rule_text: box.querySelector(`[data-lprule="${id}"]`).value, computer_text: box.querySelector(`[data-lpcomp="${id}"]`).value,
+          scope: box.querySelector(`[data-lpscope="${id}"]`).value, approve:true, by:$("#lpby").value}); });
   box.querySelectorAll("[data-lpdone]").forEach(b => b.onclick = () => send({id:b.dataset.lpdone, done:true, by:$("#lpby").value}));
   box.querySelectorAll("[data-lphold]").forEach(b => b.onclick = () => send({id:b.dataset.lphold, hold:true}));
   box.querySelectorAll("[data-lpdel]").forEach(b => b.onclick = () => confirm("이 코멘트를 지울까요?") && send({id:b.dataset.lpdel, delete:true}));
@@ -2002,7 +2004,9 @@ function orderBox(o, d) {
         <div style="margin-top:4px;display:flex;gap:6px;align-items:center;flex-wrap:wrap"><select data-lscope="${esc(l.id)}"><option value="common" ${l.scope==="common"?"selected":""}>공통</option><option value="project" ${l.scope==="project"?"selected":""}>프로젝트</option></select>
         <span style="color:var(--sub)">근거 ${l.evidence}회 · ${esc(l.projects.join(", "))} · ${esc(l.by)}</span>${l.suggest_promote?`<span class="chip g">승격 추천</span>`:""}
         <button class="btn sm" data-lok="${esc(l.id)}">승인</button><button class="btn sm line" data-lno="${esc(l.id)}">버리기</button></div></div>`).join("")||`<div class="empty" style="padding:8px">승인 대기 없음</div>`}
-      <details style="margin-top:6px"><summary style="cursor:pointer;font-size:12.5px">공통 프로토콜 보기</summary><ol style="font-size:12px;line-height:1.6">${o.common.rules.map(r=>`<li><b>${esc(r.id)}</b> ${esc(r.text)}${r.src==="lesson"?` <span class="chip">배운 것</span>`:""}</li>`).join("")}</ol>
+      <details style="margin-top:6px"><summary style="cursor:pointer;font-size:12.5px">공통 프로토콜 보기 (엔지니어 · 컴퓨터 · 유지보수 관점)</summary>
+        <div style="margin:6px 0"><select id="pvview"><option value="text">엔지니어 관점</option><option value="computer">컴퓨터 관점</option><option value="maintenance">유지보수 관점</option></select></div>
+        <ol style="font-size:12px;line-height:1.6" id="pvlist">${o.common.rules.map(r=>`<li><b>${esc(r.id)} ${esc(r.title||"")}</b> <span data-pv="${esc(r.id)}">${esc(r.text)}</span>${r.src!=="seed"?` <span class="chip">${r.src==="comment"?"코멘트":"배운 것"}</span>`:""}${r.needs_review?` <span class="chip y">관점 확인 필요</span>`:""}</li>`).join("")}</ol>
         <div style="font-size:11.5px;color:var(--sub)">${o.common.changelog.map(c=>`v${esc(c.version)} ${esc(c.at)} ${esc(c.what)}`).join("<br>")}</div></details>
     </details>
   </div>`;
@@ -2105,6 +2109,8 @@ async function renderTwin(m) {
   </div>`;
   renderVPlan(); renderLoop();
   if ($("#twmore")) $("#twmore").ontoggle = e => { S.twMore = e.target.open; };
+  if ($("#pvview") && od) $("#pvview").onchange = e => { const k = e.target.value; od.common.rules.forEach(r => { const el = document.querySelector(`[data-pv="${r.id}"]`);
+    if (el) el.textContent = k === "text" ? r.text : (r[k] || "").replace(/\{(\w+)\}/g, (m, p) => (r.params||{})[p] ?? m); }); };
   const twset = async body => { try { await post(P("cable"), body); renderTwin(m); } catch(e) { toast(e.message, true); } };
   m.querySelectorAll("[data-ck]").forEach(el => el.onchange = () => twset({set:{[el.dataset.ck]: el.value}}));
   m.querySelectorAll("[data-cktog]").forEach(el => el.onclick = () => { const it = d.schema[0].items.find(x=>x.id===el.dataset.cktog);

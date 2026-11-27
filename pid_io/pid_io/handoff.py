@@ -746,6 +746,8 @@ def write_package(setdir: Path, ctx: dict) -> dict:
     for p in ctx.get("evidence_files") or []:
         if p and Path(p).exists():
             shutil.copy2(p, pkg / "evidence" / Path(p).name)
+    p11 = ctx.get("plot_vs_3d") or []
+    wcsv("evidence/plot_vs_3d.csv", ["구분", "항목", "PLOT", "3D", "물량 영향", "판정", "조치", "프로토콜"], p11)
     wcsv("evidence/pid_io_audit.csv", ["case_id", "check", "expected", "actual", "result", "by", "detail"], ctx.get("audit") or [])
     corr = ctx.get("corrections") or []
     wcsv("evidence/correction_log.csv", ["correction_id", "kind", "object_id", "drawing", "page", "drawing_value", "read_value", "engineer_value",
@@ -779,6 +781,11 @@ def write_package(setdir: Path, ctx: dict) -> dict:
          "reason": f"계기 위치 다수 추정, 좌표 맞춤 잔차 중앙값 {tf['median_m']} m / 최대 {tf['max_m']} m", "action": "태그 위치 자료 · 3D 좌표 확인", "owner": "CI"},
         {"issue_id": "IS-004", "status": "OPEN", "scope_ids": [], "reason": "전기 공용 통로 인터페이스 미합의 (IF-EL-ROUTE)", "action": "전기 3D 데이터 수신 후 합의", "owner": "CI / EL"},
     ]
+    p11_hold = [r for r in p11 if r[5] == "HOLD"]
+    if p11_hold:
+        issues.append({"issue_id": "IS-P11", "status": "OPEN", "scope_ids": [x["scope_id"] for x in direct if x["unit"] == "m"],
+                       "reason": f"3D와 PLOT 불일치 HOLD {len(p11_hold)}건 (프로토콜 P11): " + "; ".join(f"{r[1]} {r[3]}" for r in p11_hold[:5]),
+                       "action": "evidence/plot_vs_3d.csv 확인 후 사람 결정", "owner": "CI"})
     if not any(c.get("locked_at") for c in cases):
         issues.append({"issue_id": "IS-005", "status": "OPEN", "scope_ids": [x["scope_id"] for x in direct],
                        "reason": "독립 검증 기대값 잠금 없음 (05 전부 HOLD)", "action": "STEP 10 '독립 검증 기대값 잠금'", "owner": "CI 책임자"})

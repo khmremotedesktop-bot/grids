@@ -7,10 +7,10 @@
  "scope_rev": "01",
  "rule_rev": "01",
  "model_rev": "01",
- "case_id": "T-CHANGED-AG",
- "executed_at": "2026-11-27T08:50:59+09:00",
+ "case_id": "T-CHANGED-SPARE30",
+ "executed_at": "2026-11-27T09:19:21+09:00",
  "overrides": {
-  "trunk_off": "AG 서포트"
+  "jb_spare": 0.3
  },
  "results": {
   "CI-INST": {
@@ -44,27 +44,27 @@
    "unit": "EA"
   },
   "CI-CB-MC-48PX125SQOS": {
-   "value": 950,
+   "value": 925,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-CB-MU-40PX125SQISOS": {
-   "value": 4510,
+   "value": 4590,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-CB-MU-40PX125SQOS": {
-   "value": 3350,
+   "value": 3410,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-CB-MU-60PX125SQISOS": {
-   "value": 280,
+   "value": 285,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-CB-MU-60PX125SQOS": {
-   "value": 280,
+   "value": 285,
    "status": "VALUE",
    "unit": "m"
   },
@@ -79,12 +79,12 @@
    "unit": "m"
   },
   "CI-CB-CM-FO12CSMARMOURED": {
-   "value": 3310,
+   "value": 3380,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-CB-PK-6PX125SQOS": {
-   "value": 38000,
+   "value": 38610,
    "status": "VALUE",
    "unit": "m"
   },
@@ -99,37 +99,37 @@
    "unit": "EA"
   },
   "CI-TR-SIG-300": {
-   "value": 1028,
+   "value": 455,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-TR-SIG-600": {
-   "value": 184,
+   "value": 74,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-TR-SIG-900": {
-   "value": 472,
+   "value": 250,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-TR-COM-300": {
-   "value": 648,
+   "value": 311,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-UG-W300": {
-   "value": null,
+   "value": 605,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-UG-W450": {
-   "value": null,
+   "value": 78,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-UG-W1200": {
-   "value": null,
+   "value": 111,
    "status": "VALUE",
    "unit": "m"
   },
@@ -154,7 +154,7 @@
    "unit": "EA"
   },
   "CI-SP-UB": {
-   "value": null,
+   "value": 587,
    "status": "VALUE",
    "unit": "EA"
   },
@@ -164,20 +164,20 @@
    "unit": "EA"
   },
   "CI-SP-KG": {
-   "value": 25697.5,
+   "value": 10759.2,
    "status": "VALUE",
    "unit": "kg"
   },
   "CI-SP-EXP": {
-   "value": 26,
+   "value": 6,
    "status": "VALUE",
    "unit": "SET"
   }
  },
  "info": {
-  "cables": 415,
+  "cables": 417,
   "jbs": 30,
-  "by_plot": 415,
+  "by_plot": 417,
   "plot_gone": false,
   "note": ""
  }

@@ -70,7 +70,7 @@ def comment_update(pdir: Path, b: dict) -> dict:
             if c["status"] == "APPLIED" and c.get("rule_id"):
                 raise ValueError("이미 프롬프트에 들어간 규칙은 지우지 않고 '폐기'로 남깁니다")
             d["comments"].remove(c)
-        for k in ("rule_text", "kind", "scope", "target"):
+        for k in ("rule_text", "computer_text", "kind", "scope", "target"):
             if k in b:
                 c[k] = b[k]
         if b.get("approve"):                                  # becomes a prompt rule from the next round on
@@ -79,6 +79,11 @@ def comment_update(pdir: Path, b: dict) -> dict:
             n = 1 + max([int(x["rule_id"][3:]) for x in d["comments"] if x.get("rule_id")] or [0])
             c.update(status="APPLIED", rule_id=c.get("rule_id") or f"PR-{n:03d}", approved_at=now_iso(),
                      approved_by=(b.get("by") or "").strip(), round_applied=cur + 1)
+            c["computer_text"] = (c.get("computer_text") or "").strip() or c["rule_text"]
+            c["maintenance_text"] = (f"코멘트 {c['id']} (R{c['round']}{', 대상 ' + c['target'] if c.get('target') else ''}) → "
+                                     f"{c['rule_id']}, R{c['round_applied']}부터, 승인 {c.get('approved_by') or '(이름 없음)'} {c['approved_at'][:16]}. "
+                                     "바꾸려면 코멘트 '폐기' 후 새 코멘트")
+            c["needs_review"] = c["computer_text"] == c["rule_text"]     # same sentence for both views: a person checks
         if b.get("done"):                                     # base fix done in STEP 6~9
             c.update(status="APPLIED", approved_at=now_iso(), approved_by=(b.get("by") or "").strip(), round_applied=cur + 1)
         if b.get("hold"):
@@ -91,7 +96,8 @@ def comment_update(pdir: Path, b: dict) -> dict:
 
 
 # ------------------------------------------------------------------ 3D 구현 프롬프트
-def build_prompt(project: str, n: int, v: dict, base: dict, meta: dict, recs: list, tf: dict, rules: list, model_json: str) -> str:
+def build_prompt(project: str, n: int, v: dict, base: dict, meta: dict, recs: list, tf: dict, rules: list, model_json: str,
+                 common: dict | None = None) -> str:
     from collections import Counter
     cnt = Counter(r["entity_id"] for r in recs)
     fit = Counter(r["geometry"]["type"] for r in recs if r["entity_id"] == "E-FITTING")
@@ -188,13 +194,20 @@ def build_prompt(project: str, n: int, v: dict, base: dict, meta: dict, recs: li
     a("## 6. 코멘트 반영 규칙 (사람 승인, 이전 Rev에서 누적)")
     if active:
         for r in active:
-            a(f"- **{r['rule_id']}** (R{r.get('round_applied', '?')}, {r.get('scope', '프로젝트')}){' 대상 ' + r['target'] if r.get('target') else ''}: {r['rule_text']}")
+            a(f"- **{r['rule_id']}** (R{r.get('round_applied', '?')}, {r.get('scope', '프로젝트')}){' 대상 ' + r['target'] if r.get('target') else ''}: "
+              f"{r.get('computer_text') or r['rule_text']}")
     else:
         a("- (아직 없음 - R0)")
     retired = [r for r in rules if r["status"] == "RETIRED" and r.get("rule_id")]
     if retired:
         a("- 폐기된 규칙(적용하지 말 것): " + ", ".join(r["rule_id"] for r in retired))
     a("")
+    if common:
+        from .common_rules import render
+        a(f"## 6-1. 공통 프로토콜 v{common.get('version')} (컴퓨터 관점 — 엔지니어·유지보수 관점과 같은 규칙, COMMON_PROTOCOL.md)")
+        for r in common.get("rules", []):
+            a(f"- **{r['id']} {r.get('title', '')}**: {render(r.get('computer') or r.get('text', ''), r.get('params') or {})}")
+        a("")
     a("## 7. 끝나면 확인하고 보고")
     a("1. 레이어별 객체 수 = records 수 (계기·분기·Perforated 제외).")
     a("2. 트레이 1개를 골라 단면 보기 → cable_section 개수만큼 원이 보이는지.")
@@ -269,7 +282,7 @@ def markup_png(plot_png: Path, plot_size, res, tr, layout, v, dec: dict, out: Pa
 
 # ------------------------------------------------------------------ Base 요약
 def base_summary(project: str, n: int, meta: dict, items: list, v: dict, defaults: dict, names: dict, corr: list, sources: list,
-                 prev: dict | None, rules: list, zip_list: list) -> str:
+                 prev: dict | None, rules: list, zip_list: list, p11: list | None = None) -> str:
     L = []
     a = L.append
     a(f"# Base 요약 — 계장 (T1-CI) · {project} · R{n}")
@@ -319,20 +332,30 @@ def base_summary(project: str, n: int, meta: dict, items: list, v: dict, default
     else:
         a("- 없음" + (" (R0 기준선)" if n == 0 else ""))
     a("")
-    a("## 5. 원본 목록 (제출하지 않음 · 요청 시 제공)")
+    a("## 5. 3D와 PLOT이 다른 곳 (프로토콜 P11) — 자세히 evidence/plot_vs_3d.csv")
+    p11 = p11 or []
+    if p11:
+        a("| 구분 | 항목 | 3D | 물량 영향 | 판정 | 조치 |")
+        a("|---|---|---|---|---|---|")
+        for r in [x for x in p11 if x[5] == "HOLD"] + [x for x in p11 if x[5] != "HOLD" and x[0] != "높이"][:12]:
+            a(f"| {r[0]} | {r[1]} | {r[3]} | {r[4]} | {r[5]} | {r[6]} |")
+    else:
+        a("- 없음 (3D 모델 없음)")
+    a("")
+    a("## 6. 원본 목록 (제출하지 않음 · 요청 시 제공)")
     a("| source_id | 파일 | Rev | authority | SHA-256 |")
     a("|---|---|---|---|---|")
     for s in sources:
         a(f"| {s['source_id']} | {s['filename']} | {s['revision']} | {s['authority']} | {(s.get('checksum') or '')[7:23]}… |")
     a("")
-    a("## 6. 이 제출 묶음")
+    a("## 7. 이 제출 묶음")
     for z in zip_list:
         a(f"- {z}")
     return "\n".join(L) + "\n"
 
 
 # ------------------------------------------------------------------ 제출 zip
-SUBMIT_EVIDENCE = ("correction_log.csv", "model_checks.json", "pid_io_audit.csv")
+SUBMIT_EVIDENCE = ("correction_log.csv", "model_checks.json", "pid_io_audit.csv", "plot_vs_3d.csv", "COMMON_PROTOCOL.md", "COMMON_PROTOCOL.json")
 
 
 def make_zip(pkg: Path, n: int, seven_only: bool = False) -> Path:
@@ -355,7 +378,7 @@ def zip_list(seven_only=False) -> list:
     if not seven_only:
         l += ["model/ 보강 모델 HTML + STRUCTURED_MODEL_DATA (DELTA)", PROMPT_NAME + " (회사 AI용 3D 구현 프롬프트)",
               "BASE_SUMMARY.md + PLOT_MARKUP.png", "checkpoint_*.json (회사 Copilot RESUME)",
-              "evidence/ run_*.json · correction_log.csv · model_checks.json · pid_io_audit.csv (큰 근거 파일은 참조)"]
+              "evidence/ COMMON_PROTOCOL.md (공통 프로토콜, 엔지니어 · 컴퓨터 · 유지보수 관점) · plot_vs_3d.csv (3D와 PLOT 차이, P11) · run_*.json · correction_log.csv · model_checks.json · pid_io_audit.csv (큰 근거 파일은 참조)"]
     return l
 
 

@@ -192,7 +192,11 @@ def fit(plot: dict, our_racks: list, base: dict, w_rack: float = 3.0) -> dict:
 
 
 # ------------------------------------------------------------------ our data in the model frame
-def to_model(d3: dict, tf: dict, base: dict, v: dict) -> dict:
+def to_model(d3: dict, tf: dict, base: dict, v: dict, proto: dict | None = None) -> dict:
+    """proto = common protocol params (P05 slot_gap_m ...). Defaults are the protocol seed values, not numbers here."""
+    from .common_rules import RULES
+    seed = {k: v_ for r in RULES for k, v_ in (r.get("params") or {}).items()}
+    proto = {**seed, **(proto or {})}
     s, tx, tz = tf["s"], tf["tx"], tf["tz"]
     racks = base["racks"]
     rack_el = float(v["rack_el"])
@@ -260,7 +264,7 @@ def to_model(d3: dict, tf: dict, base: dict, v: dict) -> dict:
     # v13.1 lane packing: a rack tray belongs to the rack running the same way as the tray; every tray on that rack
     # gets its own slot across the rack (trays of different segments over the same stretch no longer share a lane).
     slots = {}                                           # rack id -> [(along0, along1, side0, side1)]
-    gap_m = 0.1
+    gap_m = float(proto["slot_gap_m"])                  # protocol P05
 
     def rack_for(t):
         (ax_, az_), (bx_, bz_) = xz(t["start"]["pt"]), xz(t["end"]["pt"])

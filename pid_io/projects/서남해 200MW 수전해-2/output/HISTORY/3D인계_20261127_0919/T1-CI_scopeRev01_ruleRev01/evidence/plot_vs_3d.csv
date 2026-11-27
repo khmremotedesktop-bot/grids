@@ -1,0 +1,26 @@
+구분,항목,PLOT,3D,물량 영향,판정,조치,프로토콜
+높이,랙 A,PLOT에 높이 없음,케이블 단 EL 11.0 m,,INFO,3D 값 사용,P11
+높이,랙 C,PLOT에 높이 없음,케이블 단 EL 11.0 m,,INFO,3D 값 사용,P11
+높이,랙 EW,PLOT에 높이 없음,케이블 단 EL 11.8 m,,INFO,3D 값 사용,P11
+높이,랙 REF-XR1,PLOT에 높이 없음,케이블 단 EL 6.0 m,,INFO,3D 값 사용,P11
+높이,랙 REF-XR2,PLOT에 높이 없음,케이블 단 EL 6.0 m,,INFO,3D 값 사용,P11
+높이,랙 REF-XR3,PLOT에 높이 없음,케이블 단 EL 6.0 m,,INFO,3D 값 사용,P11
+높이,랙 REF-OB1,PLOT에 높이 없음,케이블 단 EL 9.0 m,,INFO,3D 값 사용,P11
+높이,랙 REF-OB2,PLOT에 높이 없음,케이블 단 EL 9.0 m,,INFO,3D 값 사용,P11
+높이,랙 REF-OB3,PLOT에 높이 없음,케이블 단 EL 9.0 m,,INFO,이 랙은 경로에 안 씀,P11
+높이,랙 REF-SR201N,PLOT에 높이 없음,케이블 단 EL 5.0 m,,INFO,3D 값 사용,P11
+높이,랙 REF-SR201S,PLOT에 높이 없음,케이블 단 EL 5.0 m,,INFO,3D 값 사용,P11
+장비 위치,11개,,차이 ≤ 5 m,,INFO,"그림만 3D에 맞춤, 물량은 Base",P11
+장비 위치,10-TK-801,PLOT 위치,"3D와 9.83 m 차이 (ΔX -1.31, ΔZ -9.75)",,HOLD,어느 도면이 최신인지 확인 (PLOT 리비전 / 3D 리비전),P11
+장비 위치,10-D-601,PLOT 위치,"3D와 7.41 m 차이 (ΔX -7.41, ΔZ -0.36)",,HOLD,어느 도면이 최신인지 확인 (PLOT 리비전 / 3D 리비전),P11
+랙,3D 랙 A,PLOT 랙 조각 11개,같은 랙,,INFO,"하나의 랙으로, 형상은 3D",P11
+랙,3D 랙 REF-XR2,PLOT 랙 조각 1개,같은 랙,,INFO,"하나의 랙으로, 형상은 3D",P11
+랙,3D 랙 REF-XR1,PLOT 랙 조각 1개,같은 랙,,INFO,"하나의 랙으로, 형상은 3D",P11
+랙,3D 랙 REF-XR3,PLOT 랙 조각 1개,같은 랙,,INFO,"하나의 랙으로, 형상은 3D",P11
+랙,3D 랙 EW,PLOT 랙 조각 2개,같은 랙,,INFO,"하나의 랙으로, 형상은 3D",P11
+랙,3D 랙 C,PLOT 랙 조각 1개,같은 랙,,INFO,"하나의 랙으로, 형상은 3D",P11
+3D에만 있는 구조물,REF-OB1 OVER BRIDGE (Rack A ↔ North / Electrical,PLOT에 없음,EL 9.0 m,넣으면 케이블 +0 m (+0%),INFO,사용 중 (사람 결정),P11
+3D에만 있는 구조물,REF-OB2 OVER BRIDGE (Rack C ↔ North / MCB area),PLOT에 없음,EL 9.0 m,넣으면 케이블 +0 m (+0%),INFO,사용 중 (사람 결정),P11
+3D에만 있는 구조물,"REF-OB3 OVER BRIDGE (GIS ↔ MCB, over N-S road)",PLOT에 없음,EL 9.0 m,"넣으면 케이블 +3,175 m (+5.69%)",INFO,제외 중 (사람 결정),P11
+3D에만 있는 구조물,REF-SR201N SUB RACK – 10-PK-201 (between A / B),PLOT에 없음,EL 5.0 m,넣으면 케이블 +0 m (+0%),INFO,사용 중 (사람 결정),P11
+3D에만 있는 구조물,REF-SR201S SUB RACK – 10-PK-201 (between C / D),PLOT에 없음,EL 5.0 m,넣으면 케이블 +10 m (+0.02%),INFO,사용 중 (사람 결정),P11

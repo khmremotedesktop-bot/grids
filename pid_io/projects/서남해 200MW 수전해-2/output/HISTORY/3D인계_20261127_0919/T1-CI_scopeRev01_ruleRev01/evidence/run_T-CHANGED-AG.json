@@ -7,10 +7,10 @@
  "scope_rev": "01",
  "rule_rev": "01",
  "model_rev": "01",
- "case_id": "T-CHANGED-JB60",
- "executed_at": "2026-11-27T08:50:58+09:00",
+ "case_id": "T-CHANGED-AG",
+ "executed_at": "2026-11-27T09:19:21+09:00",
  "overrides": {
-  "jb_sizes": "60"
+  "trunk_off": "AG 서포트"
  },
  "results": {
   "CI-INST": {
@@ -44,27 +44,27 @@
    "unit": "EA"
   },
   "CI-CB-MC-48PX125SQOS": {
-   "value": 925,
+   "value": 950,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-CB-MU-40PX125SQISOS": {
-   "value": null,
+   "value": 4510,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-CB-MU-40PX125SQOS": {
-   "value": null,
+   "value": 3350,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-CB-MU-60PX125SQISOS": {
-   "value": 4875,
+   "value": 280,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-CB-MU-60PX125SQOS": {
-   "value": 3695,
+   "value": 280,
    "status": "VALUE",
    "unit": "m"
   },
@@ -79,57 +79,57 @@
    "unit": "m"
   },
   "CI-CB-CM-FO12CSMARMOURED": {
-   "value": 3380,
+   "value": 3310,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-CB-PK-6PX125SQOS": {
-   "value": 38610,
+   "value": 38000,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-JB-40P": {
-   "value": null,
+   "value": 28,
    "status": "VALUE",
    "unit": "EA"
   },
   "CI-JB-60P": {
-   "value": 30,
+   "value": 2,
    "status": "VALUE",
    "unit": "EA"
   },
   "CI-TR-SIG-300": {
-   "value": 368,
+   "value": 1028,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-TR-SIG-600": {
-   "value": 91,
+   "value": 184,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-TR-SIG-900": {
-   "value": 330,
+   "value": 472,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-TR-COM-300": {
-   "value": 311,
+   "value": 648,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-UG-W300": {
-   "value": 573,
+   "value": null,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-UG-W450": {
-   "value": 110,
+   "value": null,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-UG-W1200": {
-   "value": 107,
+   "value": null,
    "status": "VALUE",
    "unit": "m"
   },
@@ -139,7 +139,7 @@
    "unit": "m"
   },
   "CI-SP-RT": {
-   "value": 16,
+   "value": 15,
    "status": "VALUE",
    "unit": "EA"
   },
@@ -149,12 +149,12 @@
    "unit": "EA"
   },
   "CI-SP-RC": {
-   "value": 54,
+   "value": 55,
    "status": "VALUE",
    "unit": "EA"
   },
   "CI-SP-UB": {
-   "value": 587,
+   "value": null,
    "status": "VALUE",
    "unit": "EA"
   },
@@ -164,12 +164,12 @@
    "unit": "EA"
   },
   "CI-SP-KG": {
-   "value": 10885.7,
+   "value": 25697.5,
    "status": "VALUE",
    "unit": "kg"
   },
   "CI-SP-EXP": {
-   "value": 6,
+   "value": 26,
    "status": "VALUE",
    "unit": "SET"
   }

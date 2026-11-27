@@ -65,7 +65,7 @@
    "filename": "concept.xlsx + cable.json",
    "revision": "프로젝트 현재값",
    "authority": "REFERENCE",
-   "checksum": "sha256:c5b5f9661263f67589df44d0c2fcb4528b461ff4ef07b6f653fd24e44173bb34",
+   "checksum": "sha256:568e7f090ea302aba97bd25f10bf940962ab2e61eeeb26d8a8044de2d6c095d6",
    "note": "설계 가정 (체크리스트 · STEP 6~9 설정). 공종 승인 전이라 REFERENCE - 승인되면 APPROVED_ENGINEERING"
   },
   {
@@ -184,7 +184,7 @@
   {
    "gate_id": "G2",
    "status": "HOLD",
-   "evidence": "02 fields·entities·좌표계, evidence/correction_log.csv (원도 보정 5건) - 확인자 미기록",
+   "evidence": "02 fields·entities·좌표계, evidence/correction_log.csv (원도 보정 6건) - 확인자 미기록",
    "reviewed_by": null
   },
   {
@@ -299,6 +299,32 @@
    "owner": "CI / EL"
   },
   {
+   "issue_id": "IS-P11",
+   "status": "OPEN",
+   "scope_ids": [
+    "CI-CB-MC-48PX125SQOS",
+    "CI-CB-MU-40PX125SQISOS",
+    "CI-CB-MU-40PX125SQOS",
+    "CI-CB-MU-60PX125SQISOS",
+    "CI-CB-MU-60PX125SQOS",
+    "CI-CB-BR-1PX125SQOS",
+    "CI-CB-BR-2CX20SQOS",
+    "CI-CB-CM-FO12CSMARMOURED",
+    "CI-CB-PK-6PX125SQOS",
+    "CI-TR-SIG-300",
+    "CI-TR-SIG-600",
+    "CI-TR-SIG-900",
+    "CI-TR-COM-300",
+    "CI-UG-W300",
+    "CI-UG-W450",
+    "CI-UG-W1200",
+    "CI-PT-100"
+   ],
+   "reason": "3D와 PLOT 불일치 HOLD 2건 (프로토콜 P11): 10-TK-801 3D와 9.83 m 차이 (ΔX -1.31, ΔZ -9.75); 10-D-601 3D와 7.41 m 차이 (ΔX -7.41, ΔZ -0.36)",
+   "action": "evidence/plot_vs_3d.csv 확인 후 사람 결정",
+   "owner": "CI"
+  },
+  {
    "issue_id": "IS-005",
    "status": "OPEN",
    "scope_ids": [
@@ -346,7 +372,7 @@
   "tool": "pid_io",
   "version": "v13.3",
   "project": "서남해 200MW 수전해-2",
-  "made_at": "2026-11-27T08:50:59+09:00",
+  "made_at": "2026-11-27T09:19:22+09:00",
   "pid_io_check": "pid_io audit NG 0 · HOLD 2"
  }
 }

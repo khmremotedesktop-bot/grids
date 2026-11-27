@@ -1,6 +1,6 @@
 # Base 요약 — 계장 (T1-CI) · 서남해 200MW 수전해-2 · R0
 
-scope 01 · rule 01 · model 01 · 2026-11-27T08:51:00+09:00 · 상태 DRAFT_NOT_READY (공종 승인 전)
+scope 01 · rule 01 · model 01 · 2026-11-27T09:19:22+09:00 · 상태 DRAFT_NOT_READY (공종 승인 전)
 
 Base = 산출근거(pid_io 계산: 체크리스트 + STEP 6~9 설정 + 사람 결정) + PLOT 마크업(`PLOT_MARKUP.png`). 원본 큰 파일은 제출하지 않고 아래 '원본 목록'으로 참조합니다.
 
@@ -46,19 +46,37 @@ Base = 산출근거(pid_io 계산: 체크리스트 + STEP 6~9 설정 + 사람 �
 | 설정 | 현재 | 기본값 |
 |---|---|---|
 | 랙 최상단 높이 (트레이 EL) (`rack_el`) | 11.0 | 6.0 |
-| 랙 출처 (`rack_src`) | 3D 모델 랙 | PLOT 인식 |
+| 랙 출처 (`rack_src`) | 둘 다 | PLOT 인식 |
 | 랙 트레이 EL 출처 (`rack_el_src`) | 3D 모델 케이블 단 | 체크리스트 값 |
 | 3D 모델 장비 상자 피하기 (`slot_3d_eq`) | 사용 (3D 모델 있을 때) | 안 함 |
 
 ## 3. 사람 결정 (원도 보정 · 배치 수정) — 자세히 evidence/correction_log.csv
 - 노트 해석 (ONLY ONE SHOWN): 1건
-- 3D 반영 관문: 3건
+- 3D 반영 관문: 4건
 - 합계 (보정 전 → 후): 1건
 
 ## 4. 이번 Rev(R0)에 반영한 코멘트
 - 없음 (R0 기준선)
 
-## 5. 원본 목록 (제출하지 않음 · 요청 시 제공)
+## 5. 3D와 PLOT이 다른 곳 (프로토콜 P11) — 자세히 evidence/plot_vs_3d.csv
+| 구분 | 항목 | 3D | 물량 영향 | 판정 | 조치 |
+|---|---|---|---|---|---|
+| 장비 위치 | 10-TK-801 | 3D와 9.83 m 차이 (ΔX -1.31, ΔZ -9.75) |  | HOLD | 어느 도면이 최신인지 확인 (PLOT 리비전 / 3D 리비전) |
+| 장비 위치 | 10-D-601 | 3D와 7.41 m 차이 (ΔX -7.41, ΔZ -0.36) |  | HOLD | 어느 도면이 최신인지 확인 (PLOT 리비전 / 3D 리비전) |
+| 장비 위치 | 11개 | 차이 ≤ 5 m |  | INFO | 그림만 3D에 맞춤, 물량은 Base |
+| 랙 | 3D 랙 A | 같은 랙 |  | INFO | 하나의 랙으로, 형상은 3D |
+| 랙 | 3D 랙 REF-XR2 | 같은 랙 |  | INFO | 하나의 랙으로, 형상은 3D |
+| 랙 | 3D 랙 REF-XR1 | 같은 랙 |  | INFO | 하나의 랙으로, 형상은 3D |
+| 랙 | 3D 랙 REF-XR3 | 같은 랙 |  | INFO | 하나의 랙으로, 형상은 3D |
+| 랙 | 3D 랙 EW | 같은 랙 |  | INFO | 하나의 랙으로, 형상은 3D |
+| 랙 | 3D 랙 C | 같은 랙 |  | INFO | 하나의 랙으로, 형상은 3D |
+| 3D에만 있는 구조물 | REF-OB1 OVER BRIDGE (Rack A ↔ North / Electrical | EL 9.0 m | 넣으면 케이블 +0 m (+0%) | INFO | 사용 중 (사람 결정) |
+| 3D에만 있는 구조물 | REF-OB2 OVER BRIDGE (Rack C ↔ North / MCB area) | EL 9.0 m | 넣으면 케이블 +0 m (+0%) | INFO | 사용 중 (사람 결정) |
+| 3D에만 있는 구조물 | REF-OB3 OVER BRIDGE (GIS ↔ MCB, over N-S road) | EL 9.0 m | 넣으면 케이블 +3,175 m (+5.69%) | INFO | 제외 중 (사람 결정) |
+| 3D에만 있는 구조물 | REF-SR201N SUB RACK – 10-PK-201 (between A / B) | EL 5.0 m | 넣으면 케이블 +0 m (+0%) | INFO | 사용 중 (사람 결정) |
+| 3D에만 있는 구조물 | REF-SR201S SUB RACK – 10-PK-201 (between C / D) | EL 5.0 m | 넣으면 케이블 +10 m (+0.02%) | INFO | 사용 중 (사람 결정) |
+
+## 6. 원본 목록 (제출하지 않음 · 요청 시 제공)
 | source_id | 파일 | Rev | authority | SHA-256 |
 |---|---|---|---|---|
 | SRC-PID | 200MW PEM 수전해 플랜트 PID_Rev.A 1.pdf | Rev.A (파일명·타이틀 블록) | VERIFIED_SOURCE | a29f5fc969b8f4f5… |
@@ -66,16 +84,16 @@ Base = 산출근거(pid_io 계산: 체크리스트 + STEP 6~9 설정 + 사람 �
 | SRC-PLOTREF | Plot_Plan_Rev.2_260202.pdf | 파일명 기준 | REFERENCE | 55c0bfec8aa4e471… |
 | SRC-TEMPLATE | Instrument_Index_Template.xlsx | 회사 양식 | APPROVED_STANDARD | f2032d021f24eba5… |
 | SRC-REF | (서남해 수전해) Instrument Index_Rev.A_26.03.20_Metering IO 삭제.xlsx | 이전 리비전 | REFERENCE | 4da0e12c5272f94a… |
-| SRC-CHECKLIST | concept.xlsx + cable.json | 프로젝트 현재값 | REFERENCE | c5b5f9661263f675… |
+| SRC-CHECKLIST | concept.xlsx + cable.json | 프로젝트 현재값 | REFERENCE | 568e7f090ea302ab… |
 | SRC-BASE | 02-AI-Assisted.Conceptual.3D.Model_Final.html | 3d-rev0 | SEED_PROTOTYPE | 35d0e456ad1bbb7f… |
 | SRC-CATALOGUE | 케이블 외경표 (STEP 8 T10~T15E) | 외장형 제조사 공개 카탈로그 값 | REFERENCE | … |
 | SRC-NEMA | NEMA VE 2 | 판본 확인 전 | REFERENCE | … |
 | SRC-PIDIO | pid_io v13.3 | 프로그램 | REFERENCE | … |
 
-## 6. 이 제출 묶음
+## 7. 이 제출 묶음
 - 00_manifest.json ~ 06_model_handoff.json (표준 7종)
 - model/ 보강 모델 HTML + STRUCTURED_MODEL_DATA (DELTA)
 - 3D_BUILD_PROMPT.md (회사 AI용 3D 구현 프롬프트)
 - BASE_SUMMARY.md + PLOT_MARKUP.png
 - checkpoint_*.json (회사 Copilot RESUME)
-- evidence/ run_*.json · correction_log.csv · model_checks.json · pid_io_audit.csv (큰 근거 파일은 참조)
+- evidence/ COMMON_PROTOCOL.md (공통 프로토콜, 엔지니어 · 컴퓨터 · 유지보수 관점) · plot_vs_3d.csv (3D와 PLOT 차이, P11) · run_*.json · correction_log.csv · model_checks.json · pid_io_audit.csv (큰 근거 파일은 참조)
