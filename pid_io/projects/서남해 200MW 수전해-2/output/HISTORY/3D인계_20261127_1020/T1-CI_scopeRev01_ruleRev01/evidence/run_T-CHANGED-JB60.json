@@ -7,9 +7,11 @@
  "scope_rev": "01",
  "rule_rev": "01",
  "model_rev": "01",
- "case_id": "T-NORMAL",
- "executed_at": "2026-11-27T09:19:21+09:00",
- "overrides": {},
+ "case_id": "T-CHANGED-JB60",
+ "executed_at": "2026-11-27T10:20:23+09:00",
+ "overrides": {
+  "jb_sizes": "60"
+ },
  "results": {
   "CI-INST": {
    "value": 1252,
@@ -47,22 +49,22 @@
    "unit": "m"
   },
   "CI-CB-MU-40PX125SQISOS": {
-   "value": 4590,
+   "value": null,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-CB-MU-40PX125SQOS": {
-   "value": 3410,
+   "value": null,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-CB-MU-60PX125SQISOS": {
-   "value": 285,
+   "value": 4875,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-CB-MU-60PX125SQOS": {
-   "value": 285,
+   "value": 3695,
    "status": "VALUE",
    "unit": "m"
   },
@@ -87,27 +89,27 @@
    "unit": "m"
   },
   "CI-JB-40P": {
-   "value": 28,
+   "value": null,
    "status": "VALUE",
    "unit": "EA"
   },
   "CI-JB-60P": {
-   "value": 2,
+   "value": 30,
    "status": "VALUE",
    "unit": "EA"
   },
   "CI-TR-SIG-300": {
-   "value": 455,
+   "value": 368,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-TR-SIG-600": {
-   "value": 74,
+   "value": 91,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-TR-SIG-900": {
-   "value": 250,
+   "value": 330,
    "status": "VALUE",
    "unit": "m"
   },
@@ -117,17 +119,17 @@
    "unit": "m"
   },
   "CI-UG-W300": {
-   "value": 605,
+   "value": 573,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-UG-W450": {
-   "value": 78,
+   "value": 110,
    "status": "VALUE",
    "unit": "m"
   },
   "CI-UG-W1200": {
-   "value": 111,
+   "value": 107,
    "status": "VALUE",
    "unit": "m"
   },
@@ -137,7 +139,7 @@
    "unit": "m"
   },
   "CI-SP-RT": {
-   "value": 15,
+   "value": 16,
    "status": "VALUE",
    "unit": "EA"
   },
@@ -147,7 +149,7 @@
    "unit": "EA"
   },
   "CI-SP-RC": {
-   "value": 55,
+   "value": 54,
    "status": "VALUE",
    "unit": "EA"
   },
@@ -162,7 +164,7 @@
    "unit": "EA"
   },
   "CI-SP-KG": {
-   "value": 10759.2,
+   "value": 10885.7,
    "status": "VALUE",
    "unit": "kg"
   },

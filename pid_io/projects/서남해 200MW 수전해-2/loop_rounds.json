@@ -1,15 +1,15 @@
 [
  {
   "round": 0,
-  "at": "2026-11-27 09:19",
-  "set": "3D인계_20261127_0919",
+  "at": "2026-11-27 10:20",
+  "set": "3D인계_20261127_1020",
   "package": "T1-CI_scopeRev01_ruleRev01",
   "revs": {
    "scope_rev": "01",
    "rule_rev": "01",
    "model_rev": "01"
   },
-  "prompt_sha": "3c8562c0bba6393b",
+  "prompt_sha": "86a88fe8bd998163",
   "rules": [],
   "applied_comments": [],
   "qty": {

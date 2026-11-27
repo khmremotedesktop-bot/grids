@@ -30,11 +30,13 @@ from . import common_rules as CR  # noqa: E402  (v13.7: one rule, three views)
 COMMON_SEED = {
     "name": "pid_io 계장 개념설계 공통 프로토콜",
     "scope": "어떤 개념설계에든 쓰는 공통 부분만 (태그 번호·프로젝트 이름·프로젝트 값 없음)",
-    "version": "2.0",
+    "version": "3.0",
     "views": CR.VIEWS,
-    "rules": [{**r, "src": "seed"} for r in CR.RULES],
+    "notice": CR.NOTICE,
+    "rules": CR.RULES,
     "changelog": [{"version": "1.0", "at": "2026-11-27", "what": "처음 (v13.2 규칙을 공통으로)"},
-                  {"version": "2.0", "at": "2026-11-27", "what": "세 관점(엔지니어 · 컴퓨터 · 유지보수)으로 다시 씀, 기준값 params 한 곳, P11 추가"}],
+                  {"version": "2.0", "at": "2026-11-27", "what": "세 관점(엔지니어 · 컴퓨터 · 유지보수)으로 다시 씀, 기준값 params 한 곳, P11 추가"},
+                  {"version": "3.0", "at": "2026-11-27", "what": "엔지니어 관점 = 마스터 (설계실 Rule 양식 칸), 컴퓨터·유지보수 = 번역본 (지문·상태), P00 읽는 법 추가"}],
 }
 
 TAGLIKE = re.compile(r"\b(\d{2}-[A-Z]{1,5}-?\d+|JB-\S+|TR-\S+|UG-\S+|SP-\S+|MC-\S+|C-\S+)\b")
@@ -97,7 +99,7 @@ def ai_prompt(text: str, items: dict, values: dict, ids: dict, common: dict) -> 
     sets = "\n".join(f"- {k}: {it['name']} = {values.get(k)!r}" + (f" (선택지: {' / '.join(map(str, it['options']))})" if it.get("options") else
                                                                      f" ({it.get('unit', '')} 숫자)") for k, it in items.items())
     acts = "\n".join(f"- {k}: {v}" for k, v in ACTIONS.items())
-    rules = "\n".join(f"- {r['id']} {r['text']}" for r in common.get("rules", []))
+    rules = "\n".join(f"- {r['id']} {CR.master_text(r) if r.get('master') else r.get('text', '')}" for r in common.get("rules", []))
     return f"""너는 계장 개념설계 프로그램(pid_io)의 주문 해석기다. 사람의 주문을 아래 '동작'으로만 바꿔라. 값을 지어내지 마라.
 주문: {text}
 
@@ -182,7 +184,7 @@ def load_common(home: Path) -> dict:
     if not f.exists():
         save_common(home, json.loads(json.dumps(COMMON_SEED)))
     c = json.loads(f.read_text(encoding="utf-8"))
-    if str(c.get("version", "1")).split(".")[0] < "2":          # v1 file -> three views (lessons kept, flagged)
+    if str(c.get("version", "1")).split(".")[0] < "3":          # v1 / v2 file -> master + translations (learned rules kept)
         c = CR.upgrade(c)
         save_common(home, c)
     return c
@@ -190,8 +192,7 @@ def load_common(home: Path) -> dict:
 
 def save_common(home: Path, c: dict):
     d = proto_dir(home)
-    # views stay as templates ({param}); 'text' (old screens, AI prompt) = the engineer view with the values filled in
-    c["rules"] = [{**r, "text": CR.render(r.get("engineer"), r.get("params") or {})} if r.get("engineer") else r for r in c["rules"]]
+    # stored: master + translations only (no copied view text that someone could edit by mistake); md generated
     (d / "common_protocol.json").write_text(json.dumps(c, ensure_ascii=False, indent=1), encoding="utf-8")
     (d / "공통프로토콜.md").write_text(CR.markdown(c), encoding="utf-8")
 
@@ -204,8 +205,12 @@ def add_common_rule(home: Path, engineer: str, computer: str, maintenance: str, 
     n = sum(1 for r in c["rules"] if r.get("src") in ("lesson", "comment")) + 1
     major, minor = c["version"].split(".")
     c["version"] = f"{major}.{int(minor) + 1}"
-    c["rules"].append({"id": f"L{n:02d}", "title": title[:30], "params": {}, "engineer": engineer, "computer": computer,
-                       "maintenance": maintenance, "needs_review": engineer == computer, "src": src, "by": by, "at": time.strftime("%Y-%m-%d")})
+    r = CR.make_rule({"id": f"L{n:02d}", "title": title[:30], "params": {},
+                      "master": {"target": title[:40], "preconditions": "", "steps": [engineer], "exceptions": [],
+                                 "verdict": "어기면 HOLD (사람 판단)", "evidence": [f"{src} 승인 {by}".strip()]},
+                      "computer": computer, "maintenance": maintenance, "src": src}, by or src)
+    r.update(src=src, by=by, at=time.strftime("%Y-%m-%d"))
+    c["rules"].append(r)
     c.setdefault("changelog", []).append({"version": c["version"], "at": time.strftime("%Y-%m-%d"), "what": f"{src} 규칙 추가: {engineer[:60]}"})
     save_common(home, c)
     return c
@@ -263,11 +268,13 @@ def decide_lesson(home: Path, lid: str, accept: bool, text: str | None = None, s
         n = sum(1 for r in c["rules"] if r.get("src") == "lesson") + 1
         major, minor = c["version"].split(".")
         c["version"] = f"{major}.{int(minor) + 1}"
-        c["rules"].append({"id": f"L{n:02d}", "title": x["text"][:30], "text": x["text"], "params": {},
-                           "engineer": x.get("engineer") or x["text"], "computer": x.get("computer") or x["text"],
-                           "maintenance": x.get("maintenance") or f"배운 규칙 ({', '.join(x['projects'])}, 근거 {x['evidence']}회)",
-                           "needs_review": not (x.get("computer") and x.get("maintenance")),
-                           "src": "lesson", "from": ", ".join(x["projects"]), "evidence": x["evidence"], "at": time.strftime("%Y-%m-%d")})
+        r = CR.make_rule({"id": f"L{n:02d}", "title": x["text"][:30], "params": {},
+                          "master": {"target": x["text"][:40], "preconditions": "", "steps": [x["text"]], "exceptions": [],
+                                     "verdict": "어기면 HOLD (사람 판단)", "evidence": [f"배운 것: {', '.join(x['projects'])}, 근거 {x['evidence']}회"]},
+                          "computer": x["text"], "maintenance": f"배운 규칙 (주문 교훈 {', '.join(x.get('orders') or [])}). 마스터를 고치면 번역 다시",
+                          "src": "lesson"}, "교훈 원문 그대로 (번역 확인 필요)")
+        r.update(src="lesson", **{"from": ", ".join(x["projects"])}, evidence=x["evidence"], at=time.strftime("%Y-%m-%d"))
+        c["rules"].append(r)
         c.setdefault("changelog", []).append({"version": c["version"], "at": time.strftime("%Y-%m-%d"), "what": f"배운 규칙 추가: {x['text'][:60]}"})
         save_common(home, c)
     return {"lesson": x, "common_version": c["version"]}

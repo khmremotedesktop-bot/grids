@@ -1,6 +1,6 @@
 # Base 요약 — 계장 (T1-CI) · 서남해 200MW 수전해-2 · R0
 
-scope 01 · rule 01 · model 01 · 2026-11-27T09:19:22+09:00 · 상태 DRAFT_NOT_READY (공종 승인 전)
+scope 01 · rule 01 · model 01 · 2026-11-27T10:20:25+09:00 · 상태 DRAFT_NOT_READY (공종 승인 전)
 
 Base = 산출근거(pid_io 계산: 체크리스트 + STEP 6~9 설정 + 사람 결정) + PLOT 마크업(`PLOT_MARKUP.png`). 원본 큰 파일은 제출하지 않고 아래 '원본 목록'으로 참조합니다.
 

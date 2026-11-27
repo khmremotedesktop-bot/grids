@@ -145,10 +145,18 @@
  },
  {
   "kind": "twin",
-  "file": "HISTORY/3D인계_20261127_0919",
-  "at": "2026-11-27 09:19",
-  "fid": "e996b1bbad96",
+  "file": "HISTORY/3D인계_20261127_1020",
+  "at": "2026-11-27 10:20",
+  "fid": "4e92af5b397b",
   "state": "399d1ad1577a",
   "sha256": ""
+ },
+ {
+  "kind": "index",
+  "file": "HISTORY/Instrument_Index_서남해 200MW 수전해-2_20261127_1020.xlsx",
+  "at": "2026-11-27 10:20",
+  "fid": "07b376576fba",
+  "state": "399d1ad1577a",
+  "sha256": "bc38fbbbb82461f8fecc79c86339d0e22e24cea386cb43e4eb220d9aaaed85da"
  }
 ]

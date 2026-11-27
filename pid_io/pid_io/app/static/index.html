@@ -327,6 +327,38 @@ async function render() {
   } catch (e) { toast(e.message, true); }
 }
 
+/* ---------------------------------------------------------------- v13.8 공통 프로토콜 (엔지니어 마스터 + 번역본) */
+const PV = {view:"engineer"};
+function protoBox(c) {
+  const ST = {"확정":"g","확인 필요":"y","다시 번역 필요":"r","질문 있음":"r"};
+  const fill = (t, p) => String(t||"").replace(/\{(\w+)\}/g, (m, k) => (p||{})[k] ?? m);
+  const L = {target:"대상", preconditions:"조건", steps:"할 일", exceptions:"예외", verdict:"판정", evidence:"근거"};
+  const mtxt = r => !r.master ? esc(r.text) : Object.entries(L).filter(([k])=>r.master[k]&&(!Array.isArray(r.master[k])||r.master[k].length))
+    .map(([k,lab]) => `<div><b>${lab}</b> ${Array.isArray(r.master[k]) ? (k==="steps" ? r.master[k].map((x,i)=>`${i+1}) ${esc(fill(x,r.params))}`).join(" ") : r.master[k].map(x=>esc(fill(x,r.params))).join(" / ")) : esc(fill(r.master[k],r.params))}</div>`).join("");
+  return `<div style="font-size:12px;background:#fff8e1;padding:6px 8px;margin:6px 0">${esc(c.notice||"")}</div>
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px"><select id="pvview">${[["engineer","엔지니어 관점 (마스터)"],["computer","컴퓨터 관점 (번역본)"],["maintenance","유지보수 관점 (번역본)"]].map(([k,t])=>`<option value="${k}" ${PV.view===k?"selected":""}>${t}</option>`).join("")}</select>
+      <input id="pvby" placeholder="확인 · 승인자 이름" style="width:140px"></div>
+    ${c.rules.map(r => { const st = r.states || {}; const v = PV.view;
+      return `<div style="border-top:1px solid var(--line-l);padding:6px 0;font-size:12px"><b>${esc(r.id)} ${esc(r.title||"")}</b>
+        <span class="chip ${r.status==="APPROVED"?"g":""}">마스터 ${r.status==="APPROVED"?"승인 "+esc(r.approved_by||""):"DRAFT"}</span>
+        <span class="chip ${ST[st.computer]||""}">컴퓨터 ${esc(st.computer||"-")}</span><span class="chip ${ST[st.maintenance]||""}">유지보수 ${esc(st.maintenance||"-")}</span>
+        ${r.src&&r.src!=="seed"?`<span class="chip">${r.src==="comment"?"코멘트":"배운 것"}</span>`:""}
+        <div style="margin-top:4px;line-height:1.6">${v==="engineer" ? mtxt(r) : esc(fill(r[v], r.params))}</div>
+        <div style="margin-top:4px;display:flex;gap:6px">${v!=="engineer"&&st[v]==="확인 필요"?`<button class="btn sm line" data-pvok="${esc(r.id)}">이 번역 확인 (마스터와 같은 뜻)</button>`:""}
+          ${v==="engineer"&&r.status!=="APPROVED"?`<button class="btn sm line" data-pvap="${esc(r.id)}">마스터 승인</button>`:""}</div></div>`; }).join("")}`;
+}
+async function protoSend(body) {
+  try { const r = await post(P("protocol"), body); const b = $("#pvbox"); if (b) { b.innerHTML = `<summary style="cursor:pointer;font-size:12.5px">공통 프로토콜 보기 · 번역 확인 · 승인</summary>${protoBox(r.common)}`; b.open = true; protoBind(r.common); } }
+  catch(e) { toast(e.message, true); }
+}
+function protoBind(c) {
+  const b = $("#pvbox"); if (!b) return;
+  const by = () => ($("#pvby")||{}).value || "";
+  const sel = $("#pvview"); if (sel) sel.onchange = e => { PV.view = e.target.value; b.innerHTML = `<summary style="cursor:pointer;font-size:12.5px">공통 프로토콜 보기 · 번역 확인 · 승인</summary>${protoBox(c)}`; b.open = true; protoBind(c); };
+  b.querySelectorAll("[data-pvok]").forEach(x => x.onclick = () => protoSend({confirm:true, rule:x.dataset.pvok, view:PV.view, by:by()}));
+  b.querySelectorAll("[data-pvap]").forEach(x => x.onclick = () => confirm(`${x.dataset.pvap} 마스터를 승인할까요? (계장 공종 책임자)`) && protoSend({approve:true, rule:x.dataset.pvap, by:by()}));
+}
+
 /* ---------------------------------------------------------------- v13.6 3D 구현 루프 (프롬프트 + 자료 → 회사 AI 3D → 코멘트 → 다음 Rev) */
 const LPS = {seven:false};
 async function loopMake(m) {
@@ -2004,9 +2036,8 @@ function orderBox(o, d) {
         <div style="margin-top:4px;display:flex;gap:6px;align-items:center;flex-wrap:wrap"><select data-lscope="${esc(l.id)}"><option value="common" ${l.scope==="common"?"selected":""}>공통</option><option value="project" ${l.scope==="project"?"selected":""}>프로젝트</option></select>
         <span style="color:var(--sub)">근거 ${l.evidence}회 · ${esc(l.projects.join(", "))} · ${esc(l.by)}</span>${l.suggest_promote?`<span class="chip g">승격 추천</span>`:""}
         <button class="btn sm" data-lok="${esc(l.id)}">승인</button><button class="btn sm line" data-lno="${esc(l.id)}">버리기</button></div></div>`).join("")||`<div class="empty" style="padding:8px">승인 대기 없음</div>`}
-      <details style="margin-top:6px"><summary style="cursor:pointer;font-size:12.5px">공통 프로토콜 보기 (엔지니어 · 컴퓨터 · 유지보수 관점)</summary>
-        <div style="margin:6px 0"><select id="pvview"><option value="text">엔지니어 관점</option><option value="computer">컴퓨터 관점</option><option value="maintenance">유지보수 관점</option></select></div>
-        <ol style="font-size:12px;line-height:1.6" id="pvlist">${o.common.rules.map(r=>`<li><b>${esc(r.id)} ${esc(r.title||"")}</b> <span data-pv="${esc(r.id)}">${esc(r.text)}</span>${r.src!=="seed"?` <span class="chip">${r.src==="comment"?"코멘트":"배운 것"}</span>`:""}${r.needs_review?` <span class="chip y">관점 확인 필요</span>`:""}</li>`).join("")}</ol>
+      <details style="margin-top:6px" id="pvbox"><summary style="cursor:pointer;font-size:12.5px">공통 프로토콜 보기 · 번역 확인 · 승인</summary>${protoBox(o.common)}</details>
+      <details style="margin-top:4px"><summary style="cursor:pointer;font-size:12px">변경 이력</summary>
         <div style="font-size:11.5px;color:var(--sub)">${o.common.changelog.map(c=>`v${esc(c.version)} ${esc(c.at)} ${esc(c.what)}`).join("<br>")}</div></details>
     </details>
   </div>`;
@@ -2109,8 +2140,7 @@ async function renderTwin(m) {
   </div>`;
   renderVPlan(); renderLoop();
   if ($("#twmore")) $("#twmore").ontoggle = e => { S.twMore = e.target.open; };
-  if ($("#pvview") && od) $("#pvview").onchange = e => { const k = e.target.value; od.common.rules.forEach(r => { const el = document.querySelector(`[data-pv="${r.id}"]`);
-    if (el) el.textContent = k === "text" ? r.text : (r[k] || "").replace(/\{(\w+)\}/g, (m, p) => (r.params||{})[p] ?? m); }); };
+  if (od) protoBind(od.common);
   const twset = async body => { try { await post(P("cable"), body); renderTwin(m); } catch(e) { toast(e.message, true); } };
   m.querySelectorAll("[data-ck]").forEach(el => el.onchange = () => twset({set:{[el.dataset.ck]: el.value}}));
   m.querySelectorAll("[data-cktog]").forEach(el => el.onclick = () => { const it = d.schema[0].items.find(x=>x.id===el.dataset.cktog);

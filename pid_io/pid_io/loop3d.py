@@ -195,7 +195,8 @@ def build_prompt(project: str, n: int, v: dict, base: dict, meta: dict, recs: li
     if active:
         for r in active:
             a(f"- **{r['rule_id']}** (R{r.get('round_applied', '?')}, {r.get('scope', '프로젝트')}){' 대상 ' + r['target'] if r.get('target') else ''}: "
-              f"{r.get('computer_text') or r['rule_text']}")
+              f"{r.get('computer_text') or r['rule_text']}"
+              + (f" — (번역 확인 전, 기준인 엔지니어 원문: {r['rule_text']})" if r.get("needs_review") and r.get("computer_text") != r["rule_text"] else ""))
     else:
         a("- (아직 없음 - R0)")
     retired = [r for r in rules if r["status"] == "RETIRED" and r.get("rule_id")]
@@ -203,10 +204,19 @@ def build_prompt(project: str, n: int, v: dict, base: dict, meta: dict, recs: li
         a("- 폐기된 규칙(적용하지 말 것): " + ", ".join(r["rule_id"] for r in retired))
     a("")
     if common:
-        from .common_rules import render
-        a(f"## 6-1. 공통 프로토콜 v{common.get('version')} (컴퓨터 관점 — 엔지니어·유지보수 관점과 같은 규칙, COMMON_PROTOCOL.md)")
+        from .common_rules import render, state, master_text
+        a(f"## 6-1. 공통 프로토콜 v{common.get('version')} — 컴퓨터 관점 (번역본)")
+        a("- 기준은 엔지니어 관점(마스터)입니다 (COMMON_PROTOCOL.md). 아래 번역본이 마스터와 다르게 읽히면 **마스터를 따르세요**.")
         for r in common.get("rules", []):
-            a(f"- **{r['id']} {r.get('title', '')}**: {render(r.get('computer') or r.get('text', ''), r.get('params') or {})}")
+            if not r.get("master"):
+                a(f"- **{r['id']}**: {r.get('text', '')}")
+                continue
+            st = state(r, "computer")
+            tr = render(((r.get("translations") or {}).get("computer") or {}).get("text"), r.get("params") or {})
+            if st in ("다시 번역 필요", "질문 있음"):
+                a(f"- **{r['id']} {r.get('title', '')}** (번역 {st} - 마스터 원문을 따름): {master_text(r)}")
+            else:
+                a(f"- **{r['id']} {r.get('title', '')}**{'' if st == '확정' else ' (번역 확인 전)'}: {tr}")
         a("")
     a("## 7. 끝나면 확인하고 보고")
     a("1. 레이어별 객체 수 = records 수 (계기·분기·Perforated 제외).")

@@ -372,7 +372,7 @@
   "tool": "pid_io",
   "version": "v13.3",
   "project": "서남해 200MW 수전해-2",
-  "made_at": "2026-11-27T09:19:22+09:00",
+  "made_at": "2026-11-27T10:20:24+09:00",
   "pid_io_check": "pid_io audit NG 0 · HOLD 2"
  }
 }

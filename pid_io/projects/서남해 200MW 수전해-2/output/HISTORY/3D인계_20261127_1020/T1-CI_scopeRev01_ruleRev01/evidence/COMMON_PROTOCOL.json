@@ -1,0 +1,542 @@
+{
+ "name": "pid_io 계장 개념설계 공통 프로토콜",
+ "scope": "어떤 개념설계에든 쓰는 공통 부분만 (태그 번호·프로젝트 이름·프로젝트 값 없음)",
+ "version": "3.0",
+ "views": {
+  "engineer": "엔지니어 관점 (마스터)",
+  "computer": "컴퓨터 관점 (번역본 · 회사 AI · 개발자)",
+  "maintenance": "유지보수 관점 (번역본 · 도구 관리자)"
+ },
+ "rules": [
+  {
+   "id": "P00",
+   "title": "이 프로토콜 읽는 법 · 고치는 법",
+   "params": {},
+   "master": {
+    "target": "이 공통 프로토콜 전체 (모든 규칙)",
+    "preconditions": "규칙을 만들거나 고치거나 인계받을 때",
+    "steps": [
+     "기준은 엔지니어 관점(마스터) 하나다. 컴퓨터 관점과 유지보수 관점은 마스터의 번역본이다.",
+     "규칙을 바꾸려면 마스터(대상 · 조건 · 할 일 · 예외 · 판정 · 근거)와 기준값만 고친다. 번역본은 직접 고치지 않는다.",
+     "마스터가 바뀌면 번역본은 '다시 번역 필요'가 되고, 다시 번역해서 사람이 확인해야 '확정'이 된다.",
+     "번역하다 애매하면 짐작하지 않고 질문으로 남긴다. 엔지니어가 마스터를 고쳐서 답한다.",
+     "숫자 기준은 기준값 한 곳에만 둔다. 마스터와 번역본과 프로그램이 같은 값을 쓴다.",
+     "마스터 승인은 계장 공종 책임자가 하고, 승인자 · 일자를 남긴다. 고칠 때마다 버전을 올리고 변경 이력을 남긴다."
+    ],
+    "exceptions": [
+     "프로젝트 한정 규칙(태그 번호 · 프로젝트 이름이 들어간 것)은 공통에 넣지 않는다"
+    ],
+    "verdict": "번역본이 마스터와 다르면 번역본을 따르지 않는다 (마스터 우선). 다시 번역 필요 · 질문 있음이 남아 있으면 점검 실패.",
+    "evidence": [
+     "사용자 결정 2026-11-27 (마스터 = 엔지니어 관점)"
+    ]
+   },
+   "translations": {
+    "computer": {
+     "text": "권위 순서: master(엔지니어 관점) > translations.computer / translations.maintenance. 각 번역본은 from_master(마스터 지문)와 state를 가진다. from_master ≠ 현재 마스터 지문이면 state = '다시 번역 필요'로 보고 그 번역본을 근거로 쓰지 않는다 (마스터 원문을 쓴다). state = '질문 있음'이면 questions를 엔지니어에게 돌려준다. 번역본 수정은 마스터 지문 갱신과 함께만. 숫자는 params만 참조, 문장 안 숫자 기준 금지. 검사: tests/check_protocol.py (다시 번역 필요 · 질문 있음 = FAIL, 확인 필요 = 참고).",
+     "from_master": "b39af93fa844",
+     "state": "확인 필요",
+     "by": "pid_io (초기 번역)",
+     "at": "2026-11-27",
+     "questions": []
+    },
+    "maintenance": {
+     "text": "고치는 순서: ① 마스터 칸과 기준값 수정 ② 버전 +0.1, 변경 이력 ③ 번역본 다시 만들기(회사 Copilot 또는 채팅 AI 초안) ④ 사람이 번역 확인(앱 STEP 10 '공통 프로토콜 보기' → 번역 확인) ⑤ tests/check_protocol.py 통과 ⑥ 계장 공종 책임자 승인. 파일: projects/_protocol/common_protocol.json (원본), 공통프로토콜.md (보기용, 자동 생성). 코드: pid_io/common_rules.py.",
+     "from_master": "b39af93fa844",
+     "state": "확인 필요",
+     "by": "pid_io (초기 번역)",
+     "at": "2026-11-27",
+     "questions": []
+    }
+   },
+   "status": "DRAFT",
+   "approved_by": null,
+   "approval_date": null,
+   "src": "seed"
+  },
+  {
+   "id": "P01",
+   "title": "같은 입력이면 같은 물량",
+   "params": {},
+   "master": {
+    "target": "모든 물량 결과 (인덱스 · 케이블 · JB · 트레이 · 서포트 · 3D 데이터)",
+    "preconditions": "같은 도면 · PLOT · 3D와 같은 체크리스트 값",
+    "steps": [
+     "누가 언제 돌려도 같은 물량이 나와야 한다.",
+     "결과 숫자를 손으로 고치지 않는다.",
+     "바꾸려면 입력이나 사람 결정을 바꾸고 다시 계산한다."
+    ],
+    "exceptions": [],
+    "verdict": "같은 입력인데 물량이 다르면 HOLD (원인 확인).",
+    "evidence": [
+     "pid_io 설계 원칙"
+    ]
+   },
+   "translations": {
+    "computer": {
+     "text": "출력 = f(입력 파일 SHA-256, 설정값, 사람 결정 기록). 같은 상태 ID(엑셀 '_지문' 시트)면 같은 물량. 결과 파일 직접 편집 금지, 변경은 입력·설정·결정 기록으로만. 검사: 같은 입력으로 다시 계산한 STRUCTURED_MODEL_DATA records 해시가 같아야 함 (06 REPRODUCIBILITY).",
+     "from_master": "80ff72fbacf5",
+     "state": "확인 필요",
+     "by": "pid_io (초기 번역)",
+     "at": "2026-11-27",
+     "questions": []
+    },
+    "maintenance": {
+     "text": "확인: 엑셀 '_지문' 시트의 상태 ID, 06 REPRODUCIBILITY 자동 점검. 계산 코드를 바꾸면 tests/check_cable_jb.py를 돌리고 기준 프로젝트('-2') 물량을 전후 비교, 이유는 인수인계 버전 이력에.",
+     "from_master": "80ff72fbacf5",
+     "state": "확인 필요",
+     "by": "pid_io (초기 번역)",
+     "at": "2026-11-27",
+     "questions": []
+    }
+   },
+   "status": "DRAFT",
+   "approved_by": null,
+   "approval_date": null,
+   "src": "seed"
+  },
+  {
+   "id": "P02",
+   "title": "값이 부딪힐 때 우선순위",
+   "params": {},
+   "master": {
+    "target": "같은 항목에 값이 여럿일 때 (위치 · 크기 · 경로 · 설정)",
+    "preconditions": "사람 결정, 승인된 3D, PLOT 자동 인식, 체크리스트 기본값이 서로 다를 때",
+    "steps": [
+     "사람이 정한 것 > 승인된 3D 자료 > PLOT 자동 인식 > 체크리스트 기본값 순서로 쓴다.",
+     "3D가 사람 결정을 덮지 않는다."
+    ],
+    "exceptions": [
+     "3D 자료는 P03 절차로 승인된 것만 '승인된 3D'"
+    ],
+    "verdict": "순서를 어긴 반영은 FAIL.",
+    "evidence": [
+     "pid_io 설계 원칙"
+    ]
+   },
+   "translations": {
+    "computer": {
+     "text": "값 결정 순서: 사람 결정(plot_decisions.json · decisions.json · overrides.json) > 승인된 3D 반영(decision_log.json, approved) > PLOT 자동 인식 > 설정 기본값. 상위 값이 있으면 하위 값은 쓰지 않음. 3D 반영은 P03 관문을 거친 것만 '승인된 3D'.",
+     "from_master": "1f6bb7367a0b",
+     "state": "확인 필요",
+     "by": "pid_io (초기 번역)",
+     "at": "2026-11-27",
+     "questions": []
+    },
+    "maintenance": {
+     "text": "관련: gate.py(결정 보호), decision_log.json. 순서를 바꾸면 관문 시험(사람이 옮긴 JB가 3D 반영 뒤에도 그 자리) 다시 확인, 승인 계장 공종 책임자.",
+     "from_master": "1f6bb7367a0b",
+     "state": "확인 필요",
+     "by": "pid_io (초기 번역)",
+     "at": "2026-11-27",
+     "questions": []
+    }
+   },
+   "status": "DRAFT",
+   "approved_by": null,
+   "approval_date": null,
+   "src": "seed"
+  },
+  {
+   "id": "P03",
+   "title": "3D 반영은 제안 → 미리보기 → 승인",
+   "params": {},
+   "master": {
+    "target": "3D 자료 때문에 물량 · 배치가 바뀌는 것",
+    "preconditions": "3D 모델을 올렸거나 바뀌었을 때",
+    "steps": [
+     "바로 바꾸지 않는다.",
+     "바뀌는 숫자 · JB · PLOT 그림을 먼저 보여 준다.",
+     "사람이 승인한 항목만 반영하고 기록한다."
+    ],
+    "exceptions": [
+     "취소하면 아무것도 바뀌지 않는다"
+    ],
+    "verdict": "승인 없이 바뀐 값이 있으면 FAIL.",
+    "evidence": [
+     "pid_io 설계 원칙"
+    ]
+   },
+   "translations": {
+    "computer": {
+     "text": "3D 반영 = 제안(proposals/<시각>.json) → 미리보기(물량 전후, JB 변화, PLOT 마크업 회색=지금 빨강=제안, 부딪히는 사람 결정) → 항목별 승인 → 승인 항목만 설정 반영 + decision_log 기록 + 리비전 스냅샷. 미승인 = 변경 0.",
+     "from_master": "875159bab444",
+     "state": "확인 필요",
+     "by": "pid_io (초기 번역)",
+     "at": "2026-11-27",
+     "questions": []
+    },
+    "maintenance": {
+     "text": "관련: STEP 10 '3D 반영 제안 보기', gate.py, proposals/. 제안 항목을 늘리면 GATE_3D 목록과 미리보기 숫자를 같이 고침.",
+     "from_master": "875159bab444",
+     "state": "확인 필요",
+     "by": "pid_io (초기 번역)",
+     "at": "2026-11-27",
+     "questions": []
+    }
+   },
+   "status": "DRAFT",
+   "approved_by": null,
+   "approval_date": null,
+   "src": "seed"
+  },
+  {
+   "id": "P04",
+   "title": "랙 차선 · 충돌 시 계장이 비킨다",
+   "params": {},
+   "master": {
+    "target": "랙 위 계장 트레이",
+    "preconditions": "다른 공종(배관 · 전기) 객체와 겹칠 때",
+    "steps": [
+     "랙의 계장 차선을 먼저 쓴다.",
+     "부딪히면 계장이 옆으로 비킨다.",
+     "옆으로 안 되면 위로 비킨다."
+    ],
+    "exceptions": [
+     "다른 공종을 옮기라고 하지 않는다"
+    ],
+    "verdict": "비킨 뒤에도 겹치면 HOLD (사람 판단).",
+    "evidence": [
+     "pid_io 설계 원칙"
+    ]
+   },
+   "translations": {
+    "computer": {
+     "text": "트레이 배치: 랙 폭 방향 계장 차선(설정 W01·W02)부터 채움. 다른 공종 객체와 겹치면 폭 방향 이동 → 안 되면 위로 한 단(W05)씩 최대 W06단 → 그래도 겹치면 HOLD(V08). 다른 공종 객체는 읽기만.",
+     "from_master": "e6327362847b",
+     "state": "확인 필요",
+     "by": "pid_io (초기 번역)",
+     "at": "2026-11-27",
+     "questions": []
+    },
+    "maintenance": {
+     "text": "관련 설정 STEP 10 W01~W06, twin.avoid, 3D 점검 V08. 바꾸면 다른 공종 JSON(예시 protocols/other3d_example.json)으로 회피 결과 확인.",
+     "from_master": "e6327362847b",
+     "state": "확인 필요",
+     "by": "pid_io (초기 번역)",
+     "at": "2026-11-27",
+     "questions": []
+    }
+   },
+   "status": "DRAFT",
+   "approved_by": null,
+   "approval_date": null,
+   "src": "seed"
+  },
+  {
+   "id": "P05",
+   "title": "랙 위 트레이 높이 · 자리",
+   "params": {
+    "slot_gap_m": 0.1
+   },
+   "master": {
+    "target": "랙 위 사다리 트레이",
+    "preconditions": "트레이가 랙을 탈 때",
+    "steps": [
+     "그 랙의 케이블 단 높이에 놓는다.",
+     "한 랙 위 트레이끼리는 겹치지 않게 {slot_gap_m} m 띄워 나란히 자리를 나눈다."
+    ],
+    "exceptions": [],
+    "verdict": "랙 밖이거나 높이가 다르거나 서로 겹치면 HOLD.",
+    "evidence": [
+     "pid_io 설계 원칙"
+    ]
+   },
+   "translations": {
+    "computer": {
+     "text": "ladder_on_rack 트레이 EL = 같은 방향 랙의 케이블 단 EL(3D RK.cable 또는 구조물 높이). 한 랙의 트레이는 길이 방향으로 겹치는 구간마다 폭 방향 슬롯을 따로 배정, 슬롯 간격 {slot_gap_m} m. 위반 시 V02·V06 HOLD.",
+     "from_master": "a059767f4d17",
+     "state": "확인 필요",
+     "by": "pid_io (초기 번역)",
+     "at": "2026-11-27",
+     "questions": []
+    },
+    "maintenance": {
+     "text": "관련: twin.to_model(차선 배정, 간격 {slot_gap_m} m을 여기서 읽음), 3D 점검 V02·V06. 랙 데이터 형식이 바뀌면(새 3D 모델) twin.parse_base 확인.",
+     "from_master": "a059767f4d17",
+     "state": "확인 필요",
+     "by": "pid_io (초기 번역)",
+     "at": "2026-11-27",
+     "questions": []
+    }
+   },
+   "status": "DRAFT",
+   "approved_by": null,
+   "approval_date": null,
+   "src": "seed"
+  },
+  {
+   "id": "P06",
+   "title": "경사 경로 없음",
+   "params": {},
+   "master": {
+    "target": "케이블 경로",
+    "preconditions": "높이가 바뀌는 구간",
+    "steps": [
+     "비스듬히 가지 않는다.",
+     "수평으로 가다가 수직으로 오르내린다."
+    ],
+    "exceptions": [],
+    "verdict": "경사 마디가 남으면 INFO (확인).",
+    "evidence": [
+     "pid_io 설계 원칙"
+    ]
+   },
+   "translations": {
+    "computer": {
+     "text": "경로 마디마다 수평 변화와 높이 변화가 동시에 있으면 낮은 쪽 높이로 수평 → 수직 라이저로 나눔. 남으면 V04.",
+     "from_master": "a477af91614f",
+     "state": "확인 필요",
+     "by": "pid_io (초기 번역)",
+     "at": "2026-11-27",
+     "questions": []
+    },
+    "maintenance": {
+     "text": "관련: twin.to_model(라이저 분리), 3D 점검 V04.",
+     "from_master": "a477af91614f",
+     "state": "확인 필요",
+     "by": "pid_io (초기 번역)",
+     "at": "2026-11-27",
+     "questions": []
+    }
+   },
+   "status": "DRAFT",
+   "approved_by": null,
+   "approval_date": null,
+   "src": "seed"
+  },
+  {
+   "id": "P07",
+   "title": "JB 위치",
+   "params": {},
+   "master": {
+    "target": "필드 JB 자리",
+    "preconditions": "JB를 자동으로 놓을 때",
+    "steps": [
+     "장비나 랙 안에 두지 않는다.",
+     "랙 기둥 바깥이나 장비 가장자리에 둔다."
+    ],
+    "exceptions": [
+     "사람이 옮긴 JB는 그 자리 유지 (P02)"
+    ],
+    "verdict": "장비 · 랙 안이면 HOLD.",
+    "evidence": [
+     "pid_io 설계 원칙"
+    ]
+   },
+   "translations": {
+    "computer": {
+     "text": "JB 자리 후보 = 랙 기둥 바깥(설정 J13 거리) · 장비 가장자리(J14) · 3D 랙 기둥 옆. 랙 칸·장비 상자(3D 포함, J1A) 안은 제외. 위반 시 V07 HOLD.",
+     "from_master": "745b81a205b6",
+     "state": "확인 필요",
+     "by": "pid_io (초기 번역)",
+     "at": "2026-11-27",
+     "questions": []
+    },
+    "maintenance": {
+     "text": "관련 설정 STEP 7 J10~J1A, jb.slots, 3D 점검 V07, check_cable_jb.py의 '자리 … 랙 안' 검사.",
+     "from_master": "745b81a205b6",
+     "state": "확인 필요",
+     "by": "pid_io (초기 번역)",
+     "at": "2026-11-27",
+     "questions": []
+    }
+   },
+   "status": "DRAFT",
+   "approved_by": null,
+   "approval_date": null,
+   "src": "seed"
+  },
+  {
+   "id": "P08",
+   "title": "3D 점검 HOLD는 사람이 판단",
+   "params": {},
+   "master": {
+    "target": "3D 점검에서 걸린 항목",
+    "preconditions": "3D 사전 점검 · 회사 AI 리뷰 결과가 나왔을 때",
+    "steps": [
+     "프로그램이 고치지 않고 보류로 둔다.",
+     "사람이 맞다 / 오탐 / 고침을 정한다."
+    ],
+    "exceptions": [
+     "AI 리뷰 답도 제안일 뿐"
+    ],
+    "verdict": "사람 판단 전까지 HOLD.",
+    "evidence": [
+     "pid_io 설계 원칙"
+    ]
+   },
+   "translations": {
+    "computer": {
+     "text": "3D 사전 점검 V01~V09 결과: HOLD 항목은 자동 수정 금지, 3D_REVIEW_PRECHECK에 객체 ID로 기록, 회사 AI 리뷰 답(CONFIRMED / FALSE_ALARM / NEEDS_PERSON)도 제안일 뿐.",
+     "from_master": "6a6be9689352",
+     "state": "확인 필요",
+     "by": "pid_io (초기 번역)",
+     "at": "2026-11-27",
+     "questions": []
+    },
+    "maintenance": {
+     "text": "관련: review3d.py(규칙 V01~V09), 3D_REVIEW_PROMPT.md. 규칙 추가 시 V 번호 이어서, 프롬프트·스키마 같이 고침.",
+     "from_master": "6a6be9689352",
+     "state": "확인 필요",
+     "by": "pid_io (초기 번역)",
+     "at": "2026-11-27",
+     "questions": []
+    }
+   },
+   "status": "DRAFT",
+   "approved_by": null,
+   "approval_date": null,
+   "src": "seed"
+  },
+  {
+   "id": "P09",
+   "title": "출력 관리",
+   "params": {},
+   "master": {
+    "target": "모든 결과 파일",
+    "preconditions": "결과를 만들 때 · 발행할 때",
+    "steps": [
+     "'최신 하나', '발행본(고정)', '이력(안 지움)'으로 나눠 둔다.",
+     "모든 엑셀에 어느 입력 · 설정으로 만든 것인지 지문을 남긴다."
+    ],
+    "exceptions": [],
+    "verdict": "지문 없는 엑셀은 FAIL.",
+    "evidence": [
+     "pid_io 설계 원칙"
+    ]
+   },
+   "translations": {
+    "computer": {
+     "text": "output/LATEST(종류마다 하나, 덮어씀) · ISSUED/R*_날짜(읽기 전용) · HISTORY(시각 붙은 원본, 지우지 않음). 모든 엑셀 끝 '_지문' 시트: 지문 ID, 상태 ID, Rev, 입력 SHA-256, 설정·결정 해시.",
+     "from_master": "9882a558426c",
+     "state": "확인 필요",
+     "by": "pid_io (초기 번역)",
+     "at": "2026-11-27",
+     "questions": []
+    },
+    "maintenance": {
+     "text": "관련: outputs.py, history.json, _latest.json. 출력 종류를 추가하면 KIND_NAME에 등록.",
+     "from_master": "9882a558426c",
+     "state": "확인 필요",
+     "by": "pid_io (초기 번역)",
+     "at": "2026-11-27",
+     "questions": []
+    }
+   },
+   "status": "DRAFT",
+   "approved_by": null,
+   "approval_date": null,
+   "src": "seed"
+  },
+  {
+   "id": "P10",
+   "title": "AI는 제안만",
+   "params": {},
+   "master": {
+    "target": "AI가 만든 모든 결과 (심볼 판정 · 주문 해석 · 3D 리뷰 · 번역 · 교훈)",
+    "preconditions": "AI를 쓸 때",
+    "steps": [
+     "AI는 제안과 해석만 한다.",
+     "값을 바꾸는 것과 공통 규칙으로 올리는 것은 사람이 승인한다."
+    ],
+    "exceptions": [],
+    "verdict": "승인 기록 없는 반영은 FAIL.",
+    "evidence": [
+     "pid_io 설계 원칙"
+    ]
+   },
+   "translations": {
+    "computer": {
+     "text": "AI 출력(심볼 판정, 주문 해석, 3D 리뷰, 교훈 후보, 프로토콜 번역) = status pending/OPEN/'확인 필요' 제안. 반영은 사람 승인 이벤트(이름·시각)가 있을 때만. 공통 규칙 추가는 decide_lesson(accept) 또는 코멘트 승인으로만.",
+     "from_master": "4a6a34b35556",
+     "state": "확인 필요",
+     "by": "pid_io (초기 번역)",
+     "at": "2026-11-27",
+     "questions": []
+    },
+    "maintenance": {
+     "text": "관련: ai_suggestions.json, lessons.json, prompt_rules.json, common_protocol.json(번역 상태). 승인 기록이 없는 반영이 생기면 버그 - 관련 화면 확인.",
+     "from_master": "4a6a34b35556",
+     "state": "확인 필요",
+     "by": "pid_io (초기 번역)",
+     "at": "2026-11-27",
+     "questions": []
+    }
+   },
+   "status": "DRAFT",
+   "approved_by": null,
+   "approval_date": null,
+   "src": "seed"
+  },
+  {
+   "id": "P11",
+   "title": "3D와 PLOT이 다를 때",
+   "params": {
+    "pos_tol_m": 5,
+    "detour_pct": 2,
+    "same_rack_pct": 30
+   },
+   "master": {
+    "target": "PLOT과 배관 3D 모델의 위치 · 높이 · 랙 · 구조물 차이",
+    "preconditions": "3D 모델을 올렸을 때 (랙 출처가 3D를 쓸 때)",
+    "steps": [
+     "물량과 배치의 기준은 우리 Base(PLOT + 산출근거 + 사람 결정)이고, 3D는 높이와 구조물 확인용이다.",
+     "높이는 3D 값을 쓴다.",
+     "PLOT 랙과 3D 랙이 {same_rack_pct}% 이상 겹치면 같은 랙으로 보고 형상은 3D를 쓴다.",
+     "위치 차이가 {pos_tol_m} m 이하면 그림만 맞추고 물량은 Base대로 둔다.",
+     "3D에만 있는 구조물(오버브리지 · 서브 랙)은 물량 영향과 함께 보여 주고 사람이 쓸지 정한다.",
+     "PLOT에만 있는 랙은 Base대로 두고 배관팀에 알린다."
+    ],
+    "exceptions": [
+     "장비 위치가 {pos_tol_m} m 넘게 다르면 어느 도면이 최신인지 먼저 확인한다",
+     "3D에만 있는 구조물 때문에 케이블이 {detour_pct}% 넘게 늘면 쓰기 전에 다시 확인한다"
+    ],
+    "verdict": "장비 위치 차이 > {pos_tol_m} m → HOLD. 사용 중인 3D 구조물로 케이블 증가 > {detour_pct}% → HOLD. 나머지 차이는 INFO (목록에 남김).",
+    "evidence": [
+     "사용자 결정 2026-11-27 (Base 먼저)"
+    ]
+   },
+   "translations": {
+    "computer": {
+     "text": "입력: PLOT 랙(pt), 3D 랙·참조 구조물(모델 좌표 → 좌표 맞춤 후 pt). (1) 높이: 랙 케이블 단 EL = 3D RK.cable, 참조 구조물 = 높이 h. (2) 랙 출처 '둘 다': PLOT 랙이 3D 랙과 면적 {same_rack_pct}% 이상 겹치면 같은 랙 → 3D 사각형, 아니면 PLOT 랙 유지. (3) 장비 잔차 d: d ≤ {pos_tol_m} m → INFO(그림만 맞춤), d > {pos_tol_m} m → HOLD. (4) 3D에만 있는 구조물: 넣었을 때와 뺐을 때 케이블 m 차이 Δ%를 계산, 사용 여부는 사람 설정(rack_refs, rack_refs_off); 사용 중이고 Δ > {detour_pct}% → HOLD. (5) PLOT에만 있는 랙 → INFO '배관팀 보고'. 결과 evidence/plot_vs_3d.csv.",
+     "from_master": "54a728a2a988",
+     "state": "확인 필요",
+     "by": "pid_io (초기 번역)",
+     "at": "2026-11-27",
+     "questions": []
+    },
+    "maintenance": {
+     "text": "관련 설정: STEP 6 '랙 출처'(3D 모델이 있으면 '둘 다' 권장), '3D 모델 오버브리지 · 서브 랙', '빼는 3D 참조 랙'. 기준값 {pos_tol_m} m · {detour_pct}% · 같은 랙 {same_rack_pct}%는 이 규칙의 params에만 있고 프로그램도 여기서 읽는다. 바꾸면 tests/check_protocol.py와 기준 프로젝트 불일치 목록·물량을 전후 비교, 승인 계장 공종 책임자, 버전 +0.1.",
+     "from_master": "54a728a2a988",
+     "state": "확인 필요",
+     "by": "pid_io (초기 번역)",
+     "at": "2026-11-27",
+     "questions": []
+    }
+   },
+   "status": "DRAFT",
+   "approved_by": null,
+   "approval_date": null,
+   "src": "seed"
+  }
+ ],
+ "changelog": [
+  {
+   "version": "1.0",
+   "at": "2026-11-27",
+   "what": "처음 (v13.2 규칙을 공통으로)"
+  },
+  {
+   "version": "2.0",
+   "at": "2026-11-27",
+   "what": "세 관점(엔지니어 · 컴퓨터 · 유지보수)으로 다시 씀, 기준값 params 한 곳, P11 추가"
+  },
+  {
+   "version": "3.0",
+   "at": "2026-11-27",
+   "what": "엔지니어 관점 = 마스터 (설계실 Rule 양식 칸: 대상·조건·할 일·예외·판정·근거·상태), 컴퓨터·유지보수 = 번역본 (마스터 지문·상태), P00 읽는 법 추가. 규칙 내용은 v2.0과 같음 (사용자 결정)"
+  }
+ ],
+ "notice": "이 프로토콜의 기준은 **엔지니어 관점(마스터)** 하나입니다. 컴퓨터 관점과 유지보수 관점은 마스터를 옮긴 **번역본**입니다. 둘이 다르면 항상 마스터가 맞고, 번역본은 고치지 않고 마스터를 고친 뒤 다시 번역합니다. 숫자 기준은 규칙의 기준값(params) 한 곳에만 있습니다. 자세한 관리 방법은 P00."
+}

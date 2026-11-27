@@ -1941,11 +1941,13 @@ def order_undo(name: str, oid: str):
 
 
 def orders_view(name: str):
+    from .. import common_rules as CR
     from .. import orders as OR
     c = OR.load_common(HOME)
     return {"orders": ait.load(pdir(name) / "orders.json", [])[-20:], "pending": ait.load(pdir(name) / "order_pending.json", None),
             "lessons": [x for x in OR.lessons(HOME) if x["status"] == "pending"][-30:],
-            "common": {"version": c["version"], "rules": c["rules"], "changelog": c.get("changelog", [])[-5:]},
+            "common": {"version": c["version"], "notice": c.get("notice", ""), "rules": [CR.flat(r) if r.get("master") else r for r in c["rules"]],
+                       "changelog": c.get("changelog", [])[-5:]},
             "actions": OR.ACTIONS}
 
 
@@ -2380,6 +2382,19 @@ class H(BaseHTTPRequestHandler):
                     (d / "cache" / "page_texts.json").unlink(missing_ok=True)
                     cache_pages(name)                    # readable now: save page images for later
                 return self._send(200, {"ok": True, "meta": m})
+            if act == "protocol" and method == "POST":   # v13.8 공통 프로토콜: 번역 확인 · 마스터 승인 · 번역 갱신
+                from .. import orders as OR, common_rules as CR
+                b = self._json()
+                c = OR.load_common(HOME)
+                if b.get("confirm"):
+                    CR.confirm_translation(c, b["rule"], b["view"], b.get("by", ""))
+                elif b.get("approve"):
+                    CR.approve_master(c, b["rule"], b.get("by", ""))
+                elif b.get("translation") is not None:
+                    CR.set_translation(c, b["rule"], b["view"], b["translation"], b.get("by", "") or "사람 입력", b.get("questions") or [])
+                OR.save_common(HOME, c)
+                return self._send(200, {"common": {"version": c["version"], "notice": c.get("notice", ""),
+                                                   "rules": [CR.flat(r) for r in c["rules"]], "changelog": c.get("changelog", [])[-5:]}})
             if act == "loop":                            # v13.6 3D 구현 루프
                 from .. import loop3d as LP
                 sub = parts[4] if len(parts) > 4 else ""
