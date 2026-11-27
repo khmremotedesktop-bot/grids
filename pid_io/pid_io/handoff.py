@@ -185,7 +185,130 @@ def rule_defs(v) -> dict:
 
 
 # ------------------------------------------------------------------ structured model data (DELTA records)
-def records(inst: dict, scope_of) -> list:
+# JB typical (일반값, 사용자 승인 2026-11-27 - 회사 타피컬 오면 교체): pairs -> W x H x D mm (SUS)
+JB_TYPICAL = [(24, (400, 300, 200)), (40, (500, 400, 200)), (60, (600, 500, 250)), (80, (700, 600, 250)), (999, (800, 600, 300))]
+
+
+def jb_box(size: str):
+    m = re.match(r"(\d+)", str(size or ""))
+    n = int(m.group(1)) if m else 40
+    return next(d for lim, d in JB_TYPICAL if n <= lim)
+
+
+def jb_mount(slot: str) -> str:
+    """rack column slots (PLOT rack, drawn rack, 3D model rack) -> bracket on the column; elsewhere a 2" pipe stand."""
+    s = str(slot or "")
+    return "RACK_COLUMN_BRACKET" if (s.startswith(("랙", "3D", "그린 랙"))) else "PIPE_STAND"
+
+
+def fittings(trays: list, fit_r_mm: float) -> list:
+    """tray fittings (same class, same EL), UG trenches left out:
+    1. ends that meet (≤ 0.6 m): 2 opposite = splice (reducer when widths differ), 2 at 90° = elbow, 3 = tee, 4 = cross
+    2. ends that do not meet because the racks put the trays on different lanes: the end's line is extended to the
+       perpendicular tray's line (≤ 8 m) -> elbow when it lands near that tray's end, tee when it lands on its span.
+       'extend' tells how far each tray end has to run to reach the fitting (the drawing must not leave a gap)."""
+    import math
+    T = []
+    for t in trays:
+        if t["kind"] == "ug_trench":
+            continue
+        a, b = t["a"], t["b"]
+        L = math.hypot(b[0] - a[0], b[2] - a[2])
+        if L < 0.05:
+            continue
+        T.append({**t, "L": L, "u": ((b[0] - a[0]) / L, (b[2] - a[2]) / L), "cls": t["props"].get("구분", "")})
+    ends = []
+    for t in T:
+        for e, sgn in ((t["a"], 1), (t["b"], -1)):
+            ends.append({"t": t, "p": e, "d": (round(t["u"][0] * sgn), round(t["u"][1] * sgn))})   # d points into the tray
+    near = lambda p, q, r=0.6: math.hypot(p[0] - q[0], p[2] - q[2]) <= r and abs(p[1] - q[1]) < 0.3
+    out, used = [], set()
+    # 1. ends that meet
+    groups = []
+    for e in ends:
+        g = next((g for g in groups if g[0]["t"]["cls"] == e["t"]["cls"] and near(g[0]["p"], e["p"])), None)
+        (g.append(e) if g else groups.append([e]))
+    for g in groups:
+        dirs = sorted({x["d"] for x in g})
+        if len(dirs) < 2:
+            continue
+        for x in g:
+            used.add((x["t"]["id"], tuple(x["p"])))
+        if len(dirs) == 2 and dirs[0][0] == -dirs[1][0] and dirs[0][1] == -dirs[1][1]:
+            if len({x["t"]["w"] for x in g}) < 2:
+                continue
+            kind = "REDUCER"
+        else:
+            kind = "ELBOW_90_H" if len(dirs) == 2 else ("TEE_H" if len(dirs) == 3 else "CROSS_H")
+        out.append({"type": kind, "point": [round(sum(x["p"][0] for x in g) / len(g), 2), g[0]["p"][1], round(sum(x["p"][2] for x in g) / len(g), 2)],
+                    "dirs": [list(d) for d in dirs], "trays": sorted({x["t"]["id"] for x in g}), "extend": [], "g": g})
+    # 2. lane offsets: extend free ends to the perpendicular tray
+    for e in ends:
+        if (e["t"]["id"], tuple(e["p"])) in used:
+            continue
+        p, out_d = e["p"], (-e["d"][0], -e["d"][1])          # leaving the tray outward
+        best = None
+        for t2 in T:
+            if t2["id"] == e["t"]["id"] or t2["cls"] != e["t"]["cls"] or abs(t2["a"][1] - p[1]) >= 2.0:   # racks: different cable tier EL
+                continue
+            if abs(t2["u"][0] * out_d[0] + t2["u"][1] * out_d[1]) > 0.1:   # not perpendicular
+                continue
+            # intersection: p + s * out_d on t2's line
+            if out_d[0] == 0:                                   # moving along Z, t2 runs along X at z = t2.a.z
+                s_ = (t2["a"][2] - p[2]) * out_d[1]
+                X = [p[0], p[1], t2["a"][2]]
+                along = (p[0] - min(t2["a"][0], t2["b"][0]), max(t2["a"][0], t2["b"][0]) - p[0])
+            else:
+                s_ = (t2["a"][0] - p[0]) * out_d[0]
+                X = [t2["a"][0], p[1], p[2]]
+                along = (p[2] - min(t2["a"][2], t2["b"][2]), max(t2["a"][2], t2["b"][2]) - p[2])
+            if not (0 <= s_ <= 10.0) or min(along) < -10.0:
+                continue
+            if best is None or s_ < best[0]:
+                best = (s_, t2, X, along)
+        if not best:
+            continue
+        s_, t2, X, along = best
+        end2 = min((t2["a"], t2["b"]), key=lambda q: math.hypot(q[0] - X[0], q[2] - X[2]))
+        d2 = math.hypot(end2[0] - X[0], end2[2] - X[2])
+        drop = round(t2["a"][1] - p[1], 2)                       # vertical offset at the fitting (tier EL of the other rack)
+        X2 = [X[0], t2["a"][1], X[2]]
+        ext = [{"tray": e["t"]["id"], "from": [round(c, 2) for c in p], "to": [round(c, 2) for c in X]}] if s_ > 0.05 else []
+        if min(along) <= 0.6 or d2 <= 0.6 + 10.0 and min(along) < 0:
+            kind = "ELBOW_90_H"
+            if d2 > 0.05 and (t2["id"], tuple(end2)) not in used:
+                ext.append({"tray": t2["id"], "from": [round(c, 2) for c in end2], "to": [round(c, 2) for c in X2]})
+                used.add((t2["id"], tuple(end2)))
+            dirs = [list(e["d"] if False else out_d), [round((end2[0] == X[0]) and 0 or math.copysign(1, (t2["a"][0] + t2["b"][0]) / 2 - X[0])),
+                                                       round((end2[2] == X[2]) and 0 or math.copysign(1, (t2["a"][2] + t2["b"][2]) / 2 - X[2]))]]
+            dirs = [[-out_d[0], -out_d[1]], [round(t2["u"][0]) * (1 if ((t2["a"][0] + t2["b"][0]) / 2 - X[0]) * t2["u"][0] + ((t2["a"][2] + t2["b"][2]) / 2 - X[2]) * t2["u"][1] > 0 else -1),
+                                             round(t2["u"][1]) * (1 if ((t2["a"][0] + t2["b"][0]) / 2 - X[0]) * t2["u"][0] + ((t2["a"][2] + t2["b"][2]) / 2 - X[2]) * t2["u"][1] > 0 else -1)]]
+        else:
+            kind = "TEE_H"
+            dirs = [[-out_d[0], -out_d[1]], [round(t2["u"][0]), round(t2["u"][1])], [-round(t2["u"][0]), -round(t2["u"][1])]]
+        used.add((e["t"]["id"], tuple(p)))
+        dup = next((f for f in out if near(f["point"], X, 0.6) and f["g"][0]["t"]["cls"] == e["t"]["cls"]), None)
+        if dup and dup.get("drop_m") is None:
+            dup["drop_m"] = drop
+        if dup:
+            dup["extend"] += ext
+            dup["trays"] = sorted(set(dup["trays"]) | {e["t"]["id"], t2["id"]})
+            if dup["type"] == "ELBOW_90_H" and kind == "TEE_H":
+                dup["type"] = "TEE_H"
+            continue
+        out.append({"type": kind, "point": [round(X[0], 2), X[1], round(X[2], 2)], "dirs": dirs, "trays": sorted({e["t"]["id"], t2["id"]}),
+                    "extend": ext, "drop_m": drop, "g": [e, {"t": t2, "p": end2}]})
+    res = []
+    for f in out:
+        g = f.pop("g")
+        ts = [x["t"] for x in g]
+        widest = max(ts, key=lambda t: t["w"])
+        res.append({**f, "width_m": max(t["w"] for t in ts), "tiers": max(t.get("tiers") or 1 for t in ts), "radius_m": round(fit_r_mm / 1000, 3),
+                    "main_tray": widest["id"], "cls": ts[0]["cls"]})
+    return res
+
+
+def records(inst: dict, scope_of, fit_r_mm: float = 600) -> list:
     out = []
 
     def rec(oid, ent, sids, rule, geom, attrs):
@@ -194,7 +317,9 @@ def records(inst: dict, scope_of) -> list:
     for x in inst["instruments"]:
         rec(f"CI-INST:{x['id']}", "E-INSTRUMENT", ["CI-INST"], "R-INST", {"point": x["p"], "estimated": x["est"]}, x["props"])
     for j in inst["jbs"]:
-        rec(f"CI-JB:{j['id']}", "E-JB", [scope_of("jb", j)], "R-JB", {"point": j["p"], "box_m": [0.8, 0.8, 0.35]}, j["props"])
+        w, h, dpt = jb_box(j["props"].get("크기"))
+        rec(f"CI-JB:{j['id']}", "E-JB", [scope_of("jb", j)], "R-JB",
+            {"point": j["p"], "bottom_el_m": j["p"][1], "box_mm": [w, h, dpt], "mount": jb_mount(j["props"].get("자리"))}, j["props"])
     for c in inst["cables"]:
         rec(f"CI-CB:{c['id']}", "E-CABLE", [scope_of("cable", c)], KIND_RULE.get(c["kind"], "R-CB-MULTI"),
             {"polyline": c["path"], "od_mm": c["od"]}, c["props"])
@@ -209,6 +334,11 @@ def records(inst: dict, scope_of) -> list:
         rec(f"CI-SP:{s['id']}", "E-SUPPORT", [scope_of("support", s)], "R-SP", {"point": s["p"], "base_el": s.get("base")}, {**s["props"], "type": s["type"]})
     for j in inst.get("joints") or []:
         rec(f"CI-EJ:{j['id']}", "E-JOINT", ["CI-SP-EXP"], "R-SP-EXP", {"point": j["p"]}, j["props"])
+    tray_by = {t["id"]: t for t in inst["trays"]}
+    for k, f in enumerate(fittings(inst["trays"], fit_r_mm), 1):
+        rec(f"CI-FT:{k:04d}", "E-FITTING", [s_ for s_ in [scope_of("tray", tray_by[f["main_tray"]])] if s_], "R-TR",
+            {k_: f.get(k_, 0 if k_ == "drop_m" else None) for k_ in ("type", "point", "dirs", "width_m", "tiers", "radius_m", "extend", "drop_m")},
+            {"Fitting": f["type"], "트레이": ", ".join(f["trays"]), "구분": f["cls"], "폭 (mm)": int(round(f["width_m"] * 1000))})
     for r in inst.get("rooms") or []:
         rec(f"CI-ROOM:{r['id']}", "E-ROOM", [], None, {"point": r["p"]}, r["props"])
     return out
@@ -316,6 +446,31 @@ def write_package(setdir: Path, ctx: dict) -> dict:
     from . import cable as C
     all_items = {it["id"]: it for g in C.SCHEMA + C.JB.SCHEMA + C.TR.SCHEMA + C.SP.SCHEMA for it in g["items"]}
     fid = lambda iid: "F-" + str(all_items[iid].get("code") or iid) if iid in all_items else "F-" + iid
+    sc_map = {}
+    for x in direct:
+        sc_map.setdefault((x["item_type"], x["spec"]), x["scope_id"])
+    tray_scope = {}
+    for t in ctx["tr"]["segments"]:
+        if t["kind"] == "UG":
+            tray_scope[t["no"]] = f"CI-UG-W{t['width']}" + (f"X{t['tiers']}" if t["tiers"] > 1 else "")
+        for tt in t["trays"]:
+            tray_scope[tt["no"]] = f"CI-TR-{CLS_CODE.get(tt['cls'], slug(tt['cls']))}-{tt['width']}"
+    cable_scope = {c["no"]: f"CI-CB-{KIND_CODE.get(c['kind'], 'XX')}-{slug(c['spec'])}" for c in ctx["res"]["cables"]}
+
+    def scope_of(kind, o):
+        if kind == "jb":
+            return f"CI-JB-{slug(o['props'].get('크기', ''))}"
+        if kind == "cable":
+            return cable_scope.get(o["id"])
+        if kind == "tray":
+            return tray_scope.get(o["id"])
+        if kind == "pt":
+            return f"CI-PT-{v['pt_width']}"
+        if kind == "support":
+            return f"CI-SP-{o['type']}"
+    recs = records(ctx["inst"], scope_of, float(v.get("sp_fit_r", 600)))
+    rec_hash = lambda rs: hashlib.sha256(json.dumps(rs, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+    h_recs = rec_hash(recs)
     # --- revisions: scope / rule change when their content changes, model every time the data changes
     rv_f = Path(ctx["pdir"]) / "handoff_revs.json"
     try:
@@ -330,8 +485,7 @@ def write_package(setdir: Path, ctx: dict) -> dict:
         return f"{r['n']:02d}"
     scope_rev = bump("scope", [[x["scope_id"], x["item_name"], x["spec"], x["unit"], x["disposition"], x["rule_id"]] for x in items])
     rule_rev = bump("rule", [rdefs, {k: v.get(k) for k in sorted(v)}])
-    recs_probe = len(ctx["inst"]["cables"]), len(ctx["inst"]["trays"]), len(ctx["inst"]["supports"]), len(ctx["inst"]["jbs"])
-    model_rev = bump("model", [scope_rev, rule_rev, recs_probe, sha(ctx["model_file"])])
+    model_rev = bump("model", [scope_rev, rule_rev, h_recs, sha(ctx["model_file"])])
     rv_f.write_text(json.dumps(revs, indent=1), encoding="utf-8")
     pkg = Path(setdir) / f"{PROFILE}_scopeRev{scope_rev}_ruleRev{rule_rev}"
     shutil.rmtree(pkg, ignore_errors=True)
@@ -447,6 +601,7 @@ def write_package(setdir: Path, ctx: dict) -> dict:
             {"entity_id": "E-PERFORATED", "id_key": "PT 번호", "representation": "GEOMETRY", "source_id": "SRC-PIDIO", "locator": "Perforated_Tray"},
             {"entity_id": "E-SUPPORT", "id_key": "support_id", "representation": "GEOMETRY", "source_id": "SRC-PIDIO", "locator": "Support_List"},
             {"entity_id": "E-JOINT", "id_key": "EJ 번호", "representation": "GEOMETRY", "source_id": "SRC-PIDIO", "locator": "Expansion_Joints"},
+            {"entity_id": "E-FITTING", "id_key": "fitting id (CI-FT:nnnn)", "representation": "GEOMETRY", "source_id": "SRC-PIDIO", "locator": "트레이 구간 끝점 (같은 구분·EL)"},
             {"entity_id": "E-ROOM", "id_key": "room id", "representation": "GEOMETRY", "source_id": "SRC-PLOT", "locator": "제어실 / IRP"},
             {"entity_id": "E-QUANTITY", "id_key": "scope_id", "representation": "CALCULATION", "source_id": "SRC-PIDIO", "locator": "01_scope.csv"},
             {"entity_id": "E-VIEWER", "id_key": "seed code location", "representation": "ATTRIBUTE", "source_id": "SRC-BASE", "locator": "Seed module script"}],
@@ -531,31 +686,6 @@ def write_package(setdir: Path, ctx: dict) -> dict:
     # --- model files (copies; the app keeps its own) + DELTA data
     mname = f"{PROFILE}_Seed03_R{model_rev}"
     shutil.copy2(ctx["model_file"], pkg / "model" / f"{mname}.html")
-    sc_map = {}
-    for x in direct:
-        sc_map.setdefault((x["item_type"], x["spec"]), x["scope_id"])
-    tray_scope = {}
-    for t in ctx["tr"]["segments"]:
-        if t["kind"] == "UG":
-            tray_scope[t["no"]] = f"CI-UG-W{t['width']}" + (f"X{t['tiers']}" if t["tiers"] > 1 else "")
-        for tt in t["trays"]:
-            tray_scope[tt["no"]] = f"CI-TR-{CLS_CODE.get(tt['cls'], slug(tt['cls']))}-{tt['width']}"
-    cable_scope = {c["no"]: f"CI-CB-{KIND_CODE.get(c['kind'], 'XX')}-{slug(c['spec'])}" for c in ctx["res"]["cables"]}
-
-    def scope_of(kind, o):
-        if kind == "jb":
-            return f"CI-JB-{slug(o['props'].get('크기', ''))}"
-        if kind == "cable":
-            return cable_scope.get(o["id"])
-        if kind == "tray":
-            return tray_scope.get(o["id"])
-        if kind == "pt":
-            return f"CI-PT-{v['pt_width']}"
-        if kind == "support":
-            return f"CI-SP-{o['type']}"
-    recs = records(ctx["inst"], scope_of)
-    rec_hash = lambda rs: hashlib.sha256(json.dumps(rs, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
-    h_recs = rec_hash(recs)
     seed_mod = ctx.get("seed_modifications") or []
     for m in seed_mod:
         recs.append({"object_id": m["object_id"], "entity_id": "E-VIEWER", "operation": "MODIFY", "scope_ids": [], "rule_id": None,
@@ -582,7 +712,7 @@ def write_package(setdir: Path, ctx: dict) -> dict:
     recon = []
     by = Counter()
     for r in recs:
-        if r["operation"] != "ADD" or not r["scope_ids"]:
+        if r["operation"] != "ADD" or not r["scope_ids"] or r["entity_id"] == "E-FITTING":
             continue
         sid = r["scope_ids"][0]
         a = r["attributes"]
@@ -598,7 +728,7 @@ def write_package(setdir: Path, ctx: dict) -> dict:
     for sid, q in qn.items():
         if sid in by:
             recon.append({"scope_id": sid, "model": round(by[sid], 1), "quantity": q, "match": abs(by[sid] - float(q or 0)) <= max(1.0, 0.005 * float(q or 0))})
-    determin = bool(ctx.get("reproduce")) and rec_hash(records(ctx["reproduce"](), scope_of)) == h_recs
+    determin = bool(ctx.get("reproduce")) and rec_hash(records(ctx["reproduce"](), scope_of, float(v.get("sp_fit_r", 600)))) == h_recs
     checks_auto = {
         "BASELINE_INTEGRITY": (chk_base and base["sha256"] == GUIDE_SEED_SHA,
                                f"기준 Seed SHA-256 {base['sha256'][:12]}… (가이드 {GUIDE_SEED_SHA[:12]}…: {'일치' if base['sha256'] == GUIDE_SEED_SHA else '불일치'}); "

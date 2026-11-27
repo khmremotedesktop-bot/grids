@@ -19126,11 +19126,13 @@
      1.2,
      -33.68
     ],
-    "box_m": [
-     0.8,
-     0.8,
-     0.35
-    ]
+    "bottom_el_m": 1.2,
+    "box_mm": [
+     500,
+     400,
+     200
+    ],
+    "mount": "PIPE_STAND"
    },
    "attributes": {
     "JB No": "JB-10-DA-01",
@@ -19164,11 +19166,13 @@
      1.2,
      5.9
     ],
-    "box_m": [
-     0.8,
-     0.8,
-     0.35
-    ]
+    "bottom_el_m": 1.2,
+    "box_mm": [
+     500,
+     400,
+     200
+    ],
+    "mount": "RACK_COLUMN_BRACKET"
    },
    "attributes": {
     "JB No": "JB-10-DA-02",
@@ -19202,11 +19206,13 @@
      1.2,
      92.39
     ],
-    "box_m": [
-     0.8,
-     0.8,
-     0.35
-    ]
+    "bottom_el_m": 1.2,
+    "box_mm": [
+     500,
+     400,
+     200
+    ],
+    "mount": "RACK_COLUMN_BRACKET"
    },
    "attributes": {
     "JB No": "JB-10-DA-03",
@@ -19240,11 +19246,13 @@
      1.2,
      104.45
     ],
-    "box_m": [
-     0.8,
-     0.8,
-     0.35
-    ]
+    "bottom_el_m": 1.2,
+    "box_mm": [
+     500,
+     400,
+     200
+    ],
+    "mount": "RACK_COLUMN_BRACKET"
    },
    "attributes": {
     "JB No": "JB-10-DA-04",
@@ -19278,11 +19286,13 @@
      1.2,
      -33.68
     ],
-    "box_m": [
-     0.8,
-     0.8,
-     0.35
-    ]
+    "bottom_el_m": 1.2,
+    "box_mm": [
+     500,
+     400,
+     200
+    ],
+    "mount": "PIPE_STAND"
    },
    "attributes": {
     "JB No": "JB-10-DD-01",
@@ -19316,11 +19326,13 @@
      1.2,
      6.24
     ],
-    "box_m": [
-     0.8,
-     0.8,
-     0.35
-    ]
+    "bottom_el_m": 1.2,
+    "box_mm": [
+     500,
+     400,
+     200
+    ],
+    "mount": "RACK_COLUMN_BRACKET"
    },
    "attributes": {
     "JB No": "JB-10-DD-02",
@@ -19354,11 +19366,13 @@
      1.2,
      98.42
     ],
-    "box_m": [
-     0.8,
-     0.8,
-     0.35
-    ]
+    "bottom_el_m": 1.2,
+    "box_mm": [
+     500,
+     400,
+     200
+    ],
+    "mount": "RACK_COLUMN_BRACKET"
    },
    "attributes": {
     "JB No": "JB-10-DD-03",
@@ -19392,11 +19406,13 @@
      1.2,
      52.93
     ],
-    "box_m": [
-     0.8,
-     0.8,
-     0.35
-    ]
+    "bottom_el_m": 1.2,
+    "box_mm": [
+     500,
+     400,
+     200
+    ],
+    "mount": "PIPE_STAND"
    },
    "attributes": {
     "JB No": "JB-10-DD-04",
@@ -19430,11 +19446,13 @@
      1.2,
      5.9
     ],
-    "box_m": [
-     0.8,
-     0.8,
-     0.35
-    ]
+    "bottom_el_m": 1.2,
+    "box_mm": [
+     500,
+     400,
+     200
+    ],
+    "mount": "RACK_COLUMN_BRACKET"
    },
    "attributes": {
     "JB No": "JB-10-EA-01",
@@ -19468,11 +19486,13 @@
      1.2,
      104.45
     ],
-    "box_m": [
-     0.8,
-     0.8,
-     0.35
-    ]
+    "bottom_el_m": 1.2,
+    "box_mm": [
+     500,
+     400,
+     200
+    ],
+    "mount": "RACK_COLUMN_BRACKET"
    },
    "attributes": {
     "JB No": "JB-10-EA-02",
@@ -19506,11 +19526,13 @@
      1.2,
      92.39
     ],
-    "box_m": [
-     0.8,
-     0.8,
-     0.35
-    ]
+    "bottom_el_m": 1.2,
+    "box_mm": [
+     500,
+     400,
+     200
+    ],
+    "mount": "RACK_COLUMN_BRACKET"
    },
    "attributes": {
     "JB No": "JB-10-EA-03",
@@ -19544,11 +19566,13 @@
      1.2,
      5.9
     ],
-    "box_m": [
-     0.8,
-     0.8,
-     0.35
-    ]
+    "bottom_el_m": 1.2,
+    "box_mm": [
+     500,
+     400,
+     200
+    ],
+    "mount": "RACK_COLUMN_BRACKET"
    },
    "attributes": {
     "JB No": "JB-10-ED-01",
@@ -19582,11 +19606,13 @@
      1.2,
      38.14
     ],
-    "box_m": [
-     0.8,
-     0.8,
-     0.35
-    ]
+    "bottom_el_m": 1.2,
+    "box_mm": [
+     500,
+     400,
+     200
+    ],
+    "mount": "RACK_COLUMN_BRACKET"
    },
    "attributes": {
     "JB No": "JB-11-DA-01",
@@ -19620,11 +19646,13 @@
      1.2,
      56.22
     ],
-    "box_m": [
-     0.8,
-     0.8,
-     0.35
-    ]
+    "bottom_el_m": 1.2,
+    "box_mm": [
+     600,
+     500,
+     250
+    ],
+    "mount": "RACK_COLUMN_BRACKET"
    },
    "attributes": {
     "JB No": "JB-11-DA-02",
@@ -19658,11 +19686,13 @@
      1.2,
      56.22
     ],
-    "box_m": [
-     0.8,
-     0.8,
-     0.35
-    ]
+    "bottom_el_m": 1.2,
+    "box_mm": [
+     600,
+     500,
+     250
+    ],
+    "mount": "RACK_COLUMN_BRACKET"
    },
    "attributes": {
     "JB No": "JB-11-DD-01",
@@ -19696,11 +19726,13 @@
      1.2,
      56.22
     ],
-    "box_m": [
-     0.8,
-     0.8,
-     0.35
-    ]
+    "bottom_el_m": 1.2,
+    "box_mm": [
+     500,
+     400,
+     200
+    ],
+    "mount": "RACK_COLUMN_BRACKET"
    },
    "attributes": {
     "JB No": "JB-11-EA-01",
@@ -19734,11 +19766,13 @@
      1.2,
      38.14
     ],
-    "box_m": [
-     0.8,
-     0.8,
-     0.35
-    ]
+    "bottom_el_m": 1.2,
+    "box_mm": [
+     500,
+     400,
+     200
+    ],
+    "mount": "RACK_COLUMN_BRACKET"
    },
    "attributes": {
     "JB No": "JB-12-DA-01",
@@ -19772,11 +19806,13 @@
      1.2,
      38.14
     ],
-    "box_m": [
-     0.8,
-     0.8,
-     0.35
-    ]
+    "bottom_el_m": 1.2,
+    "box_mm": [
+     500,
+     400,
+     200
+    ],
+    "mount": "RACK_COLUMN_BRACKET"
    },
    "attributes": {
     "JB No": "JB-12-DD-01",
@@ -19810,11 +19846,13 @@
      1.2,
      51.42
     ],
-    "box_m": [
-     0.8,
-     0.8,
-     0.35
-    ]
+    "bottom_el_m": 1.2,
+    "box_mm": [
+     500,
+     400,
+     200
+    ],
+    "mount": "RACK_COLUMN_BRACKET"
    },
    "attributes": {
     "JB No": "JB-13-DA-01",
@@ -19848,11 +19886,13 @@
      1.2,
      51.42
     ],
-    "box_m": [
-     0.8,
-     0.8,
-     0.35
-    ]
+    "bottom_el_m": 1.2,
+    "box_mm": [
+     500,
+     400,
+     200
+    ],
+    "mount": "RACK_COLUMN_BRACKET"
    },
    "attributes": {
     "JB No": "JB-13-DD-01",
@@ -19886,11 +19926,13 @@
      1.2,
      56.22
     ],
-    "box_m": [
-     0.8,
-     0.8,
-     0.35
-    ]
+    "bottom_el_m": 1.2,
+    "box_mm": [
+     500,
+     400,
+     200
+    ],
+    "mount": "RACK_COLUMN_BRACKET"
    },
    "attributes": {
     "JB No": "JB-14-DA-01",
@@ -19924,11 +19966,13 @@
      1.2,
      38.14
     ],
-    "box_m": [
-     0.8,
-     0.8,
-     0.35
-    ]
+    "bottom_el_m": 1.2,
+    "box_mm": [
+     500,
+     400,
+     200
+    ],
+    "mount": "RACK_COLUMN_BRACKET"
    },
    "attributes": {
     "JB No": "JB-14-DD-01",
@@ -19962,11 +20006,13 @@
      1.2,
      120.68
     ],
-    "box_m": [
-     0.8,
-     0.8,
-     0.35
-    ]
+    "bottom_el_m": 1.2,
+    "box_mm": [
+     500,
+     400,
+     200
+    ],
+    "mount": "RACK_COLUMN_BRACKET"
    },
    "attributes": {
     "JB No": "JB-15-DA-01",
@@ -20000,11 +20046,13 @@
      1.2,
      120.68
     ],
-    "box_m": [
-     0.8,
-     0.8,
-     0.35
-    ]
+    "bottom_el_m": 1.2,
+    "box_mm": [
+     500,
+     400,
+     200
+    ],
+    "mount": "RACK_COLUMN_BRACKET"
    },
    "attributes": {
     "JB No": "JB-15-DD-01",
@@ -20038,11 +20086,13 @@
      1.2,
      132.73
     ],
-    "box_m": [
-     0.8,
-     0.8,
-     0.35
-    ]
+    "bottom_el_m": 1.2,
+    "box_mm": [
+     500,
+     400,
+     200
+    ],
+    "mount": "RACK_COLUMN_BRACKET"
    },
    "attributes": {
     "JB No": "JB-16-DA-01",
@@ -20076,11 +20126,13 @@
      1.2,
      134.58
     ],
-    "box_m": [
-     0.8,
-     0.8,
-     0.35
-    ]
+    "bottom_el_m": 1.2,
+    "box_mm": [
+     500,
+     400,
+     200
+    ],
+    "mount": "RACK_COLUMN_BRACKET"
    },
    "attributes": {
     "JB No": "JB-16-DD-01",
@@ -20114,11 +20166,13 @@
      1.2,
      177.91
     ],
-    "box_m": [
-     0.8,
-     0.8,
-     0.35
-    ]
+    "bottom_el_m": 1.2,
+    "box_mm": [
+     500,
+     400,
+     200
+    ],
+    "mount": "RACK_COLUMN_BRACKET"
    },
    "attributes": {
     "JB No": "JB-17-DA-01",
@@ -20152,11 +20206,13 @@
      1.2,
      177.91
     ],
-    "box_m": [
-     0.8,
-     0.8,
-     0.35
-    ]
+    "bottom_el_m": 1.2,
+    "box_mm": [
+     500,
+     400,
+     200
+    ],
+    "mount": "RACK_COLUMN_BRACKET"
    },
    "attributes": {
     "JB No": "JB-17-DD-01",
@@ -20190,11 +20246,13 @@
      1.2,
      182.8
     ],
-    "box_m": [
-     0.8,
-     0.8,
-     0.35
-    ]
+    "bottom_el_m": 1.2,
+    "box_mm": [
+     500,
+     400,
+     200
+    ],
+    "mount": "RACK_COLUMN_BRACKET"
    },
    "attributes": {
     "JB No": "JB-18-DA-01",
@@ -20228,11 +20286,13 @@
      1.2,
      182.8
     ],
-    "box_m": [
-     0.8,
-     0.8,
-     0.35
-    ]
+    "bottom_el_m": 1.2,
+    "box_mm": [
+     500,
+     400,
+     200
+    ],
+    "mount": "RACK_COLUMN_BRACKET"
    },
    "attributes": {
     "JB No": "JB-18-DD-01",
@@ -110653,6 +110713,374 @@
     "EJ No": "EJ-003",
     "구간": "TR-10-032",
     "트레이": "TR-10-032"
+   }
+  },
+  {
+   "object_id": "CI-FT:0001",
+   "entity_id": "E-FITTING",
+   "operation": "ADD",
+   "scope_ids": [
+    "CI-TR-SIG-900"
+   ],
+   "rule_id": "R-TR",
+   "geometry": {
+    "type": "REDUCER",
+    "point": [
+     3.83,
+     11.0,
+     -3.55
+    ],
+    "dirs": [
+     [
+      0,
+      -1
+     ],
+     [
+      0,
+      1
+     ]
+    ],
+    "width_m": 0.9,
+    "tiers": 2,
+    "radius_m": 0.6,
+    "extend": [],
+    "drop_m": 0
+   },
+   "attributes": {
+    "Fitting": "REDUCER",
+    "트레이": "TR-10-018, TR-11-002",
+    "구분": "신호",
+    "폭 (mm)": 900
+   }
+  },
+  {
+   "object_id": "CI-FT:0002",
+   "entity_id": "E-FITTING",
+   "operation": "ADD",
+   "scope_ids": [
+    "CI-TR-SIG-900"
+   ],
+   "rule_id": "R-TR",
+   "geometry": {
+    "type": "REDUCER",
+    "point": [
+     3.83,
+     11.0,
+     55.73
+    ],
+    "dirs": [
+     [
+      0,
+      -1
+     ],
+     [
+      0,
+      1
+     ]
+    ],
+    "width_m": 0.9,
+    "tiers": 1,
+    "radius_m": 0.6,
+    "extend": [],
+    "drop_m": 0
+   },
+   "attributes": {
+    "Fitting": "REDUCER",
+    "트레이": "TR-10-031, TR-10-032",
+    "구분": "신호",
+    "폭 (mm)": 900
+   }
+  },
+  {
+   "object_id": "CI-FT:0003",
+   "entity_id": "E-FITTING",
+   "operation": "ADD",
+   "scope_ids": [
+    "CI-TR-SIG-600"
+   ],
+   "rule_id": "R-TR",
+   "geometry": {
+    "type": "REDUCER",
+    "point": [
+     3.97,
+     11.0,
+     136.1
+    ],
+    "dirs": [
+     [
+      0,
+      -1
+     ],
+     [
+      0,
+      1
+     ]
+    ],
+    "width_m": 0.6,
+    "tiers": 1,
+    "radius_m": 0.6,
+    "extend": [],
+    "drop_m": 0
+   },
+   "attributes": {
+    "Fitting": "REDUCER",
+    "트레이": "TR-17-002, TR-17-003",
+    "구분": "신호",
+    "폭 (mm)": 600
+   }
+  },
+  {
+   "object_id": "CI-FT:0004",
+   "entity_id": "E-FITTING",
+   "operation": "ADD",
+   "scope_ids": [
+    "CI-TR-SIG-300"
+   ],
+   "rule_id": "R-TR",
+   "geometry": {
+    "type": "ELBOW_90_H",
+    "point": [
+     91.85,
+     11.8,
+     4.05
+    ],
+    "dirs": [
+     [
+      -1,
+      0
+     ],
+     [
+      0,
+      -1
+     ]
+    ],
+    "width_m": 0.3,
+    "tiers": 1,
+    "radius_m": 0.6,
+    "extend": [
+     {
+      "tray": "TR-10-001",
+      "from": [
+       91.45,
+       11.8,
+       4.05
+      ],
+      "to": [
+       91.85,
+       11.8,
+       4.05
+      ]
+     }
+    ],
+    "drop_m": -0.8
+   },
+   "attributes": {
+    "Fitting": "ELBOW_90_H",
+    "트레이": "TR-10-001, TR-10-003",
+    "구분": "신호",
+    "폭 (mm)": 300
+   }
+  },
+  {
+   "object_id": "CI-FT:0005",
+   "entity_id": "E-FITTING",
+   "operation": "ADD",
+   "scope_ids": [
+    "CI-TR-COM-300"
+   ],
+   "rule_id": "R-TR",
+   "geometry": {
+    "type": "ELBOW_90_H",
+    "point": [
+     91.45,
+     11.8,
+     3.65
+    ],
+    "dirs": [
+     [
+      -1,
+      0
+     ],
+     [
+      0,
+      -1
+     ]
+    ],
+    "width_m": 0.3,
+    "tiers": 1,
+    "radius_m": 0.6,
+    "extend": [],
+    "drop_m": -0.8
+   },
+   "attributes": {
+    "Fitting": "ELBOW_90_H",
+    "트레이": "TR-10-001-C, TR-10-003-C",
+    "구분": "통신",
+    "폭 (mm)": 300
+   }
+  },
+  {
+   "object_id": "CI-FT:0006",
+   "entity_id": "E-FITTING",
+   "operation": "ADD",
+   "scope_ids": [
+    "CI-TR-SIG-300"
+   ],
+   "rule_id": "R-TR",
+   "geometry": {
+    "type": "ELBOW_90_H",
+    "point": [
+     91.05,
+     11.0,
+     4.05
+    ],
+    "dirs": [
+     [
+      0,
+      -1
+     ],
+     [
+      -1,
+      0
+     ]
+    ],
+    "width_m": 0.3,
+    "tiers": 1,
+    "radius_m": 0.6,
+    "extend": [
+     {
+      "tray": "TR-10-004",
+      "from": [
+       91.05,
+       11.0,
+       -3.55
+      ],
+      "to": [
+       91.05,
+       11.0,
+       4.05
+      ]
+     }
+    ],
+    "drop_m": 0.8
+   },
+   "attributes": {
+    "Fitting": "ELBOW_90_H",
+    "트레이": "TR-10-001, TR-10-004",
+    "구분": "신호",
+    "폭 (mm)": 300
+   }
+  },
+  {
+   "object_id": "CI-FT:0007",
+   "entity_id": "E-FITTING",
+   "operation": "ADD",
+   "scope_ids": [
+    "CI-TR-COM-300"
+   ],
+   "rule_id": "R-TR",
+   "geometry": {
+    "type": "TEE_H",
+    "point": [
+     90.65,
+     11.0,
+     3.65
+    ],
+    "dirs": [
+     [
+      0,
+      -1
+     ],
+     [
+      1,
+      0
+     ],
+     [
+      -1,
+      0
+     ]
+    ],
+    "width_m": 0.3,
+    "tiers": 1,
+    "radius_m": 0.6,
+    "extend": [
+     {
+      "tray": "TR-10-004-C",
+      "from": [
+       90.65,
+       11.0,
+       -3.55
+      ],
+      "to": [
+       90.65,
+       11.0,
+       3.65
+      ]
+     }
+    ],
+    "drop_m": 0.8
+   },
+   "attributes": {
+    "Fitting": "TEE_H",
+    "트레이": "TR-10-001-C, TR-10-004-C",
+    "구분": "통신",
+    "폭 (mm)": 300
+   }
+  },
+  {
+   "object_id": "CI-FT:0008",
+   "entity_id": "E-FITTING",
+   "operation": "ADD",
+   "scope_ids": [
+    "CI-TR-SIG-600"
+   ],
+   "rule_id": "R-TR",
+   "geometry": {
+    "type": "TEE_H",
+    "point": [
+     3.2,
+     11.0,
+     3.9
+    ],
+    "dirs": [
+     [
+      0,
+      -1
+     ],
+     [
+      1,
+      0
+     ],
+     [
+      -1,
+      0
+     ]
+    ],
+    "width_m": 0.6,
+    "tiers": 1,
+    "radius_m": 0.6,
+    "extend": [
+     {
+      "tray": "TR-13-002",
+      "from": [
+       3.2,
+       11.0,
+       -3.55
+      ],
+      "to": [
+       3.2,
+       11.0,
+       3.9
+      ]
+     }
+    ],
+    "drop_m": 0.8
+   },
+   "attributes": {
+    "Fitting": "TEE_H",
+    "트레이": "TR-10-019, TR-13-002",
+    "구분": "신호",
+    "폭 (mm)": 600
    }
   },
   {

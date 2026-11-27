@@ -82,6 +82,13 @@
    "locator": "Expansion_Joints"
   },
   {
+   "entity_id": "E-FITTING",
+   "id_key": "fitting id (CI-FT:nnnn)",
+   "representation": "GEOMETRY",
+   "source_id": "SRC-PIDIO",
+   "locator": "트레이 구간 끝점 (같은 구분·EL)"
+  },
+  {
    "entity_id": "E-ROOM",
    "id_key": "room id",
    "representation": "GEOMETRY",

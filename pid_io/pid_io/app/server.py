@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import os
+import hashlib
 import re
 import shutil
 import threading
@@ -856,7 +857,9 @@ def plot_read(name: str):
         return None
     pf = d / "input" / files["plot"]
     rf = d / "input" / files["plotref"] if files.get("plotref") else None
-    key = [files["plot"], pf.stat().st_mtime_ns, files.get("plotref"), rf.stat().st_mtime_ns if rf else 0, "v3"]
+    # v13.6: content hash, not mtime - a fresh clone / unzip on another PC keeps the cache (and its picture)
+    fh = lambda f: hashlib.sha256(f.read_bytes()).hexdigest()[:16] if f else ""
+    key = [files["plot"], fh(pf), files.get("plotref"), fh(rf), "v4"]
     cj = d / "cache" / "plot.json"
     if cj.exists():
         old = json.loads(cj.read_text(encoding="utf-8"))
@@ -1308,6 +1311,109 @@ def twin_view(name: str):
     except Exception as e:                                 # noqa: BLE001
         out["error"] = str(e)
     return out
+
+
+# ------------------------------------------------------------------ v13.6 3D 구현 루프 (프롬프트 + 자료 → 회사 AI 3D → 코멘트 → 다음 Rev)
+def _loop_pkg(name: str, rd: dict) -> Path:
+    return find_out(name, rd["set"]) / rd["package"]
+
+
+def loop_view(name: str):
+    from .. import loop3d as LP
+    d = pdir(name)
+    rs = LP.rounds(d)
+    out = {"rounds": rs, "comments": LP.load_rules(d)["comments"], "next": len(rs), "prompt": None}
+    if rs:
+        try:
+            pk = _loop_pkg(name, rs[-1])
+            out["prompt"] = (pk / LP.PROMPT_NAME).read_text(encoding="utf-8")
+        except Exception:                                  # noqa: BLE001
+            pass
+    return out
+
+
+def loop_make(name: str, seven_only: bool = False):
+    """one round: package (7종 + model + evidence) + 3D_BUILD_PROMPT + BASE_SUMMARY + PLOT_MARKUP + 제출 zip."""
+    import csv as _csv
+    import hashlib
+    from .. import loop3d as LP, twin
+    d = pdir(name)
+    rs = LP.rounds(d)
+    n = len(rs)
+    r = export_twin(name)
+    od = find_out(name, r["dir"])
+    pk = od / r["package"]["dir"]
+    prog(88, f"R{n} 프롬프트 · Base 요약 · PLOT 마크업")
+    man = json.loads((pk / "00_manifest.json").read_text(encoding="utf-8"))
+    meta_ = {k: man[k] for k in ("scope_rev", "rule_rev", "model_rev")}
+    c2 = json.loads((pk / "02_input_model_contract.json").read_text(encoding="utf-8"))
+    tfp = c2["coordinate_system"]["plot_transform"]
+    tf = {"formula": tfp["formula"], "median_m": tfp["residual_median_m"], "max_m": tfp["residual_max_m"]}
+    mj = next(pk.glob("model/*.json"))
+    recs = json.loads(mj.read_text(encoding="utf-8"))["records"]
+    files = meta(name).get("files", {})
+    base = twin.parse_base(d / "input" / files["model3d"])
+    rules = LP.load_rules(d)["comments"]
+    s, res, lay = cable_result(name)
+    v = s["values"]
+    (pk / LP.PROMPT_NAME).write_text(LP.build_prompt(name, n, v, base, meta_, recs, tf, rules, "model/" + mj.name), encoding="utf-8")
+    # base summary: quantities from the T-NORMAL run, margins from 05
+    sc = list(_csv.DictReader(open(pk / "01_scope.csv", encoding="utf-8")))
+    run = json.loads((pk / "evidence" / "run_T-NORMAL.json").read_text(encoding="utf-8"))["results"]
+    marg = {x["scope_id"]: x["margin_value"] for x in _csv.DictReader(open(pk / "05_validation.csv", encoding="utf-8")) if x["case_id"] == "T-NORMAL"}
+    items = [{"scope_id": x["scope_id"], "item_name": x["item_name"], "spec": x["spec"], "unit": x["unit"], "rule_id": x["rule_id"],
+              "disposition": x["disposition"], "exclude": x["exclude_boundary"],
+              "value": (run.get(x["scope_id"]) or {}).get("value") or 0, "margin": float(marg[x["scope_id"]]) if marg.get(x["scope_id"]) else None}
+             for x in sc]
+    corr = list(_csv.DictReader(open(pk / "evidence" / "correction_log.csv", encoding="utf-8")))
+    names = {k: it["name"] for k, it in cable.ITEMS.items()}
+    prev = rs[-1] if rs else None
+    (pk / "BASE_SUMMARY.md").write_text(LP.base_summary(name, n, meta_, items, v, cable.DEFAULTS, names, corr, man["sources"], prev, rules,
+                                                        LP.zip_list(seven_only)), encoding="utf-8")
+    pl = plot_read(name)
+    if pl:
+        try:
+            png = plot_png(name)                          # the plot cache picture is rebuilt when missing
+            tr = cable.TR.build(res, lay, s, _plot_dec(name))
+            LP.markup_png(png, pl["size"], res, tr, lay, v, _plot_dec(name), pk / "PLOT_MARKUP.png")
+        except Exception as e:                             # noqa: BLE001 - the summary still goes out, without the picture
+            (pk / "PLOT_MARKUP_오류.txt").write_text(str(e), encoding="utf-8")
+    z = LP.make_zip(pk, n, seven_only)
+    rd = {"round": n, "at": time.strftime("%Y-%m-%d %H:%M"), "set": od.name, "package": pk.name, "revs": meta_,
+          "prompt_sha": hashlib.sha256((pk / LP.PROMPT_NAME).read_bytes()).hexdigest()[:16],
+          "rules": [c["rule_id"] for c in rules if c["status"] == "APPLIED" and c.get("rule_id")],
+          "applied_comments": [c["id"] for c in rules if c.get("round_applied") == n],
+          "qty": {x["scope_id"]: x["value"] for x in items if x["disposition"] == "DIRECT"}, "ai3d": None, "zip": z.name,
+          "validation": r["package"]["validation"]}
+    rs.append(rd)
+    LP.save_rounds(d, rs)
+    # export_twin already published the set to LATEST before these files existed: refresh the package copy there
+    lt = d / "output" / "LATEST" / "3D인계" / pk.name
+    if lt.parent.exists():
+        shutil.rmtree(lt, ignore_errors=True)
+        shutil.copytree(pk, lt)
+    return {**rd, "files": [od.name]}
+
+
+def loop_attach_ai(name: str, n: int, fname: str, data: bytes):
+    from .. import loop3d as LP
+    d = pdir(name)
+    rs = LP.rounds(d)
+    rd = next((x for x in rs if x["round"] == n), None)
+    if not rd:
+        raise ValueError(f"R{n}이 없습니다")
+    if b"<html" not in data[:5000].lower() and b"<!doctype" not in data[:200].lower():
+        raise ValueError("HTML 파일이 아닙니다")
+    (d / "input" / "ai3d").mkdir(parents=True, exist_ok=True)
+    src = d / "input" / "ai3d" / f"R{n}_{re.sub(r'[^0-9A-Za-z가-힣._-]+', '_', fname)}"
+    src.write_bytes(data)
+    pk = _loop_pkg(name, rd)
+    info = LP.attach_ai_model(pk, n, src)
+    (pk / rd["zip"]).unlink(missing_ok=True)
+    LP.make_zip(pk, n, "_7종" in rd["zip"])
+    rd["ai3d"] = info["file"]
+    LP.save_rounds(d, rs)
+    return loop_view(name)
 
 
 def vplan_view(name: str):
@@ -2186,6 +2292,35 @@ class H(BaseHTTPRequestHandler):
                     (d / "cache" / "page_texts.json").unlink(missing_ok=True)
                     cache_pages(name)                    # readable now: save page images for later
                 return self._send(200, {"ok": True, "meta": m})
+            if act == "loop":                            # v13.6 3D 구현 루프
+                from .. import loop3d as LP
+                sub = parts[4] if len(parts) > 4 else ""
+                if sub == "make" and method == "POST":
+                    b = self._json()
+                    return self._send(200, loop_make(name, bool(b.get("seven_only"))))
+                if sub == "comment" and method == "POST":
+                    LP.comment_update(pdir(name), self._json())
+                    return self._send(200, loop_view(name))
+                if sub == "ai3d" and method == "POST":
+                    fn = Path(unquote(self.headers.get("X-Filename", "ai3d.html"))).name
+                    return self._send(200, loop_attach_ai(name, int(q.get("round", ["0"])[0]), fn, self._body()))
+                if sub == "file":
+                    n = int(q.get("round", ["0"])[0])
+                    rd = next((x for x in LP.rounds(pdir(name)) if x["round"] == n), None)
+                    if not rd:
+                        return self._send(404, {"error": "no round"})
+                    pk = _loop_pkg(name, rd)
+                    f = {"zip": pk / rd["zip"], "prompt": pk / LP.PROMPT_NAME, "summary": pk / "BASE_SUMMARY.md",
+                         "markup": pk / "PLOT_MARKUP.png", "ai3d": pk / "model" / (rd.get("ai3d") or "-"),
+                         "ref3d": next(iter(sorted((pk / "model").glob("*_R*[0-9].html"))), pk / "-")}.get(q.get("f", [""])[0])
+                    if not f or not f.exists():
+                        return self._send(404, {"error": "not found"})
+                    from urllib.parse import quote
+                    ct = {".zip": "application/zip", ".md": "text/markdown; charset=utf-8", ".png": "image/png",
+                          ".html": "text/html; charset=utf-8"}.get(f.suffix, "application/octet-stream")
+                    hd = {} if f.suffix in (".png", ".html") else {"Content-Disposition": f"attachment; filename*=UTF-8''{quote(f.name)}"}
+                    return self._send(200, f.read_bytes(), ct, hd)
+                return self._send(200, loop_view(name))
             if act == "vplan":                           # v13.5 독립 검증 기대값 (사전 잠금) - actual values are not sent here
                 from .. import handoff as HO
                 if method == "POST":
@@ -2437,7 +2572,7 @@ class H(BaseHTTPRequestHandler):
         if not oid or parts[:2] == ["api", "progress"]:
             return self._route(method)
         key = method + " " + (parts[3] if len(parts) > 3 and parts[1] == "p" else "/".join(parts[1:2]))
-        if len(parts) > 4 and parts[1] == "p" and parts[3] in ("twin", "ai", "plot", "cable"):
+        if len(parts) > 4 and parts[1] == "p" and parts[3] in ("twin", "ai", "plot", "cable", "loop"):
             key += "/" + parts[4]
         PROG[oid] = {"key": key, "t0": time.time(), "pct": None, "msg": "", "expect": TIMING.get(key)}
         _TL.oid = oid

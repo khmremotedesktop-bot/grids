@@ -1,0 +1,176 @@
+{
+ "schema_version": "AI3D-HANDOFF-1.1",
+ "profile_id": "T1-CI",
+ "task_id": "T1",
+ "discipline_id": "CI",
+ "instruction_rev": "R9-G6",
+ "scope_rev": "01",
+ "rule_rev": "01",
+ "model_rev": "01",
+ "checked_at": "2026-11-27T08:32:30+09:00",
+ "reconciliation": [
+  {
+   "scope_id": "CI-CB-MC-48PX125SQOS",
+   "model": 925.0,
+   "quantity": 925,
+   "match": true
+  },
+  {
+   "scope_id": "CI-CB-MU-40PX125SQISOS",
+   "model": 4575.0,
+   "quantity": 4575,
+   "match": true
+  },
+  {
+   "scope_id": "CI-CB-MU-40PX125SQOS",
+   "model": 3390.0,
+   "quantity": 3390,
+   "match": true
+  },
+  {
+   "scope_id": "CI-CB-MU-60PX125SQISOS",
+   "model": 285.0,
+   "quantity": 285,
+   "match": true
+  },
+  {
+   "scope_id": "CI-CB-MU-60PX125SQOS",
+   "model": 285.0,
+   "quantity": 285,
+   "match": true
+  },
+  {
+   "scope_id": "CI-CB-BR-1PX125SQOS",
+   "model": 4090.0,
+   "quantity": 4090,
+   "match": true
+  },
+  {
+   "scope_id": "CI-CB-BR-2CX20SQOS",
+   "model": 245.0,
+   "quantity": 245,
+   "match": true
+  },
+  {
+   "scope_id": "CI-CB-CM-FO12CSMARMOURED",
+   "model": 3380.0,
+   "quantity": 3380,
+   "match": true
+  },
+  {
+   "scope_id": "CI-CB-PK-6PX125SQOS",
+   "model": 38400.0,
+   "quantity": 38400,
+   "match": true
+  },
+  {
+   "scope_id": "CI-JB-40P",
+   "model": 28,
+   "quantity": 28,
+   "match": true
+  },
+  {
+   "scope_id": "CI-JB-60P",
+   "model": 2,
+   "quantity": 2,
+   "match": true
+  },
+  {
+   "scope_id": "CI-TR-SIG-300",
+   "model": 363.0,
+   "quantity": 363,
+   "match": true
+  },
+  {
+   "scope_id": "CI-TR-SIG-600",
+   "model": 90.0,
+   "quantity": 90,
+   "match": true
+  },
+  {
+   "scope_id": "CI-TR-SIG-900",
+   "model": 114.0,
+   "quantity": 114,
+   "match": true
+  },
+  {
+   "scope_id": "CI-TR-COM-300",
+   "model": 233.0,
+   "quantity": 233,
+   "match": true
+  },
+  {
+   "scope_id": "CI-UG-W300",
+   "model": 735.0,
+   "quantity": 735,
+   "match": true
+  },
+  {
+   "scope_id": "CI-UG-W450",
+   "model": 86.0,
+   "quantity": 86,
+   "match": true
+  },
+  {
+   "scope_id": "CI-UG-W900",
+   "model": 52.0,
+   "quantity": 52,
+   "match": true
+  },
+  {
+   "scope_id": "CI-UG-W1200",
+   "model": 117.0,
+   "quantity": 117,
+   "match": true
+  },
+  {
+   "scope_id": "CI-PT-100",
+   "model": 4335.0,
+   "quantity": 4335,
+   "match": true
+  },
+  {
+   "scope_id": "CI-SP-RT",
+   "model": 8,
+   "quantity": 8,
+   "match": true
+  },
+  {
+   "scope_id": "CI-SP-RF",
+   "model": 138,
+   "quantity": 138,
+   "match": true
+  },
+  {
+   "scope_id": "CI-SP-RC",
+   "model": 33,
+   "quantity": 33,
+   "match": true
+  },
+  {
+   "scope_id": "CI-SP-UB",
+   "model": 728,
+   "quantity": 728,
+   "match": true
+  }
+ ],
+ "auto": {
+  "BASELINE_INTEGRITY": {
+   "result": "PASS",
+   "evidence": "기준 Seed SHA-256 35d0e456ad1b… (가이드 35d0e456ad1b…: 일치); 보강본에서 계장 블록 제거 + MODIFY 2건 되돌리면 원본과 바이트 일치"
+  },
+  "GEOMETRY_ATTRIBUTES": {
+   "result": "PASS",
+   "evidence": "records 2395, object_id 중복 0, geometry/attributes 빈 것 0, scope 없는 객체 0"
+  },
+  "QUANTITY_RECONCILIATION": {
+   "result": "PASS",
+   "evidence": "모델 records 합 vs 01 물량 24/24 일치 (evidence/model_checks.json)"
+  },
+  "REPRODUCIBILITY": {
+   "result": "PASS",
+   "evidence": "같은 입력·Rule로 다시 계산한 records 해시가 같음"
+  }
+ },
+ "note": "자동 점검 결과. 사람이 원본/보강 모델을 열어 확인하고 reviewed_by를 채우기 전까지 06 checks는 HOLD"
+}

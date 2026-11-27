@@ -1,0 +1,189 @@
+{
+ "schema_version": "AI3D-HANDOFF-1.1",
+ "profile_id": "T1-CI",
+ "task_id": "T1",
+ "discipline_id": "CI",
+ "instruction_rev": "R9-G6",
+ "scope_rev": "01",
+ "rule_rev": "01",
+ "model_rev": "01",
+ "case_id": "T-CHANGED-AG",
+ "executed_at": "2026-11-27T08:32:30+09:00",
+ "overrides": {
+  "trunk_off": "AG 서포트"
+ },
+ "results": {
+  "CI-INST": {
+   "value": 1252,
+   "status": "VALUE",
+   "unit": "EA"
+  },
+  "CI-IO-AI": {
+   "value": 152,
+   "status": "VALUE",
+   "unit": "PT"
+  },
+  "CI-IO-AO": {
+   "value": 26,
+   "status": "VALUE",
+   "unit": "PT"
+  },
+  "CI-IO-DI": {
+   "value": 484,
+   "status": "VALUE",
+   "unit": "PT"
+  },
+  "CI-IO-DO": {
+   "value": 300,
+   "status": "VALUE",
+   "unit": "PT"
+  },
+  "CI-IO-COMM": {
+   "value": 12,
+   "status": "VALUE",
+   "unit": "EA"
+  },
+  "CI-CB-MC-48PX125SQOS": {
+   "value": 950,
+   "status": "VALUE",
+   "unit": "m"
+  },
+  "CI-CB-MU-40PX125SQISOS": {
+   "value": 4495,
+   "status": "VALUE",
+   "unit": "m"
+  },
+  "CI-CB-MU-40PX125SQOS": {
+   "value": 3330,
+   "status": "VALUE",
+   "unit": "m"
+  },
+  "CI-CB-MU-60PX125SQISOS": {
+   "value": 280,
+   "status": "VALUE",
+   "unit": "m"
+  },
+  "CI-CB-MU-60PX125SQOS": {
+   "value": 280,
+   "status": "VALUE",
+   "unit": "m"
+  },
+  "CI-CB-BR-1PX125SQOS": {
+   "value": 4090,
+   "status": "VALUE",
+   "unit": "m"
+  },
+  "CI-CB-BR-2CX20SQOS": {
+   "value": 245,
+   "status": "VALUE",
+   "unit": "m"
+  },
+  "CI-CB-CM-FO12CSMARMOURED": {
+   "value": 3310,
+   "status": "VALUE",
+   "unit": "m"
+  },
+  "CI-CB-PK-6PX125SQOS": {
+   "value": 37710,
+   "status": "VALUE",
+   "unit": "m"
+  },
+  "CI-JB-40P": {
+   "value": 28,
+   "status": "VALUE",
+   "unit": "EA"
+  },
+  "CI-JB-60P": {
+   "value": 2,
+   "status": "VALUE",
+   "unit": "EA"
+  },
+  "CI-TR-SIG-300": {
+   "value": 1066,
+   "status": "VALUE",
+   "unit": "m"
+  },
+  "CI-TR-SIG-600": {
+   "value": 208,
+   "status": "VALUE",
+   "unit": "m"
+  },
+  "CI-TR-SIG-900": {
+   "value": 452,
+   "status": "VALUE",
+   "unit": "m"
+  },
+  "CI-TR-COM-300": {
+   "value": 648,
+   "status": "VALUE",
+   "unit": "m"
+  },
+  "CI-UG-W300": {
+   "value": null,
+   "status": "VALUE",
+   "unit": "m"
+  },
+  "CI-UG-W450": {
+   "value": null,
+   "status": "VALUE",
+   "unit": "m"
+  },
+  "CI-UG-W900": {
+   "value": null,
+   "status": "VALUE",
+   "unit": "m"
+  },
+  "CI-UG-W1200": {
+   "value": null,
+   "status": "VALUE",
+   "unit": "m"
+  },
+  "CI-PT-100": {
+   "value": 4335,
+   "status": "VALUE",
+   "unit": "m"
+  },
+  "CI-SP-RT": {
+   "value": 8,
+   "status": "VALUE",
+   "unit": "EA"
+  },
+  "CI-SP-RF": {
+   "value": 138,
+   "status": "VALUE",
+   "unit": "EA"
+  },
+  "CI-SP-RC": {
+   "value": 33,
+   "status": "VALUE",
+   "unit": "EA"
+  },
+  "CI-SP-UB": {
+   "value": null,
+   "status": "VALUE",
+   "unit": "EA"
+  },
+  "CI-SP-PB": {
+   "value": 2988,
+   "status": "VALUE",
+   "unit": "EA"
+  },
+  "CI-SP-KG": {
+   "value": 29550.1,
+   "status": "VALUE",
+   "unit": "kg"
+  },
+  "CI-SP-EXP": {
+   "value": 29,
+   "status": "VALUE",
+   "unit": "SET"
+  }
+ },
+ "info": {
+  "cables": 415,
+  "jbs": 30,
+  "by_plot": 415,
+  "plot_gone": false,
+  "note": ""
+ }
+}

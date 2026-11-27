@@ -232,7 +232,7 @@ const fmt = n => (n ?? 0).toLocaleString("ko-KR");
 const OPS = new Map();
 const OP_NAME = {"":"프로젝트 불러오기", summary:"IO 요약 계산", review:"검토 목록 만들기", concept:"체크리스트 반영", decisions:"검토 판단 반영",
   export:"인덱스 엑셀 만들기", basis_export:"산출근거 계산 (체크리스트·설정 영향 포함)", cable:"케이블 · JB 계산", cable_export:"케이블 스케줄 엑셀 만들기",
-  twin:"3D 인계 화면 준비", "twin/export":"3D 인계 파일 만들기", export_3d:"3D 데이터 만들기", simple:"케이블 · JB 개략 계산", ref_score:"레퍼런스 채점",
+  twin:"3D 인계 화면 준비", "twin/export":"3D 인계 파일 만들기", "loop/make":"다음 Rev 만들기 (7종 · 프롬프트 · 요약 · 독립 실행)", "loop/ai3d":"회사 AI 3D 붙이기", loop:"3D 구현 루프", vplan:"기대값 계획", export_3d:"3D 데이터 만들기", simple:"케이블 · JB 개략 계산", ref_score:"레퍼런스 채점",
   upload:"파일 올리는 중", extract:"추출 시작", plot:"PLOT PLAN 읽기", impact:"영향 계산", orders:"주문 반영 · 다음 3D 파일", gate:"3D 반영 제안 계산",
   revisions:"리비전 비교", outputs:"출력 목록", warm:"준비 중", identify:"파일 확인", review3d:"3D 리뷰 준비", data3d:"3D 데이터", projects:"프로젝트 목록"};
 function opLabel(path) { const a = path.split("?")[0].split("/"); const act = a[0] === "p" ? (a[2] || "") : a[0];
@@ -325,6 +325,64 @@ async function render() {
     if (S.screen === "twin") return await renderTwin(m);
     if (S.screen === "simple") return await renderSimple(m);
   } catch (e) { toast(e.message, true); }
+}
+
+/* ---------------------------------------------------------------- v13.6 3D 구현 루프 (프롬프트 + 자료 → 회사 AI 3D → 코멘트 → 다음 Rev) */
+const LPS = {seven:false};
+async function loopMake(m) {
+  const bt = $("#twmk"), b2 = $("#lpmk"); [bt,b2].forEach(b => b && (b.disabled = true));
+  try { const r = await post(P("loop/make"), {seven_only: LPS.seven}); toast(`R${r.round} 만들었습니다 · ${r.zip} · 프롬프트 규칙 ${r.rules.length}개`); renderTwin(m || $("#main")); }
+  catch(e) { toast(e.message, true); [bt,b2].forEach(b => b && (b.disabled = false)); }
+}
+async function renderLoop(data) {
+  const box = $("#lpbox"); if (!box) return;
+  let d = data; if (!d) { try { d = await api(P("loop")); } catch(e) { box.innerHTML = `<h2>3D 구현 루프</h2><p style="color:var(--red)">${esc(e.message)}</p>`; return; } }
+  if (!$("#lpbox")) return;
+  const R = d.rounds.slice().reverse(), last = d.rounds[d.rounds.length-1], F = (n, f) => `/api/${P("loop/file")}?round=${n}&f=${f}`;
+  const ST = {OPEN:["y","검토 전"], APPLIED:["g","반영"], HOLD:["","보류"], RETIRED:["","폐기"]};
+  const open = d.comments.filter(c => c.status === "OPEN"), done = d.comments.filter(c => c.status !== "OPEN");
+  const cmt = c => `<div class="ritem" style="cursor:default;margin-bottom:6px">
+      <div class="a"><b class="mono">${esc(c.id)}</b> <span class="chip ${ST[c.status][0]}">${ST[c.status][1]}</span> <span class="chip">${c.kind==="PROMPT"?"프롬프트 수정":"Base 수정 (STEP 6~9)"}</span>
+        ${c.rule_id?`<span class="chip b">${esc(c.rule_id)} · R${c.round_applied}부터</span>`:c.round_applied!=null&&c.status==="APPLIED"?`<span class="chip b">R${c.round_applied} 반영</span>`:""} <span class="def">R${c.round}에 대한 코멘트${c.target?" · 대상 "+esc(c.target):""}${c.by?" · "+esc(c.by):""}</span></div>
+      <div class="b">"${esc(c.text)}"</div>
+      ${c.status==="OPEN" ? (c.kind==="PROMPT"
+        ? `<div style="margin-top:6px;font-size:12px">프롬프트에 넣을 문장 (고쳐도 됨):</div><textarea data-lprule="${esc(c.id)}" rows="2" style="width:100%">${esc(c.rule_text)}</textarea>
+           <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;align-items:center"><select data-lpscope="${esc(c.id)}"><option ${c.scope==="프로젝트"?"selected":""}>프로젝트</option><option ${c.scope==="공통"?"selected":""}>공통</option></select>
+             <button class="btn sm" data-lpok="${esc(c.id)}">승인 → 다음 Rev 프롬프트에</button><button class="btn sm line" data-lphold="${esc(c.id)}">보류</button><button class="btn sm line" data-lpdel="${esc(c.id)}">삭제</button></div>`
+        : `<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap"><span class="def">STEP 6~9에서 Base(설정·PLOT 마크업)를 고친 뒤</span><button class="btn sm" data-lpdone="${esc(c.id)}">반영 완료</button><button class="btn sm line" data-lphold="${esc(c.id)}">보류</button><button class="btn sm line" data-lpdel="${esc(c.id)}">삭제</button></div>`)
+        : (c.status==="APPLIED"&&c.rule_id?`<div style="margin-top:4px;font-size:12px">프롬프트 문장: ${esc(c.rule_text)} <a data-lpret="${esc(c.id)}" style="cursor:pointer;color:var(--sub)">· 폐기</a></div>`:"")}</div>`;
+  let h = `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2 style="margin:0">3D 구현 루프 ${last?`<span class="chip b">현재 R${last.round}</span>`:""}</h2>
+      <span style="display:flex;gap:8px;align-items:center"><label style="font-size:12px"><input type="checkbox" id="lpseven" ${LPS.seven?"checked":""}> 제출 zip 7종만</label><button class="btn" id="lpmk">R${d.next} 만들기</button></span></div>
+    <p class="xnote">① R 만들기 → 제출 zip(7종 + 3D 구현 프롬프트 + Base 요약 + PLOT 마크업 + 좌표 데이터)을 회사 AI에 넣어 3D 작성 ② AI가 그린 3D HTML을 여기 올려 보고 ③ 코멘트 → 프롬프트 수정은 승인하면 다음 Rev 프롬프트에, Base 수정은 STEP 6~9에서 고친 뒤 '반영 완료' ④ 다음 R 만들기. 최종 Rev의 제출 zip을 냅니다.</p>
+    ${R.length?`<table class="mini"><tr><th>Rev</th><th>시각</th><th>리비전</th><th>프롬프트 규칙</th><th>회사 AI 3D</th><th>파일</th></tr>
+      ${R.map(r=>`<tr><td><b>R${r.round}</b></td><td style="font-size:12px">${esc(r.at)}</td><td class="mono" style="font-size:11px">s${r.revs.scope_rev}·r${r.revs.rule_rev}·m${r.revs.model_rev}</td>
+        <td style="font-size:12px">${r.rules.length?esc(r.rules.join(", ")):"-"}${r.applied_comments.length?`<br><span class="def">이번 반영 ${esc(r.applied_comments.join(", "))}</span>`:""}</td>
+        <td>${r.ai3d?`<a class="btn sm" target="_blank" href="${F(r.round,"ai3d")}">열기</a> `:""}<label class="btn sm line">${r.ai3d?"바꾸기":"올리기 (.html)"}<input type="file" accept=".html,.htm" data-lpai="${r.round}" style="display:none"></label></td>
+        <td style="font-size:12px;white-space:nowrap"><a href="${F(r.round,"zip")}">제출 zip</a> · <a href="${F(r.round,"prompt")}">프롬프트</a> · <a href="${F(r.round,"summary")}">요약</a> · <a target="_blank" href="${F(r.round,"markup")}">마크업</a> · <a target="_blank" href="${F(r.round,"ref3d")}">참고 3D</a></td></tr>`).join("")}</table>`
+      :`<div class="empty">아직 없음 - 'R0 만들기'로 시작합니다 (지금 Base 그대로 프롬프트 + 7종)</div>`}
+    <div style="margin-top:14px;border-top:1px dashed var(--line);padding-top:10px"><b>코멘트</b> <span class="def">AI가 그린 3D를 보고 적습니다. 위치는 객체 번호(TR-10-005, JB-10-DA-01)나 말로.</span>
+      <textarea id="lptext" rows="2" style="width:100%;margin-top:6px" placeholder="예: 랙 교차부에서 트레이가 끊겨 보임 - 엘보로 이어라 / JB-10-DA-01은 장비 반대편으로"></textarea>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;align-items:center"><input id="lptarget" placeholder="대상 (객체 번호 / 위치)" style="width:200px">
+        <select id="lpkind"><option value="PROMPT">프롬프트 수정 (그리는 방법)</option><option value="BASE">Base 수정 (배치·경로·크기 = 물량)</option></select>
+        <input id="lpby" placeholder="이름" style="width:90px"><button class="btn sm" id="lpadd">코멘트 추가</button></div></div>
+    ${open.length?`<div style="margin-top:10px">${open.map(cmt).join("")}</div>`:""}
+    ${done.length?`<details style="margin-top:8px"><summary style="cursor:pointer;font-size:12.5px">처리한 코멘트 ${done.length}</summary>${done.map(cmt).join("")}</details>`:""}
+    ${d.prompt?`<details style="margin-top:8px"><summary style="cursor:pointer;font-size:12.5px">현재 3D 구현 프롬프트 (R${last.round}) 보기</summary><pre style="white-space:pre-wrap;font-size:11.5px;max-height:420px;overflow:auto;background:#f6f7f6;padding:10px">${esc(d.prompt)}</pre></details>`:""}`;
+  box.innerHTML = h;
+  const send = async body => { try { renderLoop(await post(P("loop/comment"), body)); } catch(e) { toast(e.message, true); } };
+  $("#lpmk").onclick = () => loopMake();
+  $("#lpseven").onchange = e => { LPS.seven = e.target.checked; };
+  $("#lpadd").onclick = () => { const t = $("#lptext").value.trim(); if (!t) return toast("코멘트를 적어 주세요", true);
+    send({add:{text:t, target:$("#lptarget").value, kind:$("#lpkind").value, by:$("#lpby").value}}); };
+  box.querySelectorAll("[data-lpok]").forEach(b => b.onclick = () => { const id = b.dataset.lpok;
+    send({id, rule_text: box.querySelector(`[data-lprule="${id}"]`).value, scope: box.querySelector(`[data-lpscope="${id}"]`).value, approve:true, by:$("#lpby").value}); });
+  box.querySelectorAll("[data-lpdone]").forEach(b => b.onclick = () => send({id:b.dataset.lpdone, done:true, by:$("#lpby").value}));
+  box.querySelectorAll("[data-lphold]").forEach(b => b.onclick = () => send({id:b.dataset.lphold, hold:true}));
+  box.querySelectorAll("[data-lpdel]").forEach(b => b.onclick = () => confirm("이 코멘트를 지울까요?") && send({id:b.dataset.lpdel, delete:true}));
+  box.querySelectorAll("[data-lpret]").forEach(b => b.onclick = () => confirm("이 규칙을 다음 Rev부터 빼고 '폐기'로 남길까요?") && send({id:b.dataset.lpret, retire:true}));
+  box.querySelectorAll("[data-lpai]").forEach(inp => inp.onchange = async () => { const f = inp.files[0]; if (!f) return;
+    try { const r = await api(P("loop/ai3d") + "?round=" + inp.dataset.lpai, {method:"POST", headers:{"X-Filename": encodeURIComponent(f.name)}, body: f});
+      toast(`R${inp.dataset.lpai}에 회사 AI 3D를 붙였습니다 (제출 zip 다시 만듦)`); renderLoop(r); } catch(e) { toast(e.message, true); } });
 }
 
 /* ---------------------------------------------------------------- v13.5 독립 검증 기대값 잠금 (STEP 10 패널 6) */
@@ -2000,9 +2058,11 @@ async function renderTwin(m) {
   m.innerHTML = `
   <div class="head"><div><div class="eyebrow">STEP 10</div><h1>3D 인계</h1>
     <p class="lead">배관팀 3D 모델(Three.js HTML) 위에 계장 레이어(트레이·케이블·JB·계기·서포트)를 얹은 <b>보강 모델</b>과 회사 AI 플랫폼 <b>표준 인계 7종</b>을 만듭니다. 원본 모델은 바꾸지 않습니다.</p></div>
-    <div style="display:flex;gap:8px"><button class="btn" id="twmk" ${d.model?"":"disabled"}>보강 모델 + 인계 7종 만들기</button></div></div>
+    <div style="display:flex;gap:8px"><button class="btn" id="twmk" ${d.model?"":"disabled"}>다음 Rev 만들기 (프롬프트 + 7종)</button></div></div>
   <div style="display:flex;gap:20px;align-items:flex-start">
   <div style="flex:1;min-width:0">
+    <div class="panel" id="lpbox" style="border-top:4px solid var(--blue)"><h2>3D 구현 루프</h2><div class="empty">불러오는 중…</div></div>
+    <details id="twmore" ${S.twMore?"open":""}><summary style="cursor:pointer;margin:6px 0 12px;font-weight:600">자세히 (Seed · 주문 · 좌표 맞춤 · 랙/충돌 · AI 리뷰 · 인계 세트 · 기대값 잠금)</summary>
     ${d.model&&od?orderBox(od, d):""}
     <div class="panel"><h2>1. 배관 3D 모델 (Seed)</h2>
       <div class="kv"><span>${d.model?`<b class="mono">${esc(d.model)}</b>`:"아직 없음"}</span><label class="btn sm line">${d.model?"다른 파일":"파일 선택 (.html)"}<input type="file" accept=".html,.htm" id="twup" style="display:none"></label></div>
@@ -2033,6 +2093,7 @@ async function renderTwin(m) {
       ${d.sets.length?d.sets.map(st=>`<div class="kv"><span class="mono">${esc(st)}</span><span style="display:flex;gap:6px"><a class="btn sm" target="_blank" data-twopen="${esc(st)}">보강 모델 열기</a></span></div>`).join(""):`<div class="empty">아직 없음</div>`}
       <p class="xnote">세트 폴더: <span class="mono">projects\\${esc(S.project)}\\output\\3D인계_날짜\\</span> - 보강 모델 HTML, STRUCTURED_MODEL_DATA_FULL.json, 3D 리뷰 · 프로토콜, 그리고 회사 규격 패키지 <b class="mono">T1-CI_scopeRevNN_ruleRevNN\\</b> (00~06 · model\\ · evidence\\ · checkpoint). 보강 모델은 원본처럼 인터넷(cdn.jsdelivr.net)에서 Three.js를 불러옵니다.</p></div>
     <div class="panel" id="vpbox"><h2>6. 독립 검증 기대값 잠금 (S05)</h2><div class="empty">불러오는 중…</div></div>
+    </details>
   </div>
   <div class="side"><div class="panel" style="font-size:12.5px;line-height:1.6"><b>표준 인계 7종 (회사 가이드 T1-CI)</b>
     ${files.map(([n,x])=>`<div style="margin-top:6px"><span class="mono" style="font-size:12px">${n}</span><br><span style="color:var(--sub)">${x}</span></div>`).join("")}
@@ -2042,7 +2103,8 @@ async function renderTwin(m) {
     <div style="margin-top:6px"><b>+ checkpoint</b> 회사 Copilot 새 채팅 RESUME용</div>
     <p class="xnote" style="margin-top:8px">회사 가이드 Rev.6 (AI3D-HANDOFF-1.1) 필드 그대로. 승인·확인자는 비워 두고 DRAFT_NOT_READY로 냅니다 (사람 몫).</p></div></div>
   </div>`;
-  renderVPlan();
+  renderVPlan(); renderLoop();
+  if ($("#twmore")) $("#twmore").ontoggle = e => { S.twMore = e.target.open; };
   const twset = async body => { try { await post(P("cable"), body); renderTwin(m); } catch(e) { toast(e.message, true); } };
   m.querySelectorAll("[data-ck]").forEach(el => el.onchange = () => twset({set:{[el.dataset.ck]: el.value}}));
   m.querySelectorAll("[data-cktog]").forEach(el => el.onclick = () => { const it = d.schema[0].items.find(x=>x.id===el.dataset.cktog);
@@ -2072,9 +2134,7 @@ async function renderTwin(m) {
     a.href = `/api/${P("twin_set/"+encodeURIComponent(st))}`; });
   if ($("#rvsend")) $("#rvsend").onclick = async () => { try { const r = await post(P("review3d"), {text: $("#rvtext").value});
       toast(`AI 리뷰 읽음 · 확인 ${r.checked.length} · 새 지적 ${r.added.length}${r.errors.length?` · 오류 ${r.errors.length}`:""}`); renderTwin(m); } catch(e) { toast(e.message, true); } };
-  if ($("#twmk")) $("#twmk").onclick = async () => { const bt = $("#twmk"); bt.disabled = true; bt.textContent = "만드는 중…";
-    try { const r = await post(P("twin"), {}); toast(`${r.dir} 생성 · 계기 ${r.counts.instruments} · 트레이 ${r.counts.trays} · 서포트 ${r.counts.supports} · 잔차 ${r.fit.median_m} m${r.moves?` · 회피 ${r.moves - r.left} · 충돌 남음 ${r.left}`:""}`); renderTwin(m); }
-    catch(e) { toast(e.message, true); if ($("#twmk")) { $("#twmk").disabled = false; $("#twmk").textContent = "보강 모델 + 인계 7종 만들기"; } } };
+  if ($("#twmk")) $("#twmk").onclick = () => loopMake(m);
 }
 
 api("font").then(f => { const k = Object.keys(f.found||{}); $("#fontst").innerHTML = k.length

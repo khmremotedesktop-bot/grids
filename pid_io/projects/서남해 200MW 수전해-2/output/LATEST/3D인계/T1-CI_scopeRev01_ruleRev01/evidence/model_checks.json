@@ -7,7 +7,7 @@
  "scope_rev": "01",
  "rule_rev": "01",
  "model_rev": "01",
- "checked_at": "2026-11-27T07:50:36+09:00",
+ "checked_at": "2026-11-27T08:32:30+09:00",
  "reconciliation": [
   {
    "scope_id": "CI-CB-MC-48PX125SQOS",
@@ -161,7 +161,7 @@
   },
   "GEOMETRY_ATTRIBUTES": {
    "result": "PASS",
-   "evidence": "records 2387, object_id 중복 0, geometry/attributes 빈 것 0, scope 없는 객체 0"
+   "evidence": "records 2395, object_id 중복 0, geometry/attributes 빈 것 0, scope 없는 객체 0"
   },
   "QUANTITY_RECONCILIATION": {
    "result": "PASS",

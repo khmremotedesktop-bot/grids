@@ -66,8 +66,8 @@
   {
    "path": "model/T1-CI_Seed03_R01.json",
    "kind": "STRUCTURED_MODEL_DATA",
-   "sha256": "a48335d79eb4812685930910b7f057873e3ca6b0bd0b773bbd16b12c283a66a2",
-   "size_bytes": 1991263
+   "sha256": "65c6a3ff41c140a81de7448bd9a02df87f1aa7d7d01f068290192bd047c5dbbe",
+   "size_bytes": 1998368
   }
  ],
  "changes": [
@@ -26286,24 +26286,112 @@
   },
   {
    "change_id": "CH-02384",
-   "scope_ids": [],
+   "scope_ids": [
+    "CI-TR-SIG-900"
+   ],
    "operation": "ADD",
-   "object_id": "CI-ROOM:ROOM",
-   "rule_id": null,
+   "object_id": "CI-FT:0001",
+   "rule_id": "R-TR",
    "source_id": "SRC-PIDIO",
    "locator": "model/T1-CI_Seed03_R01.json records[2383]"
   },
   {
    "change_id": "CH-02385",
-   "scope_ids": [],
+   "scope_ids": [
+    "CI-TR-SIG-900"
+   ],
    "operation": "ADD",
-   "object_id": "CI-ROOM:IRP",
-   "rule_id": null,
+   "object_id": "CI-FT:0002",
+   "rule_id": "R-TR",
    "source_id": "SRC-PIDIO",
    "locator": "model/T1-CI_Seed03_R01.json records[2384]"
   },
   {
    "change_id": "CH-02386",
+   "scope_ids": [
+    "CI-TR-SIG-600"
+   ],
+   "operation": "ADD",
+   "object_id": "CI-FT:0003",
+   "rule_id": "R-TR",
+   "source_id": "SRC-PIDIO",
+   "locator": "model/T1-CI_Seed03_R01.json records[2385]"
+  },
+  {
+   "change_id": "CH-02387",
+   "scope_ids": [
+    "CI-TR-SIG-300"
+   ],
+   "operation": "ADD",
+   "object_id": "CI-FT:0004",
+   "rule_id": "R-TR",
+   "source_id": "SRC-PIDIO",
+   "locator": "model/T1-CI_Seed03_R01.json records[2386]"
+  },
+  {
+   "change_id": "CH-02388",
+   "scope_ids": [
+    "CI-TR-COM-300"
+   ],
+   "operation": "ADD",
+   "object_id": "CI-FT:0005",
+   "rule_id": "R-TR",
+   "source_id": "SRC-PIDIO",
+   "locator": "model/T1-CI_Seed03_R01.json records[2387]"
+  },
+  {
+   "change_id": "CH-02389",
+   "scope_ids": [
+    "CI-TR-SIG-300"
+   ],
+   "operation": "ADD",
+   "object_id": "CI-FT:0006",
+   "rule_id": "R-TR",
+   "source_id": "SRC-PIDIO",
+   "locator": "model/T1-CI_Seed03_R01.json records[2388]"
+  },
+  {
+   "change_id": "CH-02390",
+   "scope_ids": [
+    "CI-TR-COM-300"
+   ],
+   "operation": "ADD",
+   "object_id": "CI-FT:0007",
+   "rule_id": "R-TR",
+   "source_id": "SRC-PIDIO",
+   "locator": "model/T1-CI_Seed03_R01.json records[2389]"
+  },
+  {
+   "change_id": "CH-02391",
+   "scope_ids": [
+    "CI-TR-SIG-600"
+   ],
+   "operation": "ADD",
+   "object_id": "CI-FT:0008",
+   "rule_id": "R-TR",
+   "source_id": "SRC-PIDIO",
+   "locator": "model/T1-CI_Seed03_R01.json records[2390]"
+  },
+  {
+   "change_id": "CH-02392",
+   "scope_ids": [],
+   "operation": "ADD",
+   "object_id": "CI-ROOM:ROOM",
+   "rule_id": null,
+   "source_id": "SRC-PIDIO",
+   "locator": "model/T1-CI_Seed03_R01.json records[2391]"
+  },
+  {
+   "change_id": "CH-02393",
+   "scope_ids": [],
+   "operation": "ADD",
+   "object_id": "CI-ROOM:IRP",
+   "rule_id": null,
+   "source_id": "SRC-PIDIO",
+   "locator": "model/T1-CI_Seed03_R01.json records[2392]"
+  },
+  {
+   "change_id": "CH-02394",
    "scope_ids": [],
    "operation": "MODIFY",
    "object_id": "SEED-CODE:raycast-filter",
@@ -26312,7 +26400,7 @@
    "locator": "Seed module script"
   },
   {
-   "change_id": "CH-02387",
+   "change_id": "CH-02395",
    "scope_ids": [],
    "operation": "MODIFY",
    "object_id": "SEED-CODE:title",
@@ -26331,7 +26419,7 @@
   {
    "check_id": "GEOMETRY_ATTRIBUTES",
    "status": "HOLD",
-   "evidence": "자동: PASS - records 2387, object_id 중복 0, geometry/attributes 빈 것 0, scope 없는 객체 0 (evidence/model_checks.json)",
+   "evidence": "자동: PASS - records 2395, object_id 중복 0, geometry/attributes 빈 것 0, scope 없는 객체 0 (evidence/model_checks.json)",
    "reviewed_by": null
   },
   {
