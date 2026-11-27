@@ -25,23 +25,18 @@ ACTIONS = {
     "remake": "아무것도 안 바꾸고 다시 만들기·리뷰",
 }
 
+from . import common_rules as CR  # noqa: E402  (v13.7: one rule, three views)
+
 COMMON_SEED = {
     "name": "pid_io 계장 개념설계 공통 프로토콜",
     "scope": "어떤 개념설계에든 쓰는 공통 부분만 (태그 번호·프로젝트 이름·프로젝트 값 없음)",
-    "version": "1.0",
-    "rules": [
-        {"id": "P01", "text": "같은 팩트(도면·PLOT·3D) + 같은 체크리스트 값 = 같은 물량. 결과는 매번 다시 계산하고 사람이 손으로 고치지 않는다.", "src": "seed"},
-        {"id": "P02", "text": "우선순위: 사람 결정 > 3D 팩트 > PLOT 자동 인식 > 체크리스트 기본값. 3D는 사람 결정을 바꾸지 않는다.", "src": "seed"},
-        {"id": "P03", "text": "물량이 바뀌는 3D 반영은 제안 → 미리보기(숫자·JB·PLOT 마크업) → 사람 승인 순서로만 반영한다.", "src": "seed"},
-        {"id": "P04", "text": "계장은 랙의 계장 차선을 먼저 쓰고, 다른 공종과 부딪히면 계장이 옆 → 위 순서로 비킨다.", "src": "seed"},
-        {"id": "P05", "text": "랙 위 트레이는 같은 방향 랙의 케이블 단 EL에, 한 랙 위 트레이끼리는 겹치지 않게 자리 배정한다.", "src": "seed"},
-        {"id": "P06", "text": "케이블 경로에 경사 마디를 두지 않는다 (수평 + 수직 라이저).", "src": "seed"},
-        {"id": "P07", "text": "JB는 장비·랙 안에 두지 않는다 (랙 기둥 바깥, 장비 가장자리).", "src": "seed"},
-        {"id": "P08", "text": "3D 점검 규칙 V01~V09를 통과하지 못한 항목은 HOLD로 두고 사람이 판단한다.", "src": "seed"},
-        {"id": "P09", "text": "출력은 LATEST(하나) / ISSUED(발행 고정) / HISTORY(안 지움), 모든 엑셀에 지문.", "src": "seed"},
-        {"id": "P10", "text": "AI는 제안·해석만 하고, 값의 반영과 공통 규칙 승격은 사람이 승인한다.", "src": "seed"},
-    ],
-    "changelog": [{"version": "1.0", "at": "2026-11-27", "what": "처음 (v13.2 규칙을 공통으로)"}],
+    "version": "3.0",
+    "views": CR.VIEWS,
+    "notice": CR.NOTICE,
+    "rules": CR.RULES,
+    "changelog": [{"version": "1.0", "at": "2026-11-27", "what": "처음 (v13.2 규칙을 공통으로)"},
+                  {"version": "2.0", "at": "2026-11-27", "what": "세 관점(엔지니어 · 컴퓨터 · 유지보수)으로 다시 씀, 기준값 params 한 곳, P11 추가"},
+                  {"version": "3.0", "at": "2026-11-27", "what": "엔지니어 관점 = 마스터 (설계실 Rule 양식 칸), 컴퓨터·유지보수 = 번역본 (지문·상태), P00 읽는 법 추가"}],
 }
 
 TAGLIKE = re.compile(r"\b(\d{2}-[A-Z]{1,5}-?\d+|JB-\S+|TR-\S+|UG-\S+|SP-\S+|MC-\S+|C-\S+)\b")
@@ -104,7 +99,7 @@ def ai_prompt(text: str, items: dict, values: dict, ids: dict, common: dict) -> 
     sets = "\n".join(f"- {k}: {it['name']} = {values.get(k)!r}" + (f" (선택지: {' / '.join(map(str, it['options']))})" if it.get("options") else
                                                                      f" ({it.get('unit', '')} 숫자)") for k, it in items.items())
     acts = "\n".join(f"- {k}: {v}" for k, v in ACTIONS.items())
-    rules = "\n".join(f"- {r['id']} {r['text']}" for r in common.get("rules", []))
+    rules = "\n".join(f"- {r['id']} {CR.master_text(r) if r.get('master') else r.get('text', '')}" for r in common.get("rules", []))
     return f"""너는 계장 개념설계 프로그램(pid_io)의 주문 해석기다. 사람의 주문을 아래 '동작'으로만 바꿔라. 값을 지어내지 마라.
 주문: {text}
 
@@ -188,17 +183,37 @@ def load_common(home: Path) -> dict:
     f = proto_dir(home) / "common_protocol.json"
     if not f.exists():
         save_common(home, json.loads(json.dumps(COMMON_SEED)))
-    return json.loads(f.read_text(encoding="utf-8"))
+    c = json.loads(f.read_text(encoding="utf-8"))
+    if str(c.get("version", "1")).split(".")[0] < "3":          # v1 / v2 file -> master + translations (learned rules kept)
+        c = CR.upgrade(c)
+        save_common(home, c)
+    return c
 
 
 def save_common(home: Path, c: dict):
     d = proto_dir(home)
+    # stored: master + translations only (no copied view text that someone could edit by mistake); md generated
     (d / "common_protocol.json").write_text(json.dumps(c, ensure_ascii=False, indent=1), encoding="utf-8")
-    md = [f"# {c['name']} v{c['version']}", "", f"범위: {c['scope']}", "", "## 규칙", ""]
-    md += [f"- **{r['id']}** {r['text']}" + (f"  _(배운 것: {r.get('from', '')}, 근거 {r.get('evidence', 1)}회, {r.get('at', '')})_" if r.get("src") == "lesson" else "")
-           for r in c["rules"]]
-    md += ["", "## 변경 이력", ""] + [f"- v{x['version']} ({x['at']}): {x['what']}" for x in c.get("changelog", [])]
-    (d / "공통프로토콜.md").write_text("\n".join(md) + "\n", encoding="utf-8")
+    (d / "공통프로토콜.md").write_text(CR.markdown(c), encoding="utf-8")
+
+
+def add_common_rule(home: Path, engineer: str, computer: str, maintenance: str, title: str, src: str, by: str = "") -> dict:
+    """a rule approved as 공통 (e.g. from a 3D comment) -> common protocol, three views, version +0.1."""
+    if TAGLIKE.search(engineer) or TAGLIKE.search(computer):
+        raise ValueError("공통 규칙에는 태그 번호·JB·트레이 번호를 쓸 수 없습니다. 일반 표현으로 고쳐 주세요 (또는 범위를 '프로젝트'로)")
+    c = load_common(home)
+    n = sum(1 for r in c["rules"] if r.get("src") in ("lesson", "comment")) + 1
+    major, minor = c["version"].split(".")
+    c["version"] = f"{major}.{int(minor) + 1}"
+    r = CR.make_rule({"id": f"L{n:02d}", "title": title[:30], "params": {},
+                      "master": {"target": title[:40], "preconditions": "", "steps": [engineer], "exceptions": [],
+                                 "verdict": "어기면 HOLD (사람 판단)", "evidence": [f"{src} 승인 {by}".strip()]},
+                      "computer": computer, "maintenance": maintenance, "src": src}, by or src)
+    r.update(src=src, by=by, at=time.strftime("%Y-%m-%d"))
+    c["rules"].append(r)
+    c.setdefault("changelog", []).append({"version": c["version"], "at": time.strftime("%Y-%m-%d"), "what": f"{src} 규칙 추가: {engineer[:60]}"})
+    save_common(home, c)
+    return c
 
 
 def lesson_key(text: str) -> str:
@@ -253,8 +268,13 @@ def decide_lesson(home: Path, lid: str, accept: bool, text: str | None = None, s
         n = sum(1 for r in c["rules"] if r.get("src") == "lesson") + 1
         major, minor = c["version"].split(".")
         c["version"] = f"{major}.{int(minor) + 1}"
-        c["rules"].append({"id": f"L{n:02d}", "text": x["text"], "src": "lesson", "from": ", ".join(x["projects"]),
-                           "evidence": x["evidence"], "at": time.strftime("%Y-%m-%d")})
+        r = CR.make_rule({"id": f"L{n:02d}", "title": x["text"][:30], "params": {},
+                          "master": {"target": x["text"][:40], "preconditions": "", "steps": [x["text"]], "exceptions": [],
+                                     "verdict": "어기면 HOLD (사람 판단)", "evidence": [f"배운 것: {', '.join(x['projects'])}, 근거 {x['evidence']}회"]},
+                          "computer": x["text"], "maintenance": f"배운 규칙 (주문 교훈 {', '.join(x.get('orders') or [])}). 마스터를 고치면 번역 다시",
+                          "src": "lesson"}, "교훈 원문 그대로 (번역 확인 필요)")
+        r.update(src="lesson", **{"from": ", ".join(x["projects"])}, evidence=x["evidence"], at=time.strftime("%Y-%m-%d"))
+        c["rules"].append(r)
         c.setdefault("changelog", []).append({"version": c["version"], "at": time.strftime("%Y-%m-%d"), "what": f"배운 규칙 추가: {x['text'][:60]}"})
         save_common(home, c)
     return {"lesson": x, "common_version": c["version"]}

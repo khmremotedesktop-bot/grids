@@ -19,7 +19,7 @@ import time
 from pathlib import Path
 
 FORMAT = "pid_io-3d"
-VERSION = "0.2"
+VERSION = "0.3"
 
 
 def _r(x, n=2):
@@ -41,7 +41,8 @@ def build(project, res, layout, tray, sup, s, plot=None):
     else:
         off_el = float(v["sup_el"])
     branch_el = -float(v["ug_depth"]) if v["no_rack"].startswith("UG") else float(v["sup_el"])
-    on_rack = lambda x, y: any(r[0] <= x <= r[2] and r[1] <= y <= r[3] for r in racks_pt)
+    from .plot import on_rack_fn
+    on_rack = on_rack_fn(racks_pt, m)                # same cells as the router (v13.6)
 
     def P(x, y, z):
         return {"pt": [_r(x, 1), _r(y, 1)], "m": [_r(x * m), _r(y * m), _r(z)]}
@@ -139,18 +140,23 @@ def build(project, res, layout, tray, sup, s, plot=None):
         if trs:
             e["trays"] = [x["no"] for x in trs["legs"]]
         out["cables"].append(e)
+    from .tray import sections                    # v13.3: cables laid in each tray / trench cross-section
+    secs = {x["no"]: x for x in sections(tray, v)} if tray else {}
     for sg in (tray or {}).get("segments") or []:
         a, b = sg["poly"]
-        el = rack_el if sg["kind"] == "랙" else off_el
+        el = rack_el if sg["kind"] == "랙" else (-float(v["ug_depth"]) if sg["kind"] == "UG" else float(v["sup_el"]))
         base = {"seg": sg["no"], "run": sg.get("run"), "kind": {"랙": "ladder_on_rack", "AG": "ladder_on_supports", "UG": "ug_trench"}[sg["kind"]],
                 "start": P(a[0], a[1], el), "end": P(b[0], b[1], el), "length_m": sg["length"], "cables": sg["cables"]}
         if sg["kind"] == "UG":
             out["trays"].append({**base, "no": sg["no"], "width_mm": sg.get("width"), "tiers": sg.get("tiers", 1),
-                                 "fill": sg.get("fill")})
+                                 "fill": sg.get("fill"), "height_mm": float(v["ug_height"]),
+                                 "lay": (secs.get(sg["no"]) or {}).get("lay") or []})
         acc = 0                                    # trays of one segment sit side by side, 100 mm apart
         for k, t in enumerate(sg.get("trays") or []):
             out["trays"].append({**base, "no": t["no"], "class": t["cls"], "width_mm": t["width"], "tiers": t["tiers"],
-                                 "height_mm": float(v["tray_height"]), "fill": t["fill"], "side_offset_mm": acc})
+                                 "height_mm": float(v["tray_height"]), "fill": t["fill"], "side_offset_mm": acc,
+                                 "cables": t.get("cables") or sg["cables"],
+                                 "lay": (secs.get(t["no"]) or {}).get("lay") or []})
             acc += t["width"] + 100
     for x in (sup or {}).get("supports") or []:
         out["supports"].append({"no": x["no"], "type": x["type"], "name": x["name"], "typical": x["typical"],

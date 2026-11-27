@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import os
+import hashlib
 import re
 import shutil
 import threading
@@ -35,7 +36,7 @@ from ..pipeline import ORIGINS, PROTO, apply_overrides, compute, impact, load_ex
 
 STATIC = Path(__file__).resolve().parent / "static"
 HOME = Path(os.environ.get("PID_IO_HOME", Path.cwd() / "projects")).resolve()
-VERSION = "v13.2"                                      # pid_io version shown in handoff files
+VERSION = "v13.3"                                      # pid_io version shown in handoff files
 
 KINDS = {"pdf": ".pdf", "template": ".xlsx", "ref": ".xlsx", "concept": ".xlsx", "plot": ".pdf", "plotref": ".pdf",
          "model3d": ".html", "other3d": ".json"}
@@ -228,7 +229,7 @@ def recognition_kpi(name: str, syms, c):
     if files.get("ref") and c:
         try:
             from ..export import load_reference
-            ref = load_reference(pdir(name) / "input" / files["ref"])
+            ref = load_reference(pdir(name) / "input" / files["ref"], meta(name).get("ref_map"))
             norm = lambda t: re.sub(r"^\d{2}-", "", str(t).upper().replace(" ", ""))
             ours = {norm(r.tag) for r in c[4] if r.kind == "instrument"}
             rt = {norm(r["tag"]) for r in ref if "XXXX" not in str(r["tag"]).upper()}
@@ -238,6 +239,39 @@ def recognition_kpi(name: str, syms, c):
         except Exception as e:                             # noqa: BLE001
             k["ref"] = {"error": str(e)}
     return k
+
+
+def ref_check(name: str, override: dict | None = None, save: bool = False):
+    """v13.4 레퍼런스 채점: how the reference file was read (sheet / header / columns) + the score."""
+    from .. import refindex
+    m = meta(name)
+    f = (m.get("files") or {}).get("ref")
+    if not f:
+        return {"none": True}
+    if save:
+        m["ref_map"] = override or {}
+        save_meta(name, m)
+    ov = m.get("ref_map") if override is None else override
+    try:
+        rows, info = refindex.read(pdir(name) / "input" / f, ov)
+    except Exception as e:                                 # noqa: BLE001 - show the reason + let the user pick
+        try:
+            from ..directopen import load_workbook as _lw
+            wb = _lw(pdir(name) / "input" / f, data_only=True)
+            sheets = wb.sheetnames
+            sh = (ov or {}).get("sheet") or sheets[0]
+            r = int((ov or {}).get("row") or 1)
+            caps = [str(c or "") for c in next(wb[sh].iter_rows(min_row=r, max_row=r, max_col=80, values_only=True), ())]
+        except Exception:                                  # noqa: BLE001
+            sheets, caps = [], []
+        return {"file": f, "error": str(e), "info": {"sheets": sheets, "captions": caps, "map": {}, "sheet": (ov or {}).get("sheet"),
+                                                     "row": (ov or {}).get("row")}, "labels": refindex.LABEL}
+    c = computed(name)
+    sc = refindex.score(c[4], rows) if c else None
+    out = {"file": f, "info": info, "score": sc, "labels": refindex.LABEL, "at": time.strftime("%Y-%m-%d %H:%M")}
+    if sc:
+        ait.save(pdir(name) / "cache" / "ref_score.json", {"at": out["at"], "total": sc["total"], "grade": sc["grade"]})
+    return out
 
 
 def ai_run(name: str, kind: str):
@@ -423,7 +457,8 @@ def project_state(name: str):
     d = pdir(name)
     st = {"meta": m, "job": JOBS.get(name, {"state": "idle"}), "extracted": (d / "extract.json").exists(),
           "protected": protect.scan(d, {**m.get("files", {}), "concept": "concept.xlsx"}),
-          "pages_cached": pagecache.ready(d), "cache_job": JOBS.get(name + ":raster", {"state": "idle"})}
+          "pages_cached": pagecache.ready(d), "cache_job": JOBS.get(name + ":raster", {"state": "idle"}),
+          "ref_score": ait.load(d / "cache" / "ref_score.json", None) if (m.get("files") or {}).get("ref") else None}
     if m.get("files", {}).get("pdf") and not st["pages_cached"] and "pdf" not in st["protected"]:
         cache_pages(name)                          # PDF readable right now: save the page images
     ex = extracted(name)
@@ -822,7 +857,9 @@ def plot_read(name: str):
         return None
     pf = d / "input" / files["plot"]
     rf = d / "input" / files["plotref"] if files.get("plotref") else None
-    key = [files["plot"], pf.stat().st_mtime_ns, files.get("plotref"), rf.stat().st_mtime_ns if rf else 0, "v3"]
+    # v13.6: content hash, not mtime - a fresh clone / unzip on another PC keeps the cache (and its picture)
+    fh = lambda f: hashlib.sha256(f.read_bytes()).hexdigest()[:16] if f else ""
+    key = [files["plot"], fh(pf), files.get("plotref"), fh(rf), "v4"]
     cj = d / "cache" / "plot.json"
     if cj.exists():
         old = json.loads(cj.read_text(encoding="utf-8"))
@@ -839,7 +876,16 @@ def plot_read(name: str):
 _MODEL_RACKS = {}
 
 
-def model_racks(name: str):
+def proto_params() -> dict:
+    """common protocol params (all rules) - the program reads its criteria here (protocol = behaviour)."""
+    from .. import orders as OR, common_rules as CR
+    try:
+        return CR.params_flat(OR.load_common(HOME))
+    except Exception:                                      # noqa: BLE001
+        return CR.params_flat({"rules": CR.RULES})
+
+
+def model_racks(name: str, values: dict | None = None):
     """racks of the 3D model (STEP 10) moved into plot pt with the fitted transform; cached per file version.
     -> {"rects": [[x0,y0,x1,y1,rack id]], "cable_el": {rack id: EL}, "main_el": EL of the longest rack, "fit": summary}"""
     from .. import twin
@@ -850,10 +896,15 @@ def model_racks(name: str):
     f = pdir(name) / "input" / files["model3d"]
     if not f.exists():
         return None
-    key = (name, files["model3d"], f.stat().st_mtime_ns, str(pl.get("_key")))
+    cv = values or cable.load(pdir(name))["values"]
+    use_refs = str(cv.get("rack_refs", "사용"))
+    refs_off = {x.strip() for x in str(cv.get("rack_refs_off") or "").split(",") if x.strip()}
+    key = (name, files["model3d"], f.stat().st_mtime_ns, str(pl.get("_key")), use_refs, tuple(sorted(refs_off)))
     if key in _MODEL_RACKS:
         return _MODEL_RACKS[key]
     base = twin.parse_base(f)
+    base["racks"] = {k: r for k, r in base["racks"].items()
+                     if not r.get("ref") or (use_refs == "사용" or (use_refs == "서브 랙만" and r.get("kind") == "sub")) and k not in refs_off}
     ours = [{"id": f"RACK-{i + 1:02d}", "rect_pt": r[:4], "axis": "x" if (r[4] if len(r) > 4 else "H") == "H" else "y"}
             for i, r in enumerate(pl.get("racks") or [])]
     tf = twin.fit(pl, ours, base)
@@ -895,13 +946,14 @@ def plot_layout(name: str, rows, values: dict | None = None, dec: dict | None = 
     use_eq = str(vals.get("slot_3d_eq", "")).startswith("사용")
     if src != "PLOT 인식" or use_eq:
         try:
-            mr = model_racks(name)
+            mr = model_racks(name, vals)
         except Exception:                                  # noqa: BLE001 - a broken model must not stop STEP 6
             mr = None
         if mr:
             if src != "PLOT 인식":
                 dd["racks_model"] = mr["rects"]
                 dd["rack_src"] = src
+                dd["same_rack_pct"] = proto_params().get("P11.same_rack_pct")
             if use_eq:
                 dd["eq_model"] = mr.get("eq") or []
     return plotmod.Layout(pl, pt, [r.unit for r in rows if r.unit], dd)
@@ -939,6 +991,14 @@ def plot_update(name: str, b: dict):
     if b.get("tray_size"):                           # STEP 8: {seg, cls, w, n}
         t = b["tray_size"]
         dd.setdefault("tray_size", {}).setdefault(str(t["seg"]), {})[str(t["cls"])] = [int(t["w"]), max(1, int(t["n"]))]
+    if b.get("tray_kind"):                           # v13.4 STEP 8: {segs: [segment ids], kind: UG / AG / 랙 / null(auto)}
+        t = b["tray_kind"]
+        ko = dd.setdefault("tray_kind", {})
+        for sid in t.get("segs") or []:
+            if t.get("kind") in ("UG", "AG", "랙"):
+                ko[str(sid)] = t["kind"]
+            else:
+                ko.pop(str(sid), None)
     if b.get("sup_over"):                            # STEP 9: {seg (tray segment id), type?, span?}
         o = b["sup_over"]
         cur = dd.setdefault("sup_over", {}).setdefault(str(o["seg"]), {})
@@ -976,9 +1036,13 @@ def cable_result(name: str, values: dict | None = None, dec: dict | None = None)
     s = cable.load(pdir(name))
     if values:
         s["values"] = {**s["values"], **values}
+    try:                                                   # v13.3: C03 / C04 / H06 are the one place for these
+        s["concept_notes"] = cable.apply_concept(s["values"], concept(name))
+    except Exception:                                      # noqa: BLE001 - checklist unreadable: keep STEP 6 values
+        s["concept_notes"] = []
     if s["values"].get("rack_el_src", "").startswith("3D"):     # tray EL from the model's cable tier (not saved)
         try:
-            mr = model_racks(name)
+            mr = model_racks(name, s["values"])
         except Exception:                                  # noqa: BLE001
             mr = None
         if mr and mr.get("main_el"):
@@ -1023,6 +1087,63 @@ def plot_view(name: str, lay, res):
             "file": meta(name)["files"].get("plot"), "ref": meta(name)["files"].get("plotref"),
             "size": pl["size"], "m_per_pt": m, "questions": q, "geo": g,
             "located": st, "unlocated": g.get("unlocated", 0), "equipment": len(pl["equipment"])}
+
+
+# ------------------------------------------------------------------ v13.4 progress of long requests
+PROG: dict = {}                     # op id -> {key, t0, pct, msg, expect, done}
+_TL = threading.local()
+try:
+    TIMING: dict = json.loads((HOME / "_timing.json").read_text(encoding="utf-8"))
+except Exception:                                          # noqa: BLE001
+    TIMING = {}
+
+
+def _save_timing():
+    try:
+        HOME.mkdir(parents=True, exist_ok=True)
+        (HOME / "_timing.json").write_text(json.dumps(TIMING, ensure_ascii=False, indent=0), encoding="utf-8")
+    except Exception:                                      # noqa: BLE001
+        pass
+
+
+def prog(pct: float, msg: str = ""):
+    """report progress of the current request (0-100) and what it is doing."""
+    oid = getattr(_TL, "oid", None)
+    if oid and oid in PROG:
+        PROG[oid]["pct"] = max(0, min(99, round(pct, 1)))
+        if msg:
+            PROG[oid]["msg"] = msg
+
+
+# ------------------------------------------------------------------ v13.4 app settings + 간이 모드 (개략 케이블 · JB)
+def app_settings(upd: dict | None = None) -> dict:
+    f = HOME / "_app.json"
+    st = {"simple": False, "fit": True}
+    try:
+        st.update(json.loads(f.read_text(encoding="utf-8")))
+    except Exception:                                      # noqa: BLE001 - first run / broken file
+        pass
+    if upd:
+        st.update({k: v for k, v in upd.items() if k in ("simple", "fit")})
+        HOME.mkdir(parents=True, exist_ok=True)
+        f.write_text(json.dumps(st, ensure_ascii=False, indent=1), encoding="utf-8")
+    return st
+
+
+def simple_view(name: str):
+    """IO + area -> JBs and cable routes on the plot plan, numbers rounded ('약'). No settings, no edit tools."""
+    from collections import Counter
+    s, res, lay = cable_result(name)
+    pp = plot_view(name, lay, res)
+    c = computed(name)
+    io = Counter(r.io for r in c[4] if r.kind != "function" and r.origin != "스페어" and r.io in ("AI", "AO", "DI", "DO"))
+    trunk = [x for x in res["cables"] if x["kind"] != "분기"]
+    rnd = lambda n, k=5: int(round(n / k) * k) if n >= 20 else int(n)
+    total_m = sum(x["length"] for x in res["cables"])
+    units = sorted({j["area"] for j in res["jbs"] if j.get("area")})
+    return {"plot": pp, "io": dict(io), "io_total": sum(io.values()),
+            "summary": {"jb": len(res["jbs"]), "trunk": rnd(len(trunk)), "branch": rnd(sum(1 for x in res["cables"] if x["kind"] == "분기")),
+                        "km": round(total_m / 1000, 0) if total_m >= 10000 else round(total_m / 1000, 1), "units": units}}
 
 
 def typical_dir(name: str) -> Path:
@@ -1153,8 +1274,10 @@ def export_basis(name: str, sensitivity: bool = True):
     if not c:
         raise ValueError("먼저 추출을 실행해 주세요")
     data, syms, notes, con, rows, log = c
+    prog(2, "케이블 · JB 계산")
     s, res, lay = cable_result(name)
     dd, am, ob = _plot_dec(name), _area_map(name), _obstacles(lay)
+    prog(6, "트레이 · 서포트 계산")
     tr = cable.TR.build(res, lay, s, dd)
     sp = cable.SP.build(tr, s["values"], lay.m_per_pt if lay else None, dd, ob)
     imap = cable.index_map(res, tr, sp)
@@ -1163,8 +1286,11 @@ def export_basis(name: str, sensitivity: bool = True):
         ov = overrides(name)
         ps, proto = _ao(syms, load_protocol(PROTO / "io_rules.yaml"), ov)
         con2 = concept(name)
-        sc = basis.concept_sensitivity(ps, proto, con2, notes, (ov or {}).get("decisions"), s, am, lay, dd, ob)
-        sk = basis.cable_sensitivity(rows, s, am, lay, dd, ob, con)
+        sc = basis.concept_sensitivity(ps, proto, con2, notes, (ov or {}).get("decisions"), s, am, lay, dd, ob,
+                                       progress=lambda k, n: prog(10 + 40 * k / max(1, n), f"체크리스트 영향 {k}/{n}"))
+        sk = basis.cable_sensitivity(rows, s, am, lay, dd, ob, con,
+                                     progress=lambda k, n: prog(50 + 42 * k / max(1, n), f"설정 영향 {k}/{n}"))
+    prog(93, "엑셀 쓰는 중")
     out = _hist(name, "basis", ".xlsx")
     r = basis.write(out, name, rows, con, s, res, tr, sp, imap, sc, sk)
     _finish(name, "basis", out)
@@ -1202,6 +1328,284 @@ def twin_view(name: str):
     return out
 
 
+# ------------------------------------------------------------------ v13.6 3D 구현 루프 (프롬프트 + 자료 → 회사 AI 3D → 코멘트 → 다음 Rev)
+def _loop_pkg(name: str, rd: dict) -> Path:
+    return find_out(name, rd["set"]) / rd["package"]
+
+
+def loop_view(name: str):
+    from .. import loop3d as LP
+    d = pdir(name)
+    rs = LP.rounds(d)
+    out = {"rounds": rs, "comments": LP.load_rules(d)["comments"], "next": len(rs), "prompt": None}
+    if rs:
+        try:
+            pk = _loop_pkg(name, rs[-1])
+            out["prompt"] = (pk / LP.PROMPT_NAME).read_text(encoding="utf-8")
+        except Exception:                                  # noqa: BLE001
+            pass
+    return out
+
+
+def loop_make(name: str, seven_only: bool = False):
+    """one round: package (7종 + model + evidence) + 3D_BUILD_PROMPT + BASE_SUMMARY + PLOT_MARKUP + 제출 zip."""
+    import csv as _csv
+    import hashlib
+    from .. import loop3d as LP, twin
+    d = pdir(name)
+    rs = LP.rounds(d)
+    n = len(rs)
+    r = export_twin(name)
+    od = find_out(name, r["dir"])
+    pk = od / r["package"]["dir"]
+    prog(88, f"R{n} 프롬프트 · Base 요약 · PLOT 마크업")
+    man = json.loads((pk / "00_manifest.json").read_text(encoding="utf-8"))
+    meta_ = {k: man[k] for k in ("scope_rev", "rule_rev", "model_rev")}
+    c2 = json.loads((pk / "02_input_model_contract.json").read_text(encoding="utf-8"))
+    tfp = c2["coordinate_system"]["plot_transform"]
+    tf = {"formula": tfp["formula"], "median_m": tfp["residual_median_m"], "max_m": tfp["residual_max_m"]}
+    mj = next(pk.glob("model/*.json"))
+    recs = json.loads(mj.read_text(encoding="utf-8"))["records"]
+    files = meta(name).get("files", {})
+    base = twin.parse_base(d / "input" / files["model3d"])
+    rules = LP.load_rules(d)["comments"]
+    s, res, lay = cable_result(name)
+    v = s["values"]
+    from .. import orders as OR
+    (pk / LP.PROMPT_NAME).write_text(LP.build_prompt(name, n, v, base, meta_, recs, tf, rules, "model/" + mj.name, OR.load_common(HOME)),
+                                     encoding="utf-8")
+    # base summary: quantities from the T-NORMAL run, margins from 05
+    sc = list(_csv.DictReader(open(pk / "01_scope.csv", encoding="utf-8")))
+    run = json.loads((pk / "evidence" / "run_T-NORMAL.json").read_text(encoding="utf-8"))["results"]
+    marg = {x["scope_id"]: x["margin_value"] for x in _csv.DictReader(open(pk / "05_validation.csv", encoding="utf-8")) if x["case_id"] == "T-NORMAL"}
+    items = [{"scope_id": x["scope_id"], "item_name": x["item_name"], "spec": x["spec"], "unit": x["unit"], "rule_id": x["rule_id"],
+              "disposition": x["disposition"], "exclude": x["exclude_boundary"],
+              "value": (run.get(x["scope_id"]) or {}).get("value") or 0, "margin": float(marg[x["scope_id"]]) if marg.get(x["scope_id"]) else None}
+             for x in sc]
+    corr = list(_csv.DictReader(open(pk / "evidence" / "correction_log.csv", encoding="utf-8")))
+    names = {k: it["name"] for k, it in cable.ITEMS.items()}
+    prev = rs[-1] if rs else None
+    p11 = [r for r in _csv.reader(open(pk / "evidence" / "plot_vs_3d.csv", encoding="utf-8"))][1:] if (pk / "evidence" / "plot_vs_3d.csv").exists() else []
+    (pk / "BASE_SUMMARY.md").write_text(LP.base_summary(name, n, meta_, items, v, cable.DEFAULTS, names, corr, man["sources"], prev, rules,
+                                                        LP.zip_list(seven_only), p11), encoding="utf-8")
+    pl = plot_read(name)
+    if pl:
+        try:
+            png = plot_png(name)                          # the plot cache picture is rebuilt when missing
+            tr = cable.TR.build(res, lay, s, _plot_dec(name))
+            LP.markup_png(png, pl["size"], res, tr, lay, v, _plot_dec(name), pk / "PLOT_MARKUP.png")
+        except Exception as e:                             # noqa: BLE001 - the summary still goes out, without the picture
+            (pk / "PLOT_MARKUP_오류.txt").write_text(str(e), encoding="utf-8")
+    z = LP.make_zip(pk, n, seven_only)
+    rd = {"round": n, "at": time.strftime("%Y-%m-%d %H:%M"), "set": od.name, "package": pk.name, "revs": meta_,
+          "prompt_sha": hashlib.sha256((pk / LP.PROMPT_NAME).read_bytes()).hexdigest()[:16],
+          "rules": [c["rule_id"] for c in rules if c["status"] == "APPLIED" and c.get("rule_id")],
+          "applied_comments": [c["id"] for c in rules if c.get("round_applied") == n],
+          "qty": {x["scope_id"]: x["value"] for x in items if x["disposition"] == "DIRECT"}, "ai3d": None, "zip": z.name,
+          "validation": r["package"]["validation"]}
+    rs.append(rd)
+    LP.save_rounds(d, rs)
+    # export_twin already published the set to LATEST before these files existed: refresh the package copy there
+    lt = d / "output" / "LATEST" / "3D인계" / pk.name
+    if lt.parent.exists():
+        shutil.rmtree(lt, ignore_errors=True)
+        shutil.copytree(pk, lt)
+    return {**rd, "files": [od.name]}
+
+
+def loop_attach_ai(name: str, n: int, fname: str, data: bytes):
+    from .. import loop3d as LP
+    d = pdir(name)
+    rs = LP.rounds(d)
+    rd = next((x for x in rs if x["round"] == n), None)
+    if not rd:
+        raise ValueError(f"R{n}이 없습니다")
+    if b"<html" not in data[:5000].lower() and b"<!doctype" not in data[:200].lower():
+        raise ValueError("HTML 파일이 아닙니다")
+    (d / "input" / "ai3d").mkdir(parents=True, exist_ok=True)
+    src = d / "input" / "ai3d" / f"R{n}_{re.sub(r'[^0-9A-Za-z가-힣._-]+', '_', fname)}"
+    src.write_bytes(data)
+    pk = _loop_pkg(name, rd)
+    info = LP.attach_ai_model(pk, n, src)
+    (pk / rd["zip"]).unlink(missing_ok=True)
+    LP.make_zip(pk, n, "_7종" in rd["zip"])
+    rd["ai3d"] = info["file"]
+    LP.save_rounds(d, rs)
+    return loop_view(name)
+
+
+def plot_vs_3d(name: str, s: dict) -> list:
+    """protocol P11: where the plot plan and the 3D model differ, with the program's verdict. Criteria from the protocol."""
+    from .. import twin
+    P = proto_params()
+    tol, det, same = float(P["P11.pos_tol_m"]), float(P["P11.detour_pct"]), float(P["P11.same_rack_pct"]) / 100
+    files = meta(name).get("files", {})
+    pl = plot_read(name)
+    if not files.get("model3d") or not pl:
+        return []
+    v = s["values"]
+    base = twin.parse_base(pdir(name) / "input" / files["model3d"])
+    ours = [{"id": f"RACK-{i + 1:02d}", "rect_pt": r[:4], "axis": "x" if (r[4] if len(r) > 4 else "H") == "H" else "y"}
+            for i, r in enumerate(pl.get("racks") or [])]
+    tf = twin.fit(pl, ours, base)
+    rows = []
+    add = lambda kind, item, a, b, imp, verdict, action: rows.append([kind, item, a, b, imp, verdict, action, "P11"])
+    # (1) heights
+    allm = model_racks(name, {**v, "rack_refs": "사용", "rack_refs_off": ""}) or {}
+    used = {r[4] for r in (model_racks(name, v) or {}).get("rects", [])} if v.get("rack_src") != "PLOT 인식" else set()
+    for rid, el in (allm.get("cable_el") or {}).items():
+        add("높이", f"랙 {rid}", "PLOT에 높이 없음", f"케이블 단 EL {el} m", "", "INFO", "3D 값 사용" if rid in used else "이 랙은 경로에 안 씀")
+    # (2) equipment positions after the fit
+    eq = tf.get("equipment") or []
+    ok = [e for e in eq if e["d"] <= tol]
+    if ok:
+        add("장비 위치", f"{len(ok)}개", "", f"차이 ≤ {tol:g} m", "", "INFO", "그림만 3D에 맞춤, 물량은 Base")
+    for e in eq:
+        if e["d"] > tol:
+            add("장비 위치", e["tag"], "PLOT 위치", f"3D와 {e['d']} m 차이 (ΔX {e['dx']}, ΔZ {e['dz']})", "", "HOLD",
+                "어느 도면이 최신인지 확인 (PLOT 리비전 / 3D 리비전)")
+    # (3) racks: same / PLOT only / 3D only
+    rects = allm.get("rects") or []
+    ov = lambda r, q: max(0, min(r[2], q[2]) - max(r[0], q[0])) * max(0, min(r[3], q[3]) - max(r[1], q[1]))
+    area = lambda r: max(1e-6, (r[2] - r[0]) * (r[3] - r[1]))
+    pr = [r for r in (pl.get("racks") or [])]
+    same_n = {}
+    for i, r in enumerate(pr):
+        best = max(rects, key=lambda q: ov(r, q), default=None)
+        if best is not None and ov(r, best) / area(r) >= same:
+            same_n[best[4]] = same_n.get(best[4], 0) + 1
+        else:
+            add("랙", f"PLOT 랙 {i + 1}", f"{[round(x) for x in r[:4]]} pt", "3D에 없음", "", "INFO", "Base(PLOT) 랙 유지, 배관팀에 알림")
+    for rid, n in same_n.items():
+        add("랙", f"3D 랙 {rid}", f"PLOT 랙 조각 {n}개", "같은 랙", "", "INFO", "하나의 랙으로, 형상은 3D")
+    refs = {k: r for k, r in base["racks"].items() if r.get("ref")}
+    if v.get("rack_src") in ("둘 다", "3D 모델 랙"):
+        c0 = sum(c["length"] for c in cable_result(name)[1]["cables"])
+        offs = {x.strip() for x in str(v.get("rack_refs_off") or "").split(",") if x.strip()}
+        for rid, r in refs.items():
+            if rid in same_n:                               # the plot shows it too: it is the same rack, not 3D-only
+                continue
+            on = (v.get("rack_refs") == "사용" or (v.get("rack_refs") == "서브 랙만" and r.get("kind") == "sub")) and rid not in offs
+            alt = sorted(offs - {rid}) if not on else sorted(offs | {rid})
+            c1 = sum(c["length"] for c in cable_result(name, {"rack_refs": "사용" if not on else v.get("rack_refs"),
+                                                             "rack_refs_off": ",".join(alt)})[1]["cables"])
+            with_, without = (c0, c1) if on else (c1, c0)
+            dp = round(100 * (with_ - without) / max(1, without), 2)
+            imp = f"넣으면 케이블 {with_ - without:+,.0f} m ({dp:+g}%)"
+            if on:
+                add("3D에만 있는 구조물", f"{rid} {r['name'][:40]}", "PLOT에 없음", f"EL {r['cable_el']} m", imp,
+                    "HOLD" if dp > det else "INFO", f"사용 중 - 증가가 {det:g}% 넘음, 사람 확인" if dp > det else "사용 중 (사람 결정)")
+            else:
+                add("3D에만 있는 구조물", f"{rid} {r['name'][:40]}", "PLOT에 없음", f"EL {r['cable_el']} m", imp, "INFO", "제외 중 (사람 결정)")
+    return rows
+
+
+def vplan_view(name: str):
+    """cases + the scope list to write expected values against (IDs, names, units - never the computed quantities)."""
+    from collections import Counter
+    from .. import handoff as HO
+    c = computed(name)
+    if not c:
+        raise ValueError("먼저 추출을 실행해 주세요")
+    s, res, lay = cable_result(name)
+    dd = _plot_dec(name)
+    tr = cable.TR.build(res, lay, s, dd)
+    sp = cable.SP.build(tr, s["values"], lay.m_per_pt if lay else None, dd, _obstacles(lay))
+    items = [{k: x[k] for k in ("scope_id", "item_name", "spec", "unit", "rule_id")} for x in HO.scope_items(c[4], res, tr, sp, s["values"])
+             if x["disposition"] == "DIRECT"]
+    last = None
+    od = pdir(name) / "output"
+    pk = sorted(od.glob("**/3D인계_*/T1-CI_*/00_manifest.json"), key=lambda p: p.stat().st_mtime)
+    if pk:
+        mf = json.loads(pk[-1].read_text(encoding="utf-8"))
+        import csv as _csv
+        v5 = list(_csv.DictReader(open(pk[-1].parent / "05_validation.csv", encoding="utf-8")))
+        h6 = json.loads((pk[-1].parent / "06_model_handoff.json").read_text(encoding="utf-8"))
+        last = {"set": pk[-1].parent.parent.name, "dir": pk[-1].parent.name, "status": mf["status"],
+                "rev": f"scope {mf['scope_rev']} · rule {mf['rule_rev']} · model {mf['model_rev']}",
+                "verdict": dict(Counter(r["verdict"] for r in v5)), "gates": [[g["gate_id"], g["status"]] for g in mf["gate_results"]],
+                "checks": [[c_["check_id"], c_["evidence"][:90]] for c_ in h6["checks"]],
+                "issues": [[i["issue_id"], i["reason"]] for i in mf["issues"] if i["status"] == "OPEN"],
+                "fails": [r for r in v5 if r["verdict"] == "FAIL"][:30]}
+    return {"plan": HO.load_plan(pdir(name)), "scope": items, "last": last}
+
+
+def _handoff_ctx(name, version, base, base_path, model_file, inst, tf, s, c, res, tr, sp, lay, dd, am, ob, srcs, val, chk, od, d3_args):
+    """everything handoff.write_package needs: inputs, a case runner (independent execution), a reproducer, corrections."""
+    import copy as _cp
+    from .. import basis, threed, twin, handoff as HO
+    data, syms, notes, con, rows, log = c
+    plot_rules = HO.PLOT_RULES
+
+    def run_case(case):
+        s2 = _cp.deepcopy(s)
+        s2["values"].update(case.get("overrides") or {})
+        r2, t2, p2 = basis.chain(rows, s2, am, lay, dd, ob)
+        q = HO.quantities(rows, r2, t2, p2, s2["values"])
+        items = {x["scope_id"]: x for x in HO.scope_items(rows, r2, t2, p2, s2["values"])}
+        st = {}
+        plot_gone = s2["values"].get("plot_use") != "사용" or not (r2.get("summary") or {}).get("by_plot")
+        for sid in q:
+            rid = (items.get(sid) or {}).get("rule_id", "")
+            st[sid] = "HOLD" if (plot_gone and rid.startswith(plot_rules)) else "VALUE"
+        return q, st, {"cables": len(r2["cables"]), "jbs": len(r2["jbs"]), "by_plot": (r2.get("summary") or {}).get("by_plot"), "plot_gone": plot_gone,
+                       "note": "PLOT 좌표가 없어 길이·배치 물량은 가정값 → HOLD" if plot_gone else ""}
+
+    def reproduce():
+        s3, r3, l3 = cable_result(name)
+        t3 = cable.TR.build(r3, l3, s3, _plot_dec(name))
+        p3 = cable.SP.build(t3, s3["values"], l3.m_per_pt if l3 else None, _plot_dec(name), _obstacles(l3))
+        d3 = threed.build(name, r3, l3, t3, p3, s3, d3_args[1])
+        idx = {r.tag: r for r in rows if r.kind == "instrument"}
+        for x in d3["instruments"]:
+            r = idx.get(x["tag"])
+            if r:
+                x["index"] = {"Instrument Type": r.desc, "Service": getattr(r, "service", ""), "System": r.system, "I/O Type": r.io,
+                              "P&ID No": r.dwg, "Equipment No": getattr(r, "equip", ""), "Status": r.status, "산출구분": r.origin}
+        jbi = {j["no"]: j for j in r3["jbs"]}
+        for j in d3["jbs"]:
+            jj = jbi.get(j["no"]) or {}
+            j["extra"] = {"멀티": jj.get("multi", ""), "멀티 크기": jj.get("multi_size", ""), "스페어": jj.get("spare", ""),
+                          "단자": jj.get("terminals", ""), "태그": ", ".join(jj.get("tags") or [])[:300]}
+        i3 = twin.to_model(d3, tf, base, s3["values"], proto_params())
+        if inst.get("moves"):
+            files = meta(name).get("files", {})
+            twin.avoid(i3, twin.load_other(pdir(name) / "input" / files["other3d"]), base, s3["values"])
+        return i3
+
+    io_of = lambda rr: dict(Counter(r.io for r in rr if r.kind != "function"))
+    from collections import Counter
+    rows0, _ = compute(syms, notes, con, overrides=None)
+    corr = HO.corrections(syms, overrides(name), ait.load(pdir(name) / "ai_suggestions.json", []), dec.load(pdir(name)), dd,
+                          ait.load(pdir(name) / "decision_log.json", []), io_of(rows0), io_of(rows))
+    bt = Path(base_path).read_text(encoding="utf-8")
+    mods = [{"object_id": "SEED-CODE:title", "before": "<title>", "after": "<title>[계장 보강] ", "why": "보강본 표시"}]
+    f_ = "(!state.section || h.point.y <= state.sectionH)"
+    if f_ in bt:
+        mods.insert(0, {"object_id": "SEED-CODE:raycast-filter", "before": f_,
+                        "after": f_ + " && (!window.__pidClip || window.__pidClip(h.point))",
+                        "why": "수직 단면(Section view)에서 잘려 안 보이는 쪽 객체는 클릭되지 않게"})
+    d = pdir(name)
+    latest_basis = sorted((d / "output").glob("**/산출근거_*.xlsx"), key=lambda p: p.stat().st_mtime)
+    ev = [od / n for n in ("3D_REVIEW_PRECHECK.csv", "3D_REVIEW_PRECHECK.json", "3D_REVIEW_PROMPT.md", "3D_REVIEW_ANSWER_SCHEMA.json",
+                           "COMMON_PROTOCOL.json", "COMMON_PROTOCOL.md", "clash_moves.json", "RULE_PROTOCOL.json")]
+    ev += [d / "decision_log.json", d / "cable.json", d / "concept_values.json", d / "validation_plan.json", d / "plot_decisions.json"]
+    ev += latest_basis[-1:]
+    decisions_ = [{"decision": f"{x.get('what')}: {x.get('before')} → {x.get('after')}", "ref": f"decision_log.json {x.get('at')}",
+                   "approved": x.get("approved")} for x in ait.load(d / "decision_log.json", [])]
+    decisions_ += [{"decision": "중복 설정 합침 (C03·C04·H06 → STEP 6)", "ref": "인수인계 0-1c", "approved": "사용자 2026-11-27"},
+                   {"decision": "패키지 멀티 중간 묶음 안 함", "ref": "인수인계 0-1c", "approved": "사용자 2026-11-27"}]
+    try:
+        p11 = plot_vs_3d(name, s)
+    except Exception as e:                                 # noqa: BLE001 - the package still goes out
+        p11 = [["오류", str(e)[:200], "", "", "", "HOLD", "plot_vs_3d 확인", "P11"]]
+    return {"plot_vs_3d": p11, "project": name, "version": version, "pdir": d, "base": base, "base_path": base_path, "model_file": model_file, "inst": inst,
+            "tf": tf, "s": s, "rows": rows, "res": res, "tr": tr, "sp": sp, "sources": srcs, "audit": val, "check_summary": chk,
+            "run_case": run_case, "reproduce": reproduce, "corrections": corr, "seed_modifications": mods,
+            "concept_items": {k: {"name": v.get("name"), "value": v.get("value")} for k, v in con.items.items()},
+            "evidence_files": ev, "decisions": decisions_}
+
+
 def export_twin(name: str):
     """supplemented model + standard 7 files + STRUCTURED_MODEL_DATA into output/3D인계_<stamp>/."""
     from .. import twin, basis, threed
@@ -1227,10 +1631,11 @@ def export_twin(name: str):
         jj = jbi.get(j["no"]) or {}
         j["extra"] = {"멀티": jj.get("multi", ""), "멀티 크기": jj.get("multi_size", ""), "스페어": jj.get("spare", ""),
                       "단자": jj.get("terminals", ""), "태그": ", ".join(jj.get("tags") or [])[:300]}
+    prog(20, "3D 모델 읽기 · 좌표 맞추기")
     base_path = pdir(name) / "input" / files["model3d"]
     base = twin.parse_base(base_path)
     tf = twin.fit(plot_read(name) or {}, d3["racks"], base)
-    inst = twin.to_model(d3, tf, base, s["values"])
+    inst = twin.to_model(d3, tf, base, s["values"], proto_params())
     inst.update(version=VERSION, project=name)
     moves, other = [], None
     if files.get("other3d") and (pdir(name) / "input" / files["other3d"]).exists():
@@ -1242,6 +1647,7 @@ def export_twin(name: str):
     od = _hist(name, "twin", "", stamp)
     od.mkdir(parents=True, exist_ok=True)
     model_file = od / f"{Path(files['model3d']).stem}_계장보강.html"
+    prog(45, "모델에 계장 레이어 넣기")
     model_file.write_text(twin.build_html(base_path, inst), encoding="utf-8")
     data_file = od / "STRUCTURED_MODEL_DATA_FULL.json"
     data_file.write_text(json.dumps(inst, ensure_ascii=False), encoding="utf-8")
@@ -1258,6 +1664,7 @@ def export_twin(name: str):
                 ("PASS" if not left else "HOLD") if other else "NOT_APPLICABLE", "pid_io twin.avoid",
                 "; ".join(f"{m_['tray']} {m_['action']}" for m_ in moves[:20])])
     from .. import review3d
+    prog(65, "3D 사전 점검")
     rv = review3d.write_packet(od, name, inst, base, s["values"], model_file.name, data_file.name)
     sm = rv["summary"]
     val.append(["T-NORMAL", "3D 사전 점검 (장비 관통·랙 밖·떠 있는 트레이·겹침·JB 위치·남은 충돌)", "HOLD 0",
@@ -1274,8 +1681,8 @@ def export_twin(name: str):
     chk = f"pid_io audit NG {sum(1 for r in val if r[4] == 'FAIL')} · HOLD {sum(1 for r in val if r[4] == 'HOLD')}"
     srcs = {k: files.get(k) for k in ("pdf", "plot", "plotref", "template", "ref")}
     from .. import protocol
-    twin.standard_files(od, name, VERSION, base, base_path, inst, tf, s, res, tr, sp, base_m["HW IO"], srcs, val,
-                        model_file, data_file, chk, protocol.build(con, s["values"]))
+    (od / "RULE_PROTOCOL.json").write_text(json.dumps(protocol.build(con, s["values"]), ensure_ascii=False, indent=1, default=str),
+                                           encoding="utf-8")
     try:
         take_snapshot(name, "3D 인계 " + od.name)
     except Exception:                                      # noqa: BLE001
@@ -1288,14 +1695,19 @@ def export_twin(name: str):
             shutil.copy2(OR.proto_dir(HOME) / fn, od / ("COMMON_PROTOCOL.json" if fn.endswith(".json") else "COMMON_PROTOCOL.md"))
     except Exception:                                      # noqa: BLE001
         pass
+    # v13.5 company standard package (AI3D-HANDOFF-1.1, 회사 가이드 Rev.6 T1-CI) inside the set folder
+    prog(80, "회사 규격 패키지 (7종 · 모델 · 근거 · 독립 검증 실행)")
+    from .. import handoff as HO
+    pkg = HO.write_package(od, _handoff_ctx(name, VERSION, base, base_path, model_file, inst, tf, s, c, res, tr, sp, lay, dd, am, ob,
+                                            srcs, val, chk, od, d3_args=(name, plot_read(name))))
     _finish(name, "twin", od)
-    return {"files": [od.name], "dir": od.name, "counts": inst["counts"], "moves": len(moves), "review": sm,
+    return {"files": [od.name], "dir": od.name, "counts": inst["counts"], "moves": len(moves), "review": sm, "package": pkg,
             "left": len(left), "fit": {k: tf[k] for k in ("median_m", "max_m", "anchors", "rack_anchors")}}
 
 
 # ------------------------------------------------------------------ v13.2 결정 보호 + 3D 반영 관문
-GATE_3D = {"rack_src": "3D 모델 랙", "rack_el_src": "3D 모델 케이블 단", "slot_3d_eq": "사용 (3D 모델 있을 때)"}
-GATE_WHY = {"rack_src": "경로가 PLOT 인식 랙 대신 배관 3D 모델 랙을 탐 (사람이 그린 랙은 그대로 더해짐)",
+GATE_3D = {"rack_src": "둘 다", "rack_el_src": "3D 모델 케이블 단", "slot_3d_eq": "사용 (3D 모델 있을 때)"}
+GATE_WHY = {"rack_src": "같은 랙은 하나로(형상은 3D), PLOT에만 있는 랙은 그대로, 3D에만 있는 랙은 추가 (프로토콜 P11, 사람이 그린 랙도 그대로)",
             "rack_el_src": "랙 위 트레이 EL = 3D 모델 케이블 단 EL",
             "slot_3d_eq": "3D 모델 장비 상자 안 자리에는 JB를 두지 않음 (자동 배치만, 사람이 옮긴 JB는 그대로)"}
 
@@ -1529,11 +1941,13 @@ def order_undo(name: str, oid: str):
 
 
 def orders_view(name: str):
+    from .. import common_rules as CR
     from .. import orders as OR
     c = OR.load_common(HOME)
     return {"orders": ait.load(pdir(name) / "orders.json", [])[-20:], "pending": ait.load(pdir(name) / "order_pending.json", None),
             "lessons": [x for x in OR.lessons(HOME) if x["status"] == "pending"][-30:],
-            "common": {"version": c["version"], "rules": c["rules"], "changelog": c.get("changelog", [])[-5:]},
+            "common": {"version": c["version"], "notice": c.get("notice", ""), "rules": [CR.flat(r) if r.get("master") else r for r in c["rules"]],
+                       "changelog": c.get("changelog", [])[-5:]},
             "actions": OR.ACTIONS}
 
 
@@ -1648,6 +2062,7 @@ def export(name: str, body: dict):
         cmap = cable.index_map(cres, ctr, csp)
     except Exception:
         cmap = None
+    prog(35, "인덱스 엑셀 쓰는 중")
     write_template(rows, d / "input" / files["template"], out, files["pdf"], data.get("sheets"), con, log,
                    m.get("scenarios"), imp, area_map=area, cable_map=cmap)
     made = [out.name]
@@ -1660,11 +2075,13 @@ def export(name: str, body: dict):
             pt = None
             warn.append("레퍼런스 비교 시트는 빠졌습니다: " + str(e))
         if pt is not None:
-            compare(rows, load_reference(d / "input" / files["ref"]), out, pt)
+            prog(65, "레퍼런스 비교 시트")
+            compare(rows, load_reference(d / "input" / files["ref"], m.get("ref_map")), out, pt)
     _finish(name, "index", _idx_out)
     if body.get("overlay"):
         protect.require_pdf(d / "input" / files["pdf"], "검토용 P&ID PDF는 원본 도면 위에 그려야 하는데 P&ID PDF에 보안이 걸려 있는데",
                             "검토용 PDF 체크를 끄고 만들거나, P&ID를 다시 올린 직후에 만들어 주세요")
+        prog(75, "검토용 P&ID PDF 그리는 중")
         from ..overlay import write_overlay
         ov = _hist(name, "pid_review", ".pdf", stamp)
         write_overlay(d / "input" / files["pdf"], syms, ov)
@@ -1697,9 +2114,7 @@ def _check_xlsx(data: bytes, kind: str, fn: str, path: Path | None = None):
                 raise ValueError("표준 인덱스 양식과 머리글(2행)이 다릅니다 - " + "; ".join(bad[:5])
                                  + (f" 외 {len(bad) - 5}곳" if len(bad) > 5 else "")
                                  + ". 프로그램은 열 위치대로 값을 쓰므로, '표준 양식 받기'로 받은 양식을 써 주세요")
-        if kind == "ref":
-            from ..export import find_reference_sheet
-            find_reference_sheet(wb)
+        # kind == "ref": any layout is accepted (v13.4) - columns are found / chosen on the 채점 card
     except ValueError as e:
         raise ValueError(f"{fn}: {e}")
     finally:
@@ -1806,6 +2221,15 @@ class H(BaseHTTPRequestHandler):
                     return self._send(404, {"error": "no font"})
                 ctype = {".otf": "font/otf", ".woff": "font/woff", ".woff2": "font/woff2"}.get(f.suffix.lower(), "font/ttf")
                 return self._send(200, f.read_bytes(), ctype, {"Cache-Control": "max-age=86400"})
+            if method == "GET" and parts[:1] in (["icon.png"], ["icon192.png"], ["favicon.ico"]):
+                f = STATIC / ("pid_io.ico" if parts[0] == "favicon.ico" else parts[0])
+                return self._send(200, f.read_bytes(), "image/x-icon" if f.suffix == ".ico" else "image/png", {"Cache-Control": "max-age=86400"})
+            if method == "GET" and parts[:1] == ["manifest.webmanifest"]:
+                return self._send(200, json.dumps({"name": "계장 개념설계 IO 산출", "short_name": "계장 IO", "start_url": "/",
+                                                   "display": "standalone", "background_color": "#ffffff", "theme_color": "#15ad60",
+                                                   "icons": [{"src": "/icon192.png", "sizes": "192x192", "type": "image/png"},
+                                                             {"src": "/icon.png", "sizes": "512x512", "type": "image/png"}]},
+                                                  ensure_ascii=False), "application/manifest+json")
             if method == "GET" and parts[:1] == ["viewer3d"]:
                 return self._send(200, (STATIC / "viewer3d.html").read_text(encoding="utf-8").replace("/*FONTFACE*/", font_css()),
                                   "text/html; charset=utf-8")
@@ -1828,6 +2252,14 @@ class H(BaseHTTPRequestHandler):
                     return self._send(200, {"projects": out, "home": str(HOME)})
                 create_project(self._json()["name"])
                 return self._send(200, {"ok": True})
+            if parts[1:] == ["ping"]:
+                LAST_PING[0] = time.time()
+                return self._send(200, {"ok": True})
+            if parts[1:] == ["shutdown"] and method == "POST":
+                _shutdown(0.5)
+                return self._send(200, {"ok": True})
+            if parts[1:] == ["app_settings"]:
+                return self._send(200, app_settings(self._json() if method == "POST" else None))
             if parts[1:] == ["font"]:
                 return self._send(200, {"found": {k: str(v) for k, v in FONTS.items()}})
             if parts[1:] == ["template_std"]:                 # the standard index template to fill in
@@ -1950,6 +2382,67 @@ class H(BaseHTTPRequestHandler):
                     (d / "cache" / "page_texts.json").unlink(missing_ok=True)
                     cache_pages(name)                    # readable now: save page images for later
                 return self._send(200, {"ok": True, "meta": m})
+            if act == "protocol" and method == "POST":   # v13.8 공통 프로토콜: 번역 확인 · 마스터 승인 · 번역 갱신
+                from .. import orders as OR, common_rules as CR
+                b = self._json()
+                c = OR.load_common(HOME)
+                if b.get("confirm"):
+                    CR.confirm_translation(c, b["rule"], b["view"], b.get("by", ""))
+                elif b.get("approve"):
+                    CR.approve_master(c, b["rule"], b.get("by", ""))
+                elif b.get("translation") is not None:
+                    CR.set_translation(c, b["rule"], b["view"], b["translation"], b.get("by", "") or "사람 입력", b.get("questions") or [])
+                OR.save_common(HOME, c)
+                return self._send(200, {"common": {"version": c["version"], "notice": c.get("notice", ""),
+                                                   "rules": [CR.flat(r) for r in c["rules"]], "changelog": c.get("changelog", [])[-5:]}})
+            if act == "loop":                            # v13.6 3D 구현 루프
+                from .. import loop3d as LP
+                sub = parts[4] if len(parts) > 4 else ""
+                if sub == "make" and method == "POST":
+                    b = self._json()
+                    return self._send(200, loop_make(name, bool(b.get("seven_only"))))
+                if sub == "comment" and method == "POST":
+                    b = self._json()
+                    dd_ = LP.comment_update(pdir(name), b)
+                    c_ = next((x for x in dd_["comments"] if x["id"] == b.get("id")), None)
+                    if b.get("approve") and c_ and c_.get("scope") == "공통" and not c_.get("common_id"):
+                        from .. import orders as OR
+                        cm = OR.add_common_rule(HOME, c_["rule_text"], c_["computer_text"], c_["maintenance_text"], c_["text"], "comment", c_.get("approved_by", ""))
+                        c_["common_id"] = cm["rules"][-1]["id"]
+                        LP.save_rules(pdir(name), dd_)
+                    return self._send(200, loop_view(name))
+                if sub == "ai3d" and method == "POST":
+                    fn = Path(unquote(self.headers.get("X-Filename", "ai3d.html"))).name
+                    return self._send(200, loop_attach_ai(name, int(q.get("round", ["0"])[0]), fn, self._body()))
+                if sub == "file":
+                    n = int(q.get("round", ["0"])[0])
+                    rd = next((x for x in LP.rounds(pdir(name)) if x["round"] == n), None)
+                    if not rd:
+                        return self._send(404, {"error": "no round"})
+                    pk = _loop_pkg(name, rd)
+                    f = {"zip": pk / rd["zip"], "prompt": pk / LP.PROMPT_NAME, "summary": pk / "BASE_SUMMARY.md",
+                         "markup": pk / "PLOT_MARKUP.png", "ai3d": pk / "model" / (rd.get("ai3d") or "-"),
+                         "ref3d": next(iter(sorted((pk / "model").glob("*_R*[0-9].html"))), pk / "-")}.get(q.get("f", [""])[0])
+                    if not f or not f.exists():
+                        return self._send(404, {"error": "not found"})
+                    from urllib.parse import quote
+                    ct = {".zip": "application/zip", ".md": "text/markdown; charset=utf-8", ".png": "image/png",
+                          ".html": "text/html; charset=utf-8"}.get(f.suffix, "application/octet-stream")
+                    hd = {} if f.suffix in (".png", ".html") else {"Content-Disposition": f"attachment; filename*=UTF-8''{quote(f.name)}"}
+                    return self._send(200, f.read_bytes(), ct, hd)
+                return self._send(200, loop_view(name))
+            if act == "vplan":                           # v13.5 독립 검증 기대값 (사전 잠금) - actual values are not sent here
+                from .. import handoff as HO
+                if method == "POST":
+                    HO.plan_update(pdir(name), self._json())
+                return self._send(200, vplan_view(name))
+            if act == "simple":
+                return self._send(200, simple_view(name))
+            if act == "ref_score":                       # v13.4 레퍼런스 채점 (+ 열 지정 저장)
+                if method == "POST":
+                    b = self._json()
+                    return self._send(200, ref_check(name, b.get("map") or {}, save=True))
+                return self._send(200, ref_check(name))
             if act == "extract" and method == "POST":
                 start_extract(name)
                 return self._send(200, {"ok": True})
@@ -2181,22 +2674,121 @@ class H(BaseHTTPRequestHandler):
             except OSError:
                 return
 
+    def _tracked(self, method):
+        """v13.4 progress: every API call with an X-Op-Id header is timed; long ones report % (prog())."""
+        oid = self.headers.get("X-Op-Id")
+        u = urlparse(self.path)
+        parts = [unquote(p) for p in u.path.strip("/").split("/") if p]
+        if not oid or parts[:2] == ["api", "progress"]:
+            return self._route(method)
+        key = method + " " + (parts[3] if len(parts) > 3 and parts[1] == "p" else "/".join(parts[1:2]))
+        if len(parts) > 4 and parts[1] == "p" and parts[3] in ("twin", "ai", "plot", "cable", "loop"):
+            key += "/" + parts[4]
+        PROG[oid] = {"key": key, "t0": time.time(), "pct": None, "msg": "", "expect": TIMING.get(key)}
+        _TL.oid = oid
+        try:
+            self._route(method)
+        finally:
+            dt = time.time() - PROG[oid]["t0"]
+            if dt > 0.3:
+                old = TIMING.get(key)
+                TIMING[key] = round(dt if old is None else 0.6 * old + 0.4 * dt, 2)
+                _save_timing()
+            PROG[oid].update(done=True, pct=100)
+            _TL.oid = None
+            for k in [k for k, v in PROG.items() if v.get("done") and time.time() - v["t0"] > 120]:
+                PROG.pop(k, None)
+
     def do_GET(self):
-        self._route("GET")
+        u = urlparse(self.path)
+        if u.path == "/api/progress":
+            oid = parse_qs(u.query).get("id", [""])[0]
+            x = PROG.get(oid) or {}
+            return self._send(200, {"pct": x.get("pct"), "msg": x.get("msg", ""), "expect": x.get("expect"), "key": x.get("key"),
+                                    "elapsed": round(time.time() - x["t0"], 1) if x else 0, "done": bool(x.get("done"))})
+        self._tracked("GET")
 
     def do_POST(self):
-        self._route("POST")
+        self._tracked("POST")
+
+
+def _app_browser():
+    """Edge (or Chrome) for an app window: no address bar / tabs, own icon and title. Windows paths first."""
+    import shutil as _sh
+    cands = []
+    for base in (os.environ.get("ProgramFiles(x86)"), os.environ.get("ProgramFiles"), os.environ.get("LOCALAPPDATA")):
+        if base:
+            cands += [Path(base) / "Microsoft" / "Edge" / "Application" / "msedge.exe",
+                      Path(base) / "Google" / "Chrome" / "Application" / "chrome.exe"]
+    for c in cands:
+        if c.exists():
+            return str(c)
+    for n in ("msedge", "microsoft-edge", "google-chrome", "chromium", "chromium-browser"):
+        if _sh.which(n):
+            return _sh.which(n)
+    return None
+
+
+SRV = None
+
+
+def _shutdown(delay: float = 0.3):
+    threading.Timer(delay, lambda: SRV and SRV.shutdown()).start()
+
+
+def open_app_window(url: str) -> bool:
+    """v13.4 app mode: a separate browser profile so the window is its own process; closing it ends the program."""
+    import subprocess
+    exe = _app_browser()
+    if not exe or os.environ.get("PID_IO_BROWSER") == "default":
+        webbrowser.open(url)
+        return False
+    prof = HOME / "_appwin"
+    prof.mkdir(parents=True, exist_ok=True)
+    try:
+        proc = subprocess.Popen([exe, f"--app={url}", f"--user-data-dir={prof}", "--window-size=1600,1000",
+                                 "--no-first-run", "--no-default-browser-check", "--disable-features=Translate"])
+    except Exception:                                      # noqa: BLE001
+        webbrowser.open(url)
+        return False
+
+    def watch():
+        t0 = time.time()
+        proc.wait()
+        if time.time() - t0 < 5:                           # handed over to an already running instance: keep serving
+            return
+        print("창을 닫아 프로그램을 종료합니다")
+        _shutdown(0.1)
+    threading.Thread(target=watch, daemon=True).start()
+    return True
+
+
+LAST_PING = [time.time()]
 
 
 def main(port: int = 8765, open_browser: bool = True):
+    global SRV
     HOME.mkdir(parents=True, exist_ok=True)
-    srv = ThreadingHTTPServer(("127.0.0.1", port), H)
+    try:
+        SRV = srv = ThreadingHTTPServer(("127.0.0.1", port), H)
+    except OSError:                                        # already running: just show the window again
+        if open_browser:
+            open_app_window(f"http://127.0.0.1:{port}/")
+        return
     url = f"http://127.0.0.1:{port}/"
-    print(f"계장 개념설계 IO 산출 - {url}  (프로젝트 폴더: {HOME})  종료: Ctrl+C")
+    print(f"계장 개념설계 IO 산출 - {url}  (프로젝트 폴더: {HOME})  종료: Ctrl+C 또는 창 닫기")
     print("글꼴: " + (", ".join(f"{k}={v}" for k, v in FONTS.items()) if FONTS else
                       "현대하모니 파일을 찾지 못함 → 맑은 고딕 (fonts 폴더에 ttf/otf를 넣으면 적용)"))
     if open_browser:
-        threading.Timer(0.8, lambda: webbrowser.open(url)).start()
+        threading.Timer(0.6, lambda: open_app_window(url)).start()
+    if os.environ.get("PID_IO_NOCONSOLE"):                # no console to close: stop when no window has pinged for 10 min
+        def idle():
+            while True:
+                time.sleep(30)
+                if time.time() - LAST_PING[0] > 600:
+                    _shutdown(0)
+                    return
+        threading.Thread(target=idle, daemon=True).start()
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

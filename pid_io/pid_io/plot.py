@@ -308,6 +308,8 @@ class Layout:
         self.racks_model = [list(r[:4]) for r in (dec.get("racks_model") or [])]   # from the 3D model (STEP 10), pt
         self.racks_model_ids = [str(r[4]) if len(r) > 4 else "" for r in (dec.get("racks_model") or [])]
         self.rack_src = dec.get("rack_src", "PLOT 인식")
+        from .common_rules import RULES                    # protocol P11: same rack when overlap ≥ same_rack_pct
+        self.same_rack = float(dec.get("same_rack_pct") or next(r["params"]["same_rack_pct"] for r in RULES if r["id"] == "P11")) / 100
         self.eq_model = [list(r[:4]) for r in (dec.get("eq_model") or [])]          # 3D model equipment boxes, pt
         self._router = {}
         self.jb_moves = dict(dec.get("jb_moves") or {})      # STEP 7: {JB no: slot id}
@@ -365,13 +367,17 @@ class Layout:
         if self.rack_src == "3D 모델 랙" and self.racks_model:
             out = [list(r) for r in self.racks_model]
         else:
-            out = [r[:4] for r in self.racks_auto if not r[-1]]
-            if self.rack_src == "둘 다":                   # 3D fact > PLOT auto: a PLOT rack only where the model has none
+            # v13.4: a PLOT rack is read from the column marks (column centre lines); the rack itself (beams,
+            # cable tier) reaches past them. Without this pad a route running along the column line sat 0.4 m
+            # "outside" the rack and was counted as UG (사용자 지적 2026-11-27, Rack C).
+            pad = RACK_PAD_M / self.m_per_pt if self.m_per_pt else 0
+            out = [[r[0] - pad, r[1] - pad, r[2] + pad, r[3] + pad] for r in self.racks_auto if not r[-1]]
+            if self.rack_src == "둘 다":   # P11: the same rack in PLOT and 3D = one rack (3D shape); PLOT-only racks stay
                 def cover(r):
                     area = max(1e-6, (r[2] - r[0]) * (r[3] - r[1]))
                     return max((max(0, min(r[2], q[2]) - max(r[0], q[0])) * max(0, min(r[3], q[3]) - max(r[1], q[1])) / area
                                 for q in self.racks_model), default=0)
-                out = [r for r in out if cover(r) < 0.3] + [list(r) for r in self.racks_model]
+                out = [r for r in out if cover(r) < self.same_rack] + [list(r) for r in self.racks_model]
         hw = width_m / 2 / self.m_per_pt
         for poly in self.racks_user:
             for (x0, y0), (x1, y1) in zip(poly, poly[1:]):
@@ -402,7 +408,7 @@ class Layout:
     def measure(self, poly, width_m=6.0, use_racks=True):
         """A route drawn by hand: walk it every 0.5 m and split rack / off-rack metres like the router does."""
         racks = self.rack_rects(width_m) if use_racks else []
-        on = lambda x, y: any(r[0] <= x <= r[2] and r[1] <= y <= r[3] for r in racks)
+        on = on_rack_fn(racks, self.m_per_pt)
         g = rk = 0.0
         changes = 0
         prev = None
@@ -432,6 +438,24 @@ class Layout:
 
 
 # ------------------------------------------------------------------ pipe racks and obstacles
+RACK_PAD_M = 1.0                     # PLOT rack: beyond the column centre lines (m)
+
+
+def rack_cells(racks, m_per_pt: float, cell: float = 1.0):
+    """racks (pt rectangles) as the router's 1 m grid cells - the ONE definition of 'on a rack' (v13.6):
+    a cell the rack touches is rack (Router marks it so). Before, the tray / 3D / hand-route checks used the exact
+    rectangle, so a route on the rack's edge cell counted as rack for the router but UG for the trays."""
+    f = m_per_pt / cell
+    return [(int(r[0] * f), int(r[1] * f), int(r[2] * f), int(r[3] * f)) for r in racks]
+
+
+def on_rack_fn(racks, m_per_pt: float, cell: float = 1.0):
+    """(x_pt, y_pt) -> on a rack, same rule as the router's cells."""
+    cs = rack_cells(racks, m_per_pt, cell)
+    f = m_per_pt / cell
+    return lambda x, y: any(c[0] <= int(x * f + 1e-6) <= c[2] and c[1] <= int(y * f + 1e-6) <= c[3] for c in cs)
+
+
 def detect_racks(page, m_per_pt: float, tol=1.5, cols_out: list | None = None):
     """Pipe racks seen from above look like ladders: two rows of column markers (a ~1 m box
     around an H-beam) at a steady bay (2-13 m), the rows 3-12 m apart. Returns rects in pt:

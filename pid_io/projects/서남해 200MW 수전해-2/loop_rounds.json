@@ -1,0 +1,58 @@
+[
+ {
+  "round": 0,
+  "at": "2026-11-27 10:20",
+  "set": "3D인계_20261127_1020",
+  "package": "T1-CI_scopeRev01_ruleRev01",
+  "revs": {
+   "scope_rev": "01",
+   "rule_rev": "01",
+   "model_rev": "01"
+  },
+  "prompt_sha": "86a88fe8bd998163",
+  "rules": [],
+  "applied_comments": [],
+  "qty": {
+   "CI-INST": 1252,
+   "CI-IO-AI": 152,
+   "CI-IO-AO": 26,
+   "CI-IO-DI": 484,
+   "CI-IO-DO": 300,
+   "CI-IO-COMM": 12,
+   "CI-CB-MC-48PX125SQOS": 925,
+   "CI-CB-MU-40PX125SQISOS": 4590,
+   "CI-CB-MU-40PX125SQOS": 3410,
+   "CI-CB-MU-60PX125SQISOS": 285,
+   "CI-CB-MU-60PX125SQOS": 285,
+   "CI-CB-BR-1PX125SQOS": 4035,
+   "CI-CB-BR-2CX20SQOS": 245,
+   "CI-CB-CM-FO12CSMARMOURED": 3380,
+   "CI-CB-PK-6PX125SQOS": 38610,
+   "CI-JB-40P": 28,
+   "CI-JB-60P": 2,
+   "CI-TR-SIG-300": 455,
+   "CI-TR-SIG-600": 74,
+   "CI-TR-SIG-900": 250,
+   "CI-TR-COM-300": 311,
+   "CI-UG-W300": 605,
+   "CI-UG-W450": 78,
+   "CI-UG-W1200": 111,
+   "CI-PT-100": 4280,
+   "CI-SP-RT": 15,
+   "CI-SP-RF": 142,
+   "CI-SP-RC": 55,
+   "CI-SP-UB": 587,
+   "CI-SP-PB": 2955,
+   "CI-SP-KG": 10759.2,
+   "CI-SP-EXP": 6
+  },
+  "ai3d": null,
+  "zip": "T1-CI_R0_제출.zip",
+  "validation": {
+   "rows": 192,
+   "pass": 0,
+   "fail": 0,
+   "hold": 192
+  }
+ }
+]
