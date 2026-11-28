@@ -19,7 +19,7 @@ T-NORMAL,인덱스 Junction Box = JB_List 태그,OK (불변 조건),OK,PASS,pid_
 T-NORMAL,케이블 사양별 m 합 = 스케줄 합,OK (불변 조건),OK,PASS,pid_io audit,"55,765 m"
 T-NORMAL,사다리 트레이 폭별 m 합 = 구간 길이 × 단 수 합,OK (불변 조건),OK,PASS,pid_io audit,
 T-NORMAL,서포트 형식별 개수 합 = 서포트 목록,OK (불변 조건),OK,PASS,pid_io audit,
-T-NORMAL,좌표 맞춤 잔차 (장비 기준 중앙값 / 최대),≤ 5 m / ≤ 15 m (개념 모델),3.25 / 9.71 m,PASS,pid_io twin.fit,X = 0.15562·x_pt + -87.57 · Z = 0.15562·y_pt + -130.91 · Y = EL (cable tier on racks = model RK.cable)
+T-NORMAL,좌표 맞춤 잔차 (장비 기준 중앙값 / 최대),≤ 5 m / ≤ 15 m (개념 모델),1.65 / 3.28 m,PASS,pid_io twin.fit,X = 0.15597·x_pt + -87.60 · Z = 0.15597·y_pt + -131.91 · Y = EL (cable tier on racks = model RK.cable)
 T-NORMAL,다른 공종과 충돌 (계장이 비킴),남은 충돌 0,다른 공종 파일 없음,NOT_APPLICABLE,pid_io twin.avoid,
 T-NORMAL,3D 사전 점검 (장비 관통·랙 밖·떠 있는 트레이·겹침·JB 위치·남은 충돌),HOLD 0,"HOLD 1 · 전체 2 (V02 1, V09 1)",HOLD,pid_io review3d,3D_REVIEW_PRECHECK.csv · 회사 AI 리뷰: 3D_REVIEW_PROMPT.md
 T-CHANGED-JB60,jb_sizes = 60,기대값 미잠금 (기록),"사다리 m 1,090 → 1,100 (+0.9%) · 사다리 발주 m 1,201 → 1,213 (+1.0%) · 트레이 면적 m² 499.2 → 555.3 (+11.2%) · 트렌치 면적 m² 349.8 → 359.4 (+2.7%) · 서포트(포스트) 157 → 158 (+0.6%) · 강재 kg 10,759 → 10,886 (+1.2%) · 강재 발주 kg 11,838 → 11,976 (+1.2%) · 클램프 488 → 494 (+1.2%) · 앵커 8,280 → 8,292 (+0.1%) · JB 크기 40P×28 60P×2 → 60P×30 · 케이블 사양: [40P x 1.25SQ IS-OS 16 | 40P x 1.25SQ OS 12 | 60P x 1.25SQ IS-OS 1 | 60P x 1.25SQ OS 1] → [60P x 1.25SQ IS-OS 17 | 60P x 1.25SQ OS 13] · JB 사양: [SUS316 Ex e IIC T4 IP66 단자 120 28 | SUS316 Ex e IIC T4 IP66 단자 180 2] → [SUS316 Ex e IIC T4 IP66 단자 180 30]",RECORDED,pid_io,05 기대값은 담당자가 사전 잠금

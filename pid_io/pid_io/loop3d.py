@@ -347,7 +347,10 @@ def base_summary(project: str, n: int, meta: dict, items: list, v: dict, default
     if p11:
         a("| 구분 | 항목 | 3D | 물량 영향 | 판정 | 조치 |")
         a("|---|---|---|---|---|---|")
-        for r in [x for x in p11 if x[5] == "HOLD"] + [x for x in p11 if x[5] != "HOLD" and x[0] != "높이"][:12]:
+        big = lambda x: x[5] == "HOLD" or "큰 차이" in x[5]
+        a("그림은 3D를 따르고 물량은 Base 그대로입니다 (P11). 아래는 차이 기록이며 질문이 아닙니다.")
+        a("")
+        for r in [x for x in p11 if big(x)] + [x for x in p11 if not big(x) and x[0] != "높이"][:12]:
             a(f"| {r[0]} | {r[1]} | {r[3]} | {r[4]} | {r[5]} | {r[6]} |")
     else:
         a("- 없음 (3D 모델 없음)")
@@ -412,3 +415,142 @@ def attach_ai_model(pkg: Path, n: int, src: Path) -> dict:
             c["evidence"] = ("AI 작성본: 사람이 원본 Seed와 열어 비교 필요 (자동 바이트 대조는 pid_io 참고 그림에만). " + c["evidence"])[:600]
     h6p.write_text(json.dumps(h6, ensure_ascii=False, indent=1), encoding="utf-8")
     return {"file": dst.name, "sha256": sha(dst)}
+
+
+# ------------------------------------------------------------------ v13.9 코파일럿 대화 (프로토콜 P12)
+GUIDE_NAME = "COPILOT_GUIDE.md"
+ANSWERS_NAME = "COPILOT_ANSWERS.json"
+ANSWERS_FORMAT = "pid_io-copilot-answers-1"
+ANSWER_FIELDS = ("id", "about", "picture", "question", "recommendation", "answer", "what", "reason", "scope", "kind", "by")
+
+
+def _rule_text(common: dict, rid: str, view: str = "computer") -> str:
+    from .common_rules import master_text, render, state
+    r = next((x for x in (common or {}).get("rules", []) if x["id"] == rid), None)
+    if not r:
+        return ""
+    if state(r, view) in ("다시 번역 필요", "질문 있음"):
+        return master_text(r)
+    return render(((r.get("translations") or {}).get(view) or {}).get("text"), r.get("params") or {})
+
+
+def answers_template(project: str, n: int) -> dict:
+    return {"format": ANSWERS_FORMAT, "project": project, "round": f"R{n}",
+            "how": "코파일럿이 사람과 대화한 뒤 items에 한 건씩 적는다. reason(왜)과 scope(이번만 / 항상)가 빠진 항목은 pid_io가 읽지 않고 되돌린다.",
+            "items": []}
+
+
+def copilot_guide(project: str, n: int, common: dict, p11: list, rules: list, picks: list | None = None) -> str:
+    """the conversation guide for VS Code Copilot (Korean). The rule itself is P12 of the common protocol - this file
+    only puts it next to this round's material."""
+    from .common_rules import master_text
+    p12 = next((x for x in (common or {}).get("rules", []) if x["id"] == "P12"), None)
+    mq = ((p12 or {}).get("params") or {}).get("max_q", 5)
+    L = []
+    a = L.append
+    a(f"# 코파일럿 대화 안내 — {project} · R{n}")
+    a("")
+    a("> 이 파일은 VS Code 코파일럿이 읽고 사람과 **한국어로** 대화하기 위한 안내입니다. 규칙의 원본은 공통 프로토콜 "
+      "P12 · P11의 엔지니어 관점(마스터)이고, 여기 글과 다르면 마스터(COMMON_PROTOCOL.md)를 따릅니다.")
+    a("")
+    a("## 1. 너의 역할")
+    a("- 사람이 3D 결과(AI가 그린 3D)를 보고 한 코멘트를 **규칙으로 바꾸는 것**이 일이다. 질문은 드물게 한다.")
+    a("- 길이 · 위치 · 물량을 재거나 계산하지 않는다. 숫자는 이 폴더의 pid_io 파일(BASE_SUMMARY.md, evidence/plot_vs_3d.csv)에 있는 값만 쓴다.")
+    a("- 어느 도면(PLOT / 3D)이 맞는지는 묻지 않는다. 차이는 P11대로 처리되어 있다: **그림은 3D, 물량은 Base**.")
+    a("")
+    a("## 2. 대화 규칙 (P12)")
+    a(_rule_text(common, "P12") or (master_text(p12) if p12 else "(P12 없음 - 공통 프로토콜을 확인하세요)"))
+    a("")
+    a("## 3. 대화 순서")
+    a("1. 시작 인사 한 줄 + \"3D 보시고 코멘트 있으면 말씀해 주세요. 제가 먼저 물어볼 것은 N건이에요.\"")
+    a(f"2. 아래 4번 '물어볼 후보'가 있으면 한 건씩 (최대 {mq}건): 그림 파일 이름 → 상황 한 줄 → **추천안** → 다른 선택과 결과 → \"이대로 할까요? (응 / 다르게)\"")
+    a("3. 사람이 코멘트하거나 '다르게'라고 하면: \"왜요?\" 한 번. 이유를 짧게 받아 적는다.")
+    a("4. \"이번만이에요, 항상이에요?\" — 이번만 = 이 프로젝트 3D 프롬프트, 항상 = 공통 프로토콜 개정안(엔지니어 승인 후).")
+    a("5. 'PLOT이 옛 도면'처럼 Base 입력이 틀린 얘기면 kind = BASE 로 적고 \"새 PLOT을 넣고 pid_io를 다시 돌려야 해요\"라고 알린다.")
+    a("6. 다 끝나면 6번 형식으로 답 파일을 쓰고, 사람에게 \"pid_io 앱 STEP 10 → 3D 루프 → '코파일럿 답 읽기'를 눌러 주세요\"라고 안내한다.")
+    a("")
+    a("예시")
+    a("```")
+    a("AI: Q3_OB3.png 를 열어 주세요. 3D에는 OB3 다리가 있고 PLOT에는 없어요.")
+    a("    추천: 그림은 3D대로 다리를 두고, 케이블은 Base대로 다리 위로 보내지 않을게요. (케이블 변화 0 m)")
+    a("    다른 길: 케이블을 다리로 보내면 +3,175 m (BASE_SUMMARY 5번 표). 이대로 할까요? (응 / 다르게)")
+    a("사람: 다르게. 다리는 PLOT의 X 표시 자리에 그려.")
+    a("AI: 왜요?")
+    a("사람: 도로 횡단은 PLOT이 정한 자리라서.")
+    a("AI: 이번만이에요, 항상이에요?")
+    a("사람: 항상.")
+    a("```")
+    a("")
+    a("## 4. 물어볼 후보 (pid_io가 찾은 것)")
+    if picks:
+        for i, q in enumerate(picks[:mq], 1):
+            a(f"{i}. **{q.get('about', '')}** — {q.get('question', '')} 추천: {q.get('recommendation', '')}"
+              + (f" (그림 {q['picture']})" if q.get("picture") else ""))
+    else:
+        a("- 없음. 사람의 코멘트를 기다린다. (PLOT에도 3D에도 없는 배치, 3D를 따라 그렸더니 이상한 곳이 생기면 pid_io가 여기에 올린다)")
+    a("")
+    a("## 5. 묻지 말 것 — 이미 P11로 처리된 차이 (참고)")
+    big = [r for r in (p11 or []) if r[5] == "HOLD" or "큰 차이" in r[5]]
+    for r in (big + [r for r in (p11 or []) if r not in big and r[0] != "높이"])[:10]:
+        a(f"- {r[0]} · {r[1]}: {r[3]} {r[4]} → {r[6]}")
+    if not p11:
+        a("- (3D 모델 없음)")
+    a("")
+    a("## 6. 답 파일 쓰는 법")
+    a(f"이 폴더의 `{ANSWERS_NAME}` 의 items 에 한 건씩 추가한다. 한 코멘트 = 한 항목.")
+    a("")
+    a("| 칸 | 내용 |")
+    a("|---|---|")
+    for k, t in (("id", "A1, A2 … (이 파일 안에서 겹치지 않게)"), ("about", "대상 (예: OB3 오버브리지, 10-TK-801 주변 트레이)"),
+                 ("picture", "보여 준 그림 파일 이름 (없으면 빈칸)"), ("question", "AI가 물은 말 (사람이 먼저 코멘트했으면 빈칸)"),
+                 ("recommendation", "AI 추천안 (없으면 빈칸)"), ("answer", "응 / 다르게 / 코멘트"),
+                 ("what", "3D에 무엇을 어떻게 그릴지 한 문장 (숫자는 pid_io 값만)"), ("reason", "왜 — 사람이 말한 이유 (필수)"),
+                 ("scope", "이번만 / 항상 (필수)"), ("kind", "3D (그리는 법) / BASE (PLOT · 산출근거 입력이 틀림)"), ("by", "답한 사람 이름")):
+        a(f"| {k} | {t} |")
+    a("")
+    a("```json")
+    a(json.dumps({"id": "A1", "about": "OB3 오버브리지", "picture": "Q3_OB3.png", "question": "그림은 3D대로 둘까요?",
+                  "recommendation": "다리는 3D대로, 케이블은 Base대로", "answer": "다르게", "what": "OB3 다리를 PLOT의 X 표시 자리에 그린다",
+                  "reason": "도로 횡단 위치는 PLOT이 정한다", "scope": "항상", "kind": "3D", "by": "홍길동"}, ensure_ascii=False))
+    a("```")
+    a("")
+    a("## 7. 지금 프롬프트에 들어 있는 규칙 (중복 코멘트 피하기)")
+    on = [c for c in rules if c.get("status") == "APPLIED" and c.get("rule_id")]
+    for c in on:
+        a(f"- {c['rule_id']}: {c.get('computer_text') or c.get('rule_text')}")
+    if not on:
+        a("- 없음")
+    a("")
+    return "\n".join(L)
+
+
+def import_answers(pdir: Path, data: dict) -> dict:
+    """COPILOT_ANSWERS.json -> comments (OPEN, a person approves in STEP 10). scope 이번만 -> 프로젝트, 항상 -> 공통.
+    kind BASE -> a Base-fix comment. Missing reason / scope -> HOLD (sent back, not imported). Same item twice -> skipped."""
+    if (data or {}).get("format") != ANSWERS_FORMAT:
+        raise ValueError(f"답 파일 형식이 다릅니다 (format = {ANSWERS_FORMAT} 이어야 함)")
+    d = load_rules(pdir)
+    have = {c.get("answer_key") for c in d["comments"] if c.get("answer_key")}
+    added, hold, skipped = [], [], []
+    for it in data.get("items") or []:
+        it = {k: str(it.get(k) or "").strip() for k in ANSWER_FIELDS}
+        key = hashlib.sha256(json.dumps([data.get("round"), it], ensure_ascii=False, sort_keys=True).encode()).hexdigest()[:16]
+        if key in have:
+            skipped.append(it["id"])
+            continue
+        why = [w for w, bad in (("이유(reason) 없음", not it["reason"]), ("범위(scope: 이번만 / 항상) 없음", it["scope"] not in ("이번만", "항상")),
+                                ("무엇을(what) 없음", not it["what"])) if bad]
+        if why:
+            hold.append({"id": it["id"], "why": ", ".join(why)})
+            continue
+        base = it["kind"].upper() == "BASE"
+        comment_update(pdir, {"add": {"text": f"{it['what']} (이유: {it['reason']})", "target": it["about"],
+                                      "kind": "BASE" if base else "PROMPT", "rule_text": f"{it['what']} — 이유: {it['reason']}",
+                                      "scope": "공통" if it["scope"] == "항상" else "프로젝트", "by": it["by"]}})
+        d = load_rules(pdir)
+        c = d["comments"][-1]
+        c.update(answer_key=key, src="copilot", answer=it)
+        save_rules(pdir, d)
+        have.add(key)
+        added.append(c["id"])
+    return {"added": added, "hold": hold, "skipped": skipped}

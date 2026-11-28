@@ -127,17 +127,44 @@ def parse_base(path: Path) -> dict:
 
 
 # ------------------------------------------------------------------ alignment
-def fit(plot: dict, our_racks: list, base: dict, w_rack: float = 3.0) -> dict:
+def _mpt(plot: dict) -> float:
+    return float(((plot.get("scale") or {}).get("m_per_pt")) or 0.2)
+
+
+def outline(plot: dict, tag: str, e: dict, tol: float = 0.5):
+    """the PLOT outline of this equipment: among the closed shapes near its label (plot.eq_shapes), the one whose size
+    matches the 3D box (relative error sum <= tol, either orientation); nearest wins a tie. None -> use the label."""
+    m = _mpt(plot)
+    W, H = e["box"]["x1"] - e["box"]["x0"], e["box"]["z1"] - e["box"]["z0"]
+    if W <= 0 or H <= 0:
+        return None
+    best = None
+    for cx, cy, w, h, dd in (plot.get("eq_shapes") or {}).get(tag) or []:
+        w, h = w * m, h * m
+        err = min(abs(w - W) / W + abs(h - H) / H, abs(w - H) / H + abs(h - W) / W)
+        if err <= tol and (best is None or (err, dd) < best[0]):
+            best = ((err, dd), (cx, cy))
+    return best[1] if best else None
+
+
+def fit(plot: dict, our_racks: list, base: dict, w_rack: float = 3.0, outlines: bool = True) -> dict:
     """least squares for [s, tx, tz]: X = s*x + tx, Z = s*y + tz (pt -> model m, both north up).
     anchors: shared equipment tags (2 equations each), our racks matched to model racks (1 equation: the
     centre line across the rack). Two passes: equipment only, then racks matched by nearest centre line."""
     import numpy as np
     eqs, rhs, wts, tags = [], [], [], []
+    basis = {}
     for tag, pts in (plot.get("equipment") or {}).items():
         e = base["equipment"].get(tag)
         if not e or len(pts) != 1:
             continue
         x, y = pts[0]
+        o = outline(plot, tag, e) if outlines else None
+        if o:                                   # v13.9: the outline centre, not the tag text beside it
+            basis[tag] = ("도형", round(math.hypot(o[0] - x, o[1] - y) * _mpt(plot), 1))
+            x, y = o[0], o[1]
+        else:
+            basis[tag] = ("글자", None)
         eqs += [[x, 1, 0], [y, 0, 1]]
         rhs += [e["x"], e["z"]]
         wts += [1.0, 1.0]
@@ -175,7 +202,8 @@ def fit(plot: dict, our_racks: list, base: dict, w_rack: float = 3.0) -> dict:
     res = []
     for tag, x, y, X, Z in tags:
         dx, dz = s * x + tx - X, s * y + tz - Z
-        res.append({"tag": tag, "dx": round(dx, 2), "dz": round(dz, 2), "d": round(math.hypot(dx, dz), 2)})
+        res.append({"tag": tag, "dx": round(dx, 2), "dz": round(dz, 2), "d": round(math.hypot(dx, dz), 2),
+                    "basis": basis[tag][0], "label_off_m": basis[tag][1]})
     res.sort(key=lambda r: -r["d"])
     racks_res = []
     for our_id, rid, _ in matched:

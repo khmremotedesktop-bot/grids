@@ -107,20 +107,35 @@ SEED = [
                   "승인 기록 없는 반영은 FAIL.", ["pid_io 설계 원칙"]),
      "computer": "AI 출력(심볼 판정, 주문 해석, 3D 리뷰, 교훈 후보, 프로토콜 번역) = status pending/OPEN/'확인 필요' 제안. 반영은 사람 승인 이벤트(이름·시각)가 있을 때만. 공통 규칙 추가는 decide_lesson(accept) 또는 코멘트 승인으로만.",
      "maintenance": "관련: ai_suggestions.json, lessons.json, prompt_rules.json, common_protocol.json(번역 상태). 승인 기록이 없는 반영이 생기면 버그 - 관련 화면 확인."},
-    {"id": "P11", "title": "3D와 PLOT이 다를 때", "params": {"pos_tol_m": 5, "detour_pct": 2, "same_rack_pct": 30},
+    {"id": "P11", "title": "3D와 PLOT이 다를 때", "seed_rev": 2, "params": {"pos_tol_m": 5, "detour_pct": 2, "same_rack_pct": 30},
      "master": _m("PLOT과 배관 3D 모델의 위치 · 높이 · 랙 · 구조물 차이", "3D 모델을 올렸을 때 (랙 출처가 3D를 쓸 때)",
-                  ["물량과 배치의 기준은 우리 Base(PLOT + 산출근거 + 사람 결정)이고, 3D는 높이와 구조물 확인용이다.",
+                  ["물량과 배치의 기준은 우리 Base(PLOT + 산출근거 + 사람 결정)다. 3D는 결과물이다.",
+                   "PLOT과 3D가 다르면 그림은 3D를 따른다. 물량은 Base 그대로 두고, 차이는 표(plot_vs_3d)로만 남긴다. 3D를 보고 루팅을 다시 하지 않는다.",
+                   "어느 도면이 맞는지는 사람에게 묻지 않는다 (P12).",
                    "높이는 3D 값을 쓴다.",
                    "PLOT 랙과 3D 랙이 {same_rack_pct}% 이상 겹치면 같은 랙으로 보고 형상은 3D를 쓴다.",
-                   "위치 차이가 {pos_tol_m} m 이하면 그림만 맞추고 물량은 Base대로 둔다.",
-                   "3D에만 있는 구조물(오버브리지 · 서브 랙)은 물량 영향과 함께 보여 주고 사람이 쓸지 정한다.",
+                   "장비 위치는 PLOT의 태그 글자가 아니라 장비 도형의 중심으로 잰다. 도형은 3D 상자와 크기가 같은 것을 고른다. 못 찾으면 글자 위치로 재고 표에 '글자'라고 적는다.",
+                   "3D에만 있는 구조물(오버브리지 · 서브 랙)은 그림에 3D대로 둔다. 케이블을 그 위로 보낼지는 Base 설정(사람 결정)이고, 물량 영향을 표에 적는다.",
                    "PLOT에만 있는 랙은 Base대로 두고 배관팀에 알린다."],
-                  ["장비 위치가 {pos_tol_m} m 넘게 다르면 어느 도면이 최신인지 먼저 확인한다",
-                   "3D에만 있는 구조물 때문에 케이블이 {detour_pct}% 넘게 늘면 쓰기 전에 다시 확인한다"],
-                  "장비 위치 차이 > {pos_tol_m} m → HOLD. 사용 중인 3D 구조물로 케이블 증가 > {detour_pct}% → HOLD. 나머지 차이는 INFO (목록에 남김).",
-                  ["사용자 결정 2026-11-27 (Base 먼저)"]),
-     "computer": "입력: PLOT 랙(pt), 3D 랙·참조 구조물(모델 좌표 → 좌표 맞춤 후 pt). (1) 높이: 랙 케이블 단 EL = 3D RK.cable, 참조 구조물 = 높이 h. (2) 랙 출처 '둘 다': PLOT 랙이 3D 랙과 면적 {same_rack_pct}% 이상 겹치면 같은 랙 → 3D 사각형, 아니면 PLOT 랙 유지. (3) 장비 잔차 d: d ≤ {pos_tol_m} m → INFO(그림만 맞춤), d > {pos_tol_m} m → HOLD. (4) 3D에만 있는 구조물: 넣었을 때와 뺐을 때 케이블 m 차이 Δ%를 계산, 사용 여부는 사람 설정(rack_refs, rack_refs_off); 사용 중이고 Δ > {detour_pct}% → HOLD. (5) PLOT에만 있는 랙 → INFO '배관팀 보고'. 결과 evidence/plot_vs_3d.csv.",
-     "maintenance": "관련 설정: STEP 6 '랙 출처'(3D 모델이 있으면 '둘 다' 권장), '3D 모델 오버브리지 · 서브 랙', '빼는 3D 참조 랙'. 기준값 {pos_tol_m} m · {detour_pct}% · 같은 랙 {same_rack_pct}%는 이 규칙의 params에만 있고 프로그램도 여기서 읽는다. 바꾸면 tests/check_protocol.py와 기준 프로젝트 불일치 목록·물량을 전후 비교, 승인 계장 공종 책임자, 버전 +0.1."},
+                  ["PLOT 자체가 옛 도면으로 확인되면 3D 학습이 아니라 Base 입력이 바뀐 것이다: 새 PLOT을 넣고 다시 돌린다."],
+                  "차이는 모두 INFO (표에 남기고 멈추지 않음). 장비 위치 차이 > {pos_tol_m} m, 쓰는 3D 구조물로 케이블 증가 > {detour_pct}% 는 INFO '큰 차이'로 표시만 한다.",
+                  ["사용자 결정 2026-11-27 (Base 먼저)", "사용자 결정 2026-11-27 (차이 나면 그림은 3D, 어느 쪽이 맞는지 묻지 않음)"]),
+     "computer": "입력: PLOT 랙(pt), PLOT 장비 글자 위치와 주변 닫힌 도형(plot.eq_shapes), 3D 랙·참조 구조물·장비 상자(모델 좌표 → 좌표 맞춤 후 pt). (1) 높이: 랙 케이블 단 EL = 3D RK.cable, 참조 구조물 = 높이 h. (2) 랙 출처 '둘 다': PLOT 랙이 3D 랙과 면적 {same_rack_pct}% 이상 겹치면 같은 랙 → 3D 사각형, 아니면 PLOT 랙 유지. (3) 장비 위치: 글자 주변 닫힌 도형 중 3D 상자와 크기 오차 합 ≤ 0.5 인 도형의 중심(twin.outline), 없으면 글자 위치(basis='글자'). 잔차 d > {pos_tol_m} m → INFO '큰 차이', 아니면 INFO. (4) 3D에만 있는 구조물: 넣었을 때와 뺐을 때 케이블 m 차이 Δ%를 계산해 적음, 사용 여부는 사람 설정(rack_refs, rack_refs_off), Δ > {detour_pct}% → INFO '큰 차이'. (5) PLOT에만 있는 랙 → INFO '배관팀 보고'. HOLD는 내지 않는다. 3D 그림: 장비·랙·구조물은 3D 좌표, 트레이·케이블 물량은 Base. 결과 evidence/plot_vs_3d.csv.",
+     "maintenance": "관련 설정: STEP 6 '랙 출처'(3D 모델이 있으면 '둘 다' 권장), '3D 모델 오버브리지 · 서브 랙', '빼는 3D 참조 랙'. 기준값 {pos_tol_m} m · {detour_pct}% · 같은 랙 {same_rack_pct}%는 이 규칙의 params에만 있고 프로그램도 여기서 읽는다. 장비 도형 찾기: plot.equipment_shapes (PLOT 캐시 v5), twin.outline. 주의: Base 루팅의 3D 랙 좌표 맞춤은 아직 글자 기준(server.model_racks, outlines=False) - 도형 기준으로 바꾸면 랙 가장자리 경로가 바뀌어 UG가 크게 늘어남(인수인계 열린 질문), 랙 가장자리 규칙을 정한 뒤 전환. 바꾸면 tests/check_protocol.py와 기준 프로젝트 물량 전후 비교, 승인 계장 공종 책임자, 버전 +0.1."},
+    {"id": "P12", "title": "3D 코멘트를 규칙으로 바꾸기 (코파일럿 대화)", "seed_rev": 1, "params": {"max_q": 5},
+     "master": _m("3D 결과를 보고 사람이 단 코멘트, 3D를 그리며 생긴 질문", "3D 루프(R0, R1 …)에서 회사 AI(VS Code 코파일럿)와 한국어로 대화할 때",
+                  ["사실(PLOT과 3D 중 어느 쪽이 맞나)은 묻지 않는다. P11대로 처리하고 가정으로 적는다. 알 수 있는 사람은 타 공종이라 확인 목록으로 보낸다.",
+                   "묻는 것은 두 가지뿐이다: ① PLOT에도 3D에도 없어 어디에 그릴지 정해지지 않은 것 ② 3D를 따랐더니 그림이 이상해지는 곳 (트레이가 장비를 뚫음, 케이블이 공중에 뜸).",
+                   "물을 때는 한 번에 한 건, 그림(파일 이름)을 먼저 보여 주고, 추천안과 각 선택의 결과를 붙여 '응 / 다르게'로 답할 수 있게 한다. 추천안을 못 쓰면 묻지 않고 가정으로 처리한다. 한 라운드에 {max_q}건까지.",
+                   "사람이 코멘트하거나 '다르게'라고 하면 '왜요?'를 한 번 묻는다. 고른 답보다 이유가 규칙이 된다.",
+                   "마지막으로 '이번만이에요, 항상이에요?'를 묻는다. 이번만 → 이 프로젝트의 3D 프롬프트 규칙. 항상 → 공통 프로토콜 마스터 개정안 (엔지니어 승인 후 규칙).",
+                   "대화 결과는 정해진 답 파일에 적고, pid_io가 읽어 코멘트로 올린다. 사람이 승인하면 다음 라운드부터 들어간다."],
+                  ["답하다 PLOT이 옛 도면으로 밝혀지면 3D 학습이 아니라 Base 입력 변경이다 (P11 예외).",
+                   "AI는 길이 · 위치 · 물량을 재거나 계산하지 않는다. 숫자는 pid_io가 준 값만 쓴다."],
+                  "답 파일 항목에 이유(reason) 또는 범위(이번만 / 항상)가 없으면 HOLD: pid_io가 읽지 않고 되돌려 다시 묻게 한다.",
+                  ["사용자 결정 2026-11-27 (사실은 묻지 않고 의도를 묻는다, 이유가 규칙이 된다)"]),
+     "computer": "대화 상대: VS Code 코파일럿 (한국어). 라운드 폴더의 COPILOT_GUIDE.md를 읽고 시작한다. 금지: PLOT/3D 중 어느 쪽이 맞는지 묻기, 길이·위치·물량 계산. 질문 = ① 미정 배치 ② 3D를 따랐더니 그림이 이상한 곳만, 한 번에 한 건, 그림 파일 이름 + 추천안 + 선택별 결과(pid_io 숫자) + '응 / 다르게', 라운드당 {max_q}건 이하, 추천안이 없으면 묻지 않음. 코멘트나 '다르게' → '왜요?' 1회 → '이번만 / 항상'. 결과는 같은 폴더 COPILOT_ANSWERS.json (format pid_io-copilot-answers-1, items[]: id, about, picture, question, recommendation, answer, what, reason, scope 이번만|항상, kind 3D|BASE, by). reason 또는 scope가 비면 그 항목은 HOLD로 되돌아온다. 이번만 → 프로젝트 코멘트(scope 프로젝트), 항상 → 코멘트(scope 공통) → 승인 시 공통 프로토콜 DRAFT 규칙.",
+     "maintenance": "파일: 라운드 폴더 COPILOT_GUIDE.md(만들 때마다 새로 씀), COPILOT_ANSWERS.json(빈 양식, 코파일럿이 채움). 앱 STEP 10 → 3D 루프 → '코파일럿 답 읽기'가 loop3d.import_answers를 불러 코멘트(C-nnn)로 올린다. 같은 답 항목은 두 번 올라가지 않는다(answer_key). 질문 상한 {max_q}건은 이 규칙의 params. 바꾸면 tests/check_protocol.py, 승인 계장 공종 책임자, 버전 +0.1."},
 ]
 
 
@@ -172,6 +187,8 @@ def views(rule: dict, fill: bool = True) -> dict:
 
 def make_rule(seed: dict, by: str = "pid_io (초기 번역)") -> dict:
     r = {k: seed[k] for k in ("id", "title", "params", "master")}
+    if seed.get("seed_rev"):
+        r["seed_rev"] = seed["seed_rev"]
     h = master_hash(r)
     r["translations"] = {v: {"text": seed[v], "from_master": h, "state": "확인 필요", "by": by, "at": time.strftime("%Y-%m-%d"), "questions": []}
                          for v in ("computer", "maintenance")}
@@ -277,6 +294,36 @@ def _bump(c: dict, what: str):
     major, minor = str(c.get("version", "3.0")).split(".")[:2]
     c["version"] = f"{major}.{int(minor) + 1}"
     c.setdefault("changelog", []).append({"version": c["version"], "at": time.strftime("%Y-%m-%d"), "what": what})
+
+
+def sync_seed(c: dict) -> bool:
+    """v13.9: seed rules changed by a user decision (seed_rev) reach a stored v3 file: a missing rule is added, a DRAFT seed
+    rule with an older seed_rev gets the new master + fresh translations (to confirm). An APPROVED rule is not overwritten -
+    the changelog says a newer seed exists. Returns True when something changed."""
+    changed = False
+    for sd in SEED:
+        rev = sd.get("seed_rev")
+        if not rev:
+            continue
+        r = next((x for x in c["rules"] if x["id"] == sd["id"]), None)
+        if r is None:
+            c["rules"].append(make_rule(sd, "pid_io (번역)"))
+            _bump(c, f"{sd['id']} 추가 ({sd['title']}) - 사용자 결정, 마스터 승인 · 번역 확인 필요")
+            changed = True
+        elif (r.get("seed_rev") or 1) < rev:
+            if r.get("status") == "APPROVED":
+                note = f"{sd['id']} 새 seed {rev} 있음 - 승인된 규칙이라 덮어쓰지 않음, 엔지니어가 마스터 비교"
+                if not any(x.get("what") == note for x in c.get("changelog", [])):
+                    c.setdefault("changelog", []).append({"version": c.get("version"), "at": time.strftime("%Y-%m-%d"), "what": note})
+                    changed = True
+                continue
+            r["title"] = sd["title"]
+            set_master(c, sd["id"], sd["master"], sd["params"], "사용자 결정")
+            for v in ("computer", "maintenance"):
+                set_translation(c, sd["id"], v, sd[v], "pid_io (번역)")
+            r["seed_rev"] = rev
+            changed = True
+    return changed
 
 
 # ------------------------------------------------------------------ upgrade / document

@@ -158,5 +158,21 @@
   "fid": "07b376576fba",
   "state": "399d1ad1577a",
   "sha256": "bc38fbbbb82461f8fecc79c86339d0e22e24cea386cb43e4eb220d9aaaed85da"
+ },
+ {
+  "kind": "twin",
+  "file": "HISTORY/3D인계_20261127_1215",
+  "at": "2026-11-27 12:15",
+  "fid": "d34bcb5a2600",
+  "state": "399d1ad1577a",
+  "sha256": ""
+ },
+ {
+  "kind": "index",
+  "file": "HISTORY/Instrument_Index_서남해 200MW 수전해-2_20261127_1215.xlsx",
+  "at": "2026-11-27 12:15",
+  "fid": "e02489392f98",
+  "state": "399d1ad1577a",
+  "sha256": "e5ab34f6c7011febab0b6cf1101dce3fcc8a80d8c38d3cba010ec2bd8129c453"
  }
 ]

@@ -1,0 +1,7 @@
+{
+ "format": "pid_io-copilot-answers-1",
+ "project": "서남해 200MW 수전해-2",
+ "round": "R0",
+ "how": "코파일럿이 사람과 대화한 뒤 items에 한 건씩 적는다. reason(왜)과 scope(이번만 / 항상)가 빠진 항목은 pid_io가 읽지 않고 되돌린다.",
+ "items": []
+}

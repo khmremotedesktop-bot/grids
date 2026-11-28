@@ -23,4 +23,4 @@
 4. 답은 JSON 하나만 (스키마 `3D_REVIEW_ANSWER_SCHEMA.json`, review_version = "pid_io-3d-review 0.1").
 
 ## 사전 점검 목록 (2건, 그중 추정 위치 계기 200개는 목록 생략)
-{"issue_id": "V02-001", "rule": "V02", "objects": ["TR-15-007", "RACK-REF-XR2"], "where": [-21.35, 8.5, 126.22], "detail": "TR-15-007 EL 8.5 m, 랙 REF-XR2 케이블 단 EL 6.0 m"}
+{"issue_id": "V02-001", "rule": "V02", "objects": ["TR-15-007", "RACK-REF-XR2"], "where": [-21.23, 8.5, 126.0], "detail": "TR-15-007 EL 8.5 m, 랙 REF-XR2 케이블 단 EL 6.0 m"}
